@@ -39,7 +39,7 @@ export default function Home() {
     if (saved) setPlan(JSON.parse(saved));
     let script: HTMLScriptElement | null = null;
     let cancelled = false;
-    fetch("/api/map-config", { cache: "no-store" })
+    fetch("/map-config.json", { cache: "no-store" })
       .then((response) => response.ok ? response.json() : Promise.reject())
       .then(({ kakaoJavaScriptKey }) => {
         if (cancelled || !kakaoJavaScriptKey || !mapEl.current) return;
