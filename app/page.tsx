@@ -74,6 +74,8 @@ export default function Home() {
   const [regionSuggestions, setRegionSuggestions] = useState<string[]>([]);
   const [isRegionSearching, setIsRegionSearching] = useState(false);
   const [showRegionSuggestions, setShowRegionSuggestions] = useState(false);
+  const [isPlaceSearching, setIsPlaceSearching] = useState(false);
+  const [searchNotice, setSearchNotice] = useState("지역과 장소 종류를 함께 검색해보세요");
   const mapEl = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const mapObjectsRef = useRef<any[]>([]);
@@ -182,20 +184,32 @@ export default function Home() {
 
   function searchPlaces(e: React.FormEvent) {
     e.preventDefault();
-    const term = `${city} ${query.trim()}`.trim();
+    const keyword = query.trim();
+    if (!keyword) {
+      setSearchNotice("찾고 싶은 장소나 종류를 입력해주세요");
+      return;
+    }
+    const term = `${city.trim()} ${keyword}`.trim();
     if (mapReady && window.kakao?.maps?.services) {
+      setIsPlaceSearching(true);
+      setSearchNotice(`‘${term}’ 장소를 찾고 있어요…`);
       const ps = new window.kakao.maps.services.Places();
       ps.keywordSearch(term, (data: any[], status: string) => {
-        if (status !== window.kakao.maps.services.Status.OK) return setNotice("검색 결과가 없어요");
+        setIsPlaceSearching(false);
+        if (status !== window.kakao.maps.services.Status.OK) {
+          setSearchNotice("검색 결과가 없어요. 다른 검색어를 입력해보세요");
+          return;
+        }
         const found = data.slice(0, 6).map((p: any): Spot => ({
           id: p.id, name: p.place_name, category: p.category_group_name || "장소", address: p.road_address_name || p.address_name,
           x: Number(p.x), y: Number(p.y), stay: 60, emoji: emojiForPlace(p),
         }));
-        setSpots(found); setNotice(`‘${term}’ 실제 장소 ${found.length}곳을 찾았어요`);
+        setSpots(found);
+        setSearchNotice(`‘${term}’ 실제 장소 ${found.length}곳을 찾았어요`);
       });
     } else {
       setSpots(sampleSpots.filter(s => `${s.name} ${s.category}`.includes(term) || term.includes("성수")));
-      setNotice("키를 추가하면 카카오의 실제 검색 결과가 표시돼요");
+      setSearchNotice("카카오맵 연결 후 실제 장소를 검색할 수 있어요");
     }
   }
 
@@ -258,7 +272,12 @@ export default function Home() {
   }
 
   function addSpot(spot: Spot) {
-    if (!plan.some(p => p.id === spot.id)) setPlan([...plan, spot]);
+    if (plan.some(p => p.id === spot.id)) {
+      setSearchNotice(`${spot.name}은 이미 일정에 있어요`);
+      return;
+    }
+    setPlan([...plan, spot]);
+    setSearchNotice(`${spot.name}을 일정 마지막에 추가했어요`);
   }
 
   return (
@@ -333,8 +352,12 @@ export default function Home() {
 
       <section className="search-section">
         <div><p className="eyebrow">FIND A PLACE</p><h2>일정에 장소 더하기</h2></div>
-        <form onSubmit={searchPlaces}><input value={query} onChange={e => setQuery(e.target.value)} placeholder="카페, 전시관, 맛집을 검색해보세요"/><button>검색</button></form>
-        <div className="results">{spots.map(s => <button className="result" key={s.id} onClick={() => addSpot(s)}><span>{s.emoji}</span><div><b>{s.name}</b><small>{s.category} · {s.address}</small></div><i>＋</i></button>)}</div>
+        <form onSubmit={searchPlaces}><input value={query} onChange={e => setQuery(e.target.value)} placeholder="카페, 전시관, 맛집을 검색해보세요"/><button disabled={isPlaceSearching}>{isPlaceSearching ? "검색 중…" : "검색"}</button></form>
+        <p className="search-feedback" role="status">{searchNotice}</p>
+        <div className="results">{spots.map(s => {
+          const isAdded = plan.some(item => item.id === s.id);
+          return <button className={`result ${isAdded ? "added" : ""}`} disabled={isAdded} key={s.id} onClick={() => addSpot(s)}><span>{s.emoji}</span><div><b>{s.name}</b><small>{s.category} · {s.address}</small></div><i>{isAdded ? "추가됨" : "＋"}</i></button>;
+        })}</div>
       </section>
       <footer>하루여행 · 가볍게 떠나는 하루를 위해</footer>
     </main>
