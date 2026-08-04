@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import type { DragEvent } from "react";
 
 declare global {
   interface Window { kakao: any }
@@ -76,7 +77,8 @@ export default function Home() {
   const [showRegionSuggestions, setShowRegionSuggestions] = useState(false);
   const [isPlaceSearching, setIsPlaceSearching] = useState(false);
   const [searchNotice, setSearchNotice] = useState("지역과 장소 종류를 함께 검색해보세요");
-  const [insertAfterSpotId, setInsertAfterSpotId] = useState("end");
+  const [draggedSpot, setDraggedSpot] = useState<Spot | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const mapEl = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const mapObjectsRef = useRef<any[]>([]);
@@ -277,26 +279,32 @@ export default function Home() {
       setSearchNotice(`${spot.name}은 이미 일정에 있어요`);
       return;
     }
-    if (insertAfterSpotId === "start") {
-      setPlan([spot, ...plan]);
-      setSearchNotice(`${spot.name}을 일정 맨 앞에 추가했어요`);
-      return;
-    }
-    if (insertAfterSpotId === "end") {
-      setPlan([...plan, spot]);
-      setSearchNotice(`${spot.name}을 일정 마지막에 추가했어요`);
-      return;
-    }
-    const insertIndex = plan.findIndex(item => item.id === insertAfterSpotId);
-    if (insertIndex < 0) {
-      setPlan([...plan, spot]);
-      setSearchNotice(`${spot.name}을 일정 마지막에 추가했어요`);
-      return;
-    }
-    const nextPlan = [...plan];
-    nextPlan.splice(insertIndex + 1, 0, spot);
+    setPlan([...plan, spot]);
+    setSearchNotice(`${spot.name}을 일정 마지막에 추가했어요`);
+  }
+
+  function handleDragStart(event: DragEvent, spot: Spot) {
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", spot.id);
+    setDraggedSpot(spot);
+    setIsDragging(true);
+  }
+
+  function handleDropAt(index: number) {
+    if (!draggedSpot) return;
+    const previousIndex = plan.findIndex(item => item.id === draggedSpot.id);
+    const nextPlan = plan.filter(item => item.id !== draggedSpot.id);
+    const adjustedIndex = previousIndex >= 0 && previousIndex < index ? index - 1 : index;
+    nextPlan.splice(Math.max(0, Math.min(adjustedIndex, nextPlan.length)), 0, draggedSpot);
     setPlan(nextPlan);
-    setSearchNotice(`${spot.name}을 ${plan[insertIndex].name} 다음에 추가했어요`);
+    setSearchNotice(`${draggedSpot.name}의 일정 위치를 변경했어요`);
+    setDraggedSpot(null);
+    setIsDragging(false);
+  }
+
+  function handleDragEnd() {
+    setDraggedSpot(null);
+    setIsDragging(false);
   }
 
   return (
@@ -351,12 +359,16 @@ export default function Home() {
       <section className="workspace">
         <div className="timeline-panel">
           <div className="section-head"><div><p>MY DAY</p><h2>{city}에서의 하루</h2></div><div className="summary"><b>{Math.floor(total / 60)}시간 {total % 60}분</b><span>{plan.length}개 장소 · 도보 {totalTravel}분</span></div></div>
-          <div className="timeline">
-            {schedule.map(({ spot, start, end, travelToNext }, i) => <article key={spot.id} className="stop">
-              <div className="time"><b>{start}</b><span>{end}</span></div>
-              <div className="dot">{i + 1}</div>
-              <div className="stop-card"><span className="emoji">{spot.emoji}</span><div><small>{spot.category} · 체류 {spot.stay}분</small><h3>{spot.name}</h3><p>{spot.address}</p>{travelToNext > 0 && <p className="travel-meta">다음 장소까지 도보 약 {travelToNext}분</p>}</div><button aria-label={`${spot.name} 삭제`} onClick={() => setPlan(plan.filter(p => p.id !== spot.id))}>×</button></div>
-            </article>)}
+          <div className={`timeline ${isDragging ? "dragging" : ""}`}>
+            {schedule.map(({ spot, start, end, travelToNext }, i) => <Fragment key={spot.id}>
+              <div className="drop-zone" onDragOver={event => event.preventDefault()} onDrop={() => handleDropAt(i)}><span>{i === 0 ? "맨 앞에 놓기" : "여기에 놓기"}</span></div>
+              <article className={`stop ${i === schedule.length - 1 ? "last" : ""}`} draggable onDragStart={event => handleDragStart(event, spot)} onDragEnd={handleDragEnd} aria-label={`${spot.name} 일정 순서 이동`}>
+                <div className="time"><b>{start}</b><span>{end}</span></div>
+                <div className="dot">{i + 1}</div>
+                <div className="stop-card"><span className="drag-handle" aria-hidden="true">⋮⋮</span><span className="emoji">{spot.emoji}</span><div><small>{spot.category} · 체류 {spot.stay}분</small><h3>{spot.name}</h3><p>{spot.address}</p>{travelToNext > 0 && <p className="travel-meta">다음 장소까지 도보 약 {travelToNext}분</p>}</div><button aria-label={`${spot.name} 삭제`} onClick={() => setPlan(plan.filter(p => p.id !== spot.id))}>×</button></div>
+              </article>
+            </Fragment>)}
+            <div className="drop-zone" onDragOver={event => event.preventDefault()} onDrop={() => handleDropAt(plan.length)}><span>마지막에 놓기</span></div>
           </div>
         </div>
 
@@ -373,17 +385,10 @@ export default function Home() {
         <div><p className="eyebrow">FIND A PLACE</p><h2>일정에 장소 더하기</h2></div>
         <form onSubmit={searchPlaces}><input value={query} onChange={e => setQuery(e.target.value)} placeholder="카페, 전시관, 맛집을 검색해보세요"/><button disabled={isPlaceSearching}>{isPlaceSearching ? "검색 중…" : "검색"}</button></form>
         <p className="search-feedback" role="status">{searchNotice}</p>
-        <div className="insert-position">
-          <label htmlFor="insert-position">추가 위치</label>
-          <select id="insert-position" value={insertAfterSpotId} onChange={event => setInsertAfterSpotId(event.target.value)}>
-            <option value="end">일정 마지막</option>
-            <option value="start">일정 맨 앞</option>
-            {plan.map((spot, index) => <option value={spot.id} key={spot.id}>{index + 1}. {spot.name} 다음</option>)}
-          </select>
-        </div>
+        <p className="drag-guide">장소 카드를 원하는 일정 사이로 끌어 놓거나, 눌러서 마지막에 추가하세요.</p>
         <div className="results">{spots.map(s => {
           const isAdded = plan.some(item => item.id === s.id);
-          return <button className={`result ${isAdded ? "added" : ""}`} disabled={isAdded} key={s.id} onClick={() => addSpot(s)}><span>{s.emoji}</span><div><b>{s.name}</b><small>{s.category} · {s.address}</small></div><i>{isAdded ? "추가됨" : "＋"}</i></button>;
+          return <button className={`result ${isAdded ? "added" : ""}`} draggable={!isAdded} disabled={isAdded} key={s.id} onDragStart={event => handleDragStart(event, s)} onDragEnd={handleDragEnd} onClick={() => addSpot(s)}><span>{s.emoji}</span><div><b>{s.name}</b><small>{s.category} · {s.address}</small></div><i>{isAdded ? "추가됨" : "＋"}</i></button>;
         })}</div>
       </section>
       <footer>하루여행 · 가볍게 떠나는 하루를 위해</footer>
