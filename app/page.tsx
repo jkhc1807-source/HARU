@@ -7,6 +7,7 @@ declare global {
 }
 
 type Spot = { id: string; name: string; category: string; address: string; x: number; y: number; stay: number; emoji: string };
+type ScheduleItem = { spot: Spot; start: string; end: string; travelToNext: number };
 
 const sampleSpots: Spot[] = [
   { id: "1", name: "서울숲", category: "산책", address: "서울 성동구 뚝섬로 273", x: 127.0374, y: 37.5444, stay: 70, emoji: "🌳" },
@@ -23,16 +24,41 @@ function distance(a: Spot, b: Spot) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
+function travelMinutes(a: Spot, b: Spot) {
+  return Math.max(5, Math.round((distance(a, b) / 4.5) * 60));
+}
+
+function timeToMinutes(value: string) {
+  const [hours, minutes] = value.split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
+function formatTime(totalMinutes: number) {
+  const normalized = ((totalMinutes % 1440) + 1440) % 1440;
+  return `${String(Math.floor(normalized / 60)).padStart(2, "0")}:${String(normalized % 60).padStart(2, "0")}`;
+}
+
+function matchesPreference(spot: Spot, preference: string) {
+  const text = `${spot.category} ${spot.name}`;
+  if (preference === "맛집") return /음식점|맛집|식당|요리/.test(text);
+  if (preference === "전시") return /문화|전시|미술|박물관|공연/.test(text);
+  if (preference === "산책") return /공원|관광|산책|자연|명소/.test(text);
+  return text.includes(preference);
+}
+
 export default function Home() {
   const [city, setCity] = useState("성수동");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<string[]>(["카페", "맛집", "산책"]);
+  const [startTime, setStartTime] = useState("09:30");
+  const [endTime, setEndTime] = useState("19:00");
   const [spots, setSpots] = useState<Spot[]>(sampleSpots);
   const [plan, setPlan] = useState<Spot[]>(sampleSpots);
   const [notice, setNotice] = useState("샘플 일정으로 체험 중이에요");
   const [mapReady, setMapReady] = useState(false);
   const mapEl = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
+  const mapObjectsRef = useRef<any[]>([]);
 
   useEffect(() => {
     const saved = localStorage.getItem("haru-trip-plan");
@@ -63,21 +89,54 @@ export default function Home() {
   useEffect(() => {
     localStorage.setItem("haru-trip-plan", JSON.stringify(plan));
     if (!mapReady || !mapRef.current) return;
+    mapObjectsRef.current.forEach((object) => object.setMap(null));
+    mapObjectsRef.current = [];
     const bounds = new window.kakao.maps.LatLngBounds();
+    const path: any[] = [];
     plan.forEach((spot, index) => {
       const pos = new window.kakao.maps.LatLng(spot.y, spot.x);
       bounds.extend(pos);
-      const marker = new window.kakao.maps.Marker({ map: mapRef.current, position: pos, title: `${index + 1}. ${spot.name}` });
-      marker.setMap(mapRef.current);
+      path.push(pos);
+      const content = document.createElement("div");
+      content.className = "kakao-number-marker";
+      content.textContent = String(index + 1);
+      const marker = new window.kakao.maps.CustomOverlay({ map: mapRef.current, position: pos, content, yAnchor: 1.25 });
+      mapObjectsRef.current.push(marker);
+
+      if (index < plan.length - 1) {
+        const next = plan[index + 1];
+        const midpoint = new window.kakao.maps.LatLng((spot.y + next.y) / 2, (spot.x + next.x) / 2);
+        const label = document.createElement("div");
+        label.className = "travel-label";
+        label.textContent = `도보 약 ${travelMinutes(spot, next)}분`;
+        const overlay = new window.kakao.maps.CustomOverlay({ map: mapRef.current, position: midpoint, content: label, yAnchor: 0.5 });
+        mapObjectsRef.current.push(overlay);
+      }
     });
+    if (path.length > 1) {
+      const polyline = new window.kakao.maps.Polyline({ map: mapRef.current, path, strokeWeight: 5, strokeColor: "#6e8e20", strokeOpacity: 0.9, strokeStyle: "solid" });
+      mapObjectsRef.current.push(polyline);
+    }
     if (plan.length) mapRef.current.setBounds(bounds);
   }, [plan, mapReady]);
 
-  const total = useMemo(() => plan.reduce((sum, s) => sum + s.stay, 0) + Math.max(0, plan.length - 1) * 18, [plan]);
+  const schedule = useMemo<ScheduleItem[]>(() => {
+    let cursor = timeToMinutes(startTime);
+    return plan.map((spot, index) => {
+      const start = cursor;
+      const end = start + spot.stay;
+      const travelToNext = index < plan.length - 1 ? travelMinutes(spot, plan[index + 1]) : 0;
+      cursor = end + travelToNext;
+      return { spot, start: formatTime(start), end: formatTime(end), travelToNext };
+    });
+  }, [plan, startTime]);
+
+  const total = useMemo(() => plan.reduce((sum, spot) => sum + spot.stay, 0) + schedule.reduce((sum, item) => sum + item.travelToNext, 0), [plan, schedule]);
+  const totalTravel = useMemo(() => schedule.reduce((sum, item) => sum + item.travelToNext, 0), [schedule]);
 
   function searchPlaces(e: React.FormEvent) {
     e.preventDefault();
-    const term = query.trim() || city;
+    const term = `${city} ${query.trim()}`.trim();
     if (mapReady && window.kakao?.maps?.services) {
       const ps = new window.kakao.maps.services.Places();
       ps.keywordSearch(term, (data: any[], status: string) => {
@@ -95,18 +154,24 @@ export default function Home() {
   }
 
   function generatePlan() {
-    const pool = spots.filter(s => selected.some(c => s.category.includes(c)) || spots === sampleSpots);
+    if (timeToMinutes(endTime) <= timeToMinutes(startTime)) {
+      setNotice("종료 시간을 시작 시간보다 늦게 설정해주세요");
+      return;
+    }
+    const pool = spots.filter((spot) => selected.some((preference) => matchesPreference(spot, preference)) || spots === sampleSpots);
     const ordered: Spot[] = [];
     const rest = [...(pool.length ? pool : spots)];
-    while (rest.length && ordered.length < 4) {
-      if (!ordered.length) ordered.push(rest.shift()!);
-      else {
-        const last = ordered[ordered.length - 1];
-        rest.sort((a, b) => distance(last, a) - distance(last, b));
-        ordered.push(rest.shift()!);
-      }
+    const budget = timeToMinutes(endTime) - timeToMinutes(startTime);
+    let used = 0;
+    while (rest.length && ordered.length < 6) {
+      if (ordered.length) rest.sort((a, b) => distance(ordered[ordered.length - 1], a) - distance(ordered[ordered.length - 1], b));
+      const candidate = rest.shift()!;
+      const travel = ordered.length ? travelMinutes(ordered[ordered.length - 1], candidate) : 0;
+      if (used + travel + candidate.stay > budget) continue;
+      used += travel + candidate.stay;
+      ordered.push(candidate);
     }
-    setPlan(ordered); setNotice("가까운 장소끼리 묶어 하루 동선을 만들었어요");
+    setPlan(ordered); setNotice(`${formatTime(timeToMinutes(startTime))}부터 이용 시간 안에 맞춰 동선을 만들었어요`);
   }
 
   function addSpot(spot: Spot) {
@@ -124,7 +189,14 @@ export default function Home() {
         <div><p className="eyebrow">ONE DAY, ONE PERFECT ROUTE</p><h1>오늘 어디로<br/><em>떠나볼까요?</em></h1><p>취향과 시간을 고르면, 걷기 좋은 순서로 하루를 정리해드려요.</p></div>
         <div className="planner-card">
           <label>어디로 갈까요?</label>
-          <div className="location-row"><input value={city} onChange={e => setCity(e.target.value)} aria-label="여행 지역"/><span>09:30 — 19:00</span></div>
+          <div className="location-row">
+            <input value={city} onChange={e => setCity(e.target.value)} aria-label="여행 지역"/>
+            <div className="time-range">
+              <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} aria-label="시작 시간"/>
+              <span>—</span>
+              <input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} aria-label="종료 시간"/>
+            </div>
+          </div>
           <label>오늘의 취향</label>
           <div className="chips">{categories.map(c => <button key={c} className={selected.includes(c) ? "active" : ""} onClick={() => setSelected(selected.includes(c) ? selected.filter(x => x !== c) : [...selected, c])}>{c}</button>)}</div>
           <button className="primary" onClick={generatePlan}>나만의 하루 만들기 <span>→</span></button>
@@ -133,12 +205,12 @@ export default function Home() {
 
       <section className="workspace">
         <div className="timeline-panel">
-          <div className="section-head"><div><p>MY DAY</p><h2>{city}에서의 하루</h2></div><div className="summary"><b>{Math.floor(total / 60)}시간 {total % 60}분</b><span>{plan.length}개 장소</span></div></div>
+          <div className="section-head"><div><p>MY DAY</p><h2>{city}에서의 하루</h2></div><div className="summary"><b>{Math.floor(total / 60)}시간 {total % 60}분</b><span>{plan.length}개 장소 · 도보 {totalTravel}분</span></div></div>
           <div className="timeline">
-            {plan.map((spot, i) => <article key={spot.id} className="stop">
-              <div className="time">{`${String(10 + Math.floor(i * 2)).padStart(2,"0")}:${i % 2 ? "20" : "00"}`}</div>
+            {schedule.map(({ spot, start, end, travelToNext }, i) => <article key={spot.id} className="stop">
+              <div className="time"><b>{start}</b><span>{end}</span></div>
               <div className="dot">{i + 1}</div>
-              <div className="stop-card"><span className="emoji">{spot.emoji}</span><div><small>{spot.category}</small><h3>{spot.name}</h3><p>{spot.address}</p></div><button aria-label={`${spot.name} 삭제`} onClick={() => setPlan(plan.filter(p => p.id !== spot.id))}>×</button></div>
+              <div className="stop-card"><span className="emoji">{spot.emoji}</span><div><small>{spot.category} · 체류 {spot.stay}분</small><h3>{spot.name}</h3><p>{spot.address}</p>{travelToNext > 0 && <p className="travel-meta">다음 장소까지 도보 약 {travelToNext}분</p>}</div><button aria-label={`${spot.name} 삭제`} onClick={() => setPlan(plan.filter(p => p.id !== spot.id))}>×</button></div>
             </article>)}
           </div>
         </div>
@@ -148,6 +220,7 @@ export default function Home() {
             {!mapReady && <><div className="road r1"/><div className="road r2"/><div className="river"/><div className="map-label">서울숲</div>{plan.map((s, i) => <div key={s.id} className={`pin p${i + 1}`}>{i + 1}</div>)}</>}
           </div>
           <div className="map-status"><span className={mapReady ? "connected" : ""}/>{notice}</div>
+          {mapReady && <div className="route-legend">● 방문 순서 &nbsp; ━ 예상 이동 동선</div>}
         </div>
       </section>
 
