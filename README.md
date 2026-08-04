@@ -25,6 +25,7 @@ npm run dev
 
 ## 주요 문서
 
+- [프로젝트 컨텍스트](docs/PROJECT_CONTEXT.md)
 - [제품 명세](docs/PRODUCT.md)
 - [개발 로드맵](docs/ROADMAP.md)
 
