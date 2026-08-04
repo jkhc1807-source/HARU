@@ -71,6 +71,9 @@ export default function Home() {
   const [plan, setPlan] = useState<Spot[]>(sampleSpots);
   const [notice, setNotice] = useState("샘플 일정으로 체험 중이에요");
   const [mapReady, setMapReady] = useState(false);
+  const [regionSuggestions, setRegionSuggestions] = useState<string[]>([]);
+  const [isRegionSearching, setIsRegionSearching] = useState(false);
+  const [showRegionSuggestions, setShowRegionSuggestions] = useState(false);
   const mapEl = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const mapObjectsRef = useRef<any[]>([]);
@@ -100,6 +103,34 @@ export default function Home() {
       .catch(() => setNotice("지도 설정을 불러오지 못했어요"));
     return () => { cancelled = true; script?.remove(); };
   }, []);
+
+  useEffect(() => {
+    const keyword = city.trim();
+    if (!mapReady || keyword.length < 2 || !showRegionSuggestions) {
+      setRegionSuggestions([]);
+      setIsRegionSearching(false);
+      return;
+    }
+
+    setIsRegionSearching(true);
+    const timer = window.setTimeout(() => {
+      const ps = new window.kakao.maps.services.Places();
+      ps.keywordSearch(keyword, (data: any[], status: string) => {
+        if (status !== window.kakao.maps.services.Status.OK) {
+          setRegionSuggestions([]);
+          setIsRegionSearching(false);
+          return;
+        }
+        const regions = data
+          .map((place: any) => place.address_name?.split(" ").slice(0, 3).join(" "))
+          .filter(Boolean);
+        setRegionSuggestions(Array.from(new Set(regions)).slice(0, 5) as string[]);
+        setIsRegionSearching(false);
+      });
+    }, 300);
+
+    return () => window.clearTimeout(timer);
+  }, [city, mapReady, showRegionSuggestions]);
 
   useEffect(() => {
     localStorage.setItem("haru-trip-plan", JSON.stringify(plan));
@@ -242,7 +273,31 @@ export default function Home() {
         <div className="planner-card">
           <label>어디로 갈까요?</label>
           <div className="location-row">
-            <input value={city} onChange={e => setCity(e.target.value)} aria-label="여행 지역"/>
+            <div className="region-field">
+              <input
+                value={city}
+                onChange={e => { setCity(e.target.value); setShowRegionSuggestions(true); }}
+                onFocus={() => setShowRegionSuggestions(true)}
+                onBlur={() => window.setTimeout(() => setShowRegionSuggestions(false), 120)}
+                aria-label="여행 지역"
+                aria-expanded={showRegionSuggestions && (isRegionSearching || regionSuggestions.length > 0)}
+                aria-controls="region-suggestions"
+                aria-autocomplete="list"
+                role="combobox"
+                autoComplete="off"
+              />
+              {showRegionSuggestions && (isRegionSearching || regionSuggestions.length > 0) && <div className="region-suggestions" id="region-suggestions" role="listbox">
+                {isRegionSearching && <span>지역을 찾고 있어요…</span>}
+                {!isRegionSearching && regionSuggestions.map(region => <button
+                  type="button"
+                  role="option"
+                  aria-selected={city === region}
+                  key={region}
+                  onMouseDown={event => event.preventDefault()}
+                  onClick={() => { setCity(region); setShowRegionSuggestions(false); }}
+                >{region}</button>)}
+              </div>}
+            </div>
             <div className="time-range">
               <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} aria-label="시작 시간"/>
               <span>—</span>
