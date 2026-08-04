@@ -76,6 +76,7 @@ export default function Home() {
   const [showRegionSuggestions, setShowRegionSuggestions] = useState(false);
   const [isPlaceSearching, setIsPlaceSearching] = useState(false);
   const [searchNotice, setSearchNotice] = useState("지역과 장소 종류를 함께 검색해보세요");
+  const [insertAfterSpotId, setInsertAfterSpotId] = useState("end");
   const mapEl = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const mapObjectsRef = useRef<any[]>([]);
@@ -276,8 +277,26 @@ export default function Home() {
       setSearchNotice(`${spot.name}은 이미 일정에 있어요`);
       return;
     }
-    setPlan([...plan, spot]);
-    setSearchNotice(`${spot.name}을 일정 마지막에 추가했어요`);
+    if (insertAfterSpotId === "start") {
+      setPlan([spot, ...plan]);
+      setSearchNotice(`${spot.name}을 일정 맨 앞에 추가했어요`);
+      return;
+    }
+    if (insertAfterSpotId === "end") {
+      setPlan([...plan, spot]);
+      setSearchNotice(`${spot.name}을 일정 마지막에 추가했어요`);
+      return;
+    }
+    const insertIndex = plan.findIndex(item => item.id === insertAfterSpotId);
+    if (insertIndex < 0) {
+      setPlan([...plan, spot]);
+      setSearchNotice(`${spot.name}을 일정 마지막에 추가했어요`);
+      return;
+    }
+    const nextPlan = [...plan];
+    nextPlan.splice(insertIndex + 1, 0, spot);
+    setPlan(nextPlan);
+    setSearchNotice(`${spot.name}을 ${plan[insertIndex].name} 다음에 추가했어요`);
   }
 
   return (
@@ -354,6 +373,14 @@ export default function Home() {
         <div><p className="eyebrow">FIND A PLACE</p><h2>일정에 장소 더하기</h2></div>
         <form onSubmit={searchPlaces}><input value={query} onChange={e => setQuery(e.target.value)} placeholder="카페, 전시관, 맛집을 검색해보세요"/><button disabled={isPlaceSearching}>{isPlaceSearching ? "검색 중…" : "검색"}</button></form>
         <p className="search-feedback" role="status">{searchNotice}</p>
+        <div className="insert-position">
+          <label htmlFor="insert-position">추가 위치</label>
+          <select id="insert-position" value={insertAfterSpotId} onChange={event => setInsertAfterSpotId(event.target.value)}>
+            <option value="end">일정 마지막</option>
+            <option value="start">일정 맨 앞</option>
+            {plan.map((spot, index) => <option value={spot.id} key={spot.id}>{index + 1}. {spot.name} 다음</option>)}
+          </select>
+        </div>
         <div className="results">{spots.map(s => {
           const isAdded = plan.some(item => item.id === s.id);
           return <button className={`result ${isAdded ? "added" : ""}`} disabled={isAdded} key={s.id} onClick={() => addSpot(s)}><span>{s.emoji}</span><div><b>{s.name}</b><small>{s.category} · {s.address}</small></div><i>{isAdded ? "추가됨" : "＋"}</i></button>;
