@@ -360,6 +360,10 @@ export default function Home() {
         <div className="timeline-panel">
           <div className="section-head"><div><p>MY DAY</p><h2>{city}에서의 하루</h2></div><div className="summary"><b>{Math.floor(total / 60)}시간 {total % 60}분</b><span>{plan.length}개 장소 · 도보 {totalTravel}분</span></div></div>
           <div className={`timeline ${isDragging ? "dragging" : ""}`}>
+            {plan.length === 0 && <div className="empty-drop-zone" onDragOver={event => event.preventDefault()} onDrop={() => handleDropAt(0)}>
+              <b>{isDragging ? "여기에 놓으세요" : "아직 일정이 비어 있어요"}</b>
+              <span>아래 검색 결과를 끌어오거나 눌러서 첫 장소를 추가하세요.</span>
+            </div>}
             {schedule.map(({ spot, start, end, travelToNext }, i) => <Fragment key={spot.id}>
               <div className="drop-zone" onDragOver={event => event.preventDefault()} onDrop={() => handleDropAt(i)}><span>{i === 0 ? "맨 앞에 놓기" : "여기에 놓기"}</span></div>
               <article className={`stop ${i === schedule.length - 1 ? "last" : ""}`} draggable onDragStart={event => handleDragStart(event, spot)} onDragEnd={handleDragEnd} aria-label={`${spot.name} 일정 순서 이동`}>
@@ -368,7 +372,7 @@ export default function Home() {
                 <div className="stop-card"><span className="drag-handle" aria-hidden="true">⋮⋮</span><span className="emoji">{spot.emoji}</span><div><small>{spot.category} · 체류 {spot.stay}분</small><h3>{spot.name}</h3><p>{spot.address}</p>{travelToNext > 0 && <p className="travel-meta">다음 장소까지 도보 약 {travelToNext}분</p>}</div><button aria-label={`${spot.name} 삭제`} onClick={() => setPlan(plan.filter(p => p.id !== spot.id))}>×</button></div>
               </article>
             </Fragment>)}
-            <div className="drop-zone" onDragOver={event => event.preventDefault()} onDrop={() => handleDropAt(plan.length)}><span>마지막에 놓기</span></div>
+            {plan.length > 0 && <div className="drop-zone" onDragOver={event => event.preventDefault()} onDrop={() => handleDropAt(plan.length)}><span>마지막에 놓기</span></div>}
           </div>
         </div>
 
