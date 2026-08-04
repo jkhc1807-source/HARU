@@ -37,20 +37,27 @@ export default function Home() {
   useEffect(() => {
     const saved = localStorage.getItem("haru-trip-plan");
     if (saved) setPlan(JSON.parse(saved));
-    const key = process.env.NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY;
-    if (!key || !mapEl.current) return;
-    const script = document.createElement("script");
-    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${key}&autoload=false&libraries=services`;
-    script.onload = () => window.kakao.maps.load(() => {
-      if (!mapEl.current) return;
-      mapRef.current = new window.kakao.maps.Map(mapEl.current, {
-        center: new window.kakao.maps.LatLng(37.5444, 127.0447), level: 5,
-      });
-      setMapReady(true);
-      setNotice("카카오맵이 연결됐어요");
-    });
-    document.head.appendChild(script);
-    return () => script.remove();
+    let script: HTMLScriptElement | null = null;
+    let cancelled = false;
+    fetch("/api/map-config", { cache: "no-store" })
+      .then((response) => response.ok ? response.json() : Promise.reject())
+      .then(({ kakaoJavaScriptKey }) => {
+        if (cancelled || !kakaoJavaScriptKey || !mapEl.current) return;
+        script = document.createElement("script");
+        script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${kakaoJavaScriptKey}&autoload=false&libraries=services`;
+        script.onload = () => window.kakao.maps.load(() => {
+          if (!mapEl.current) return;
+          mapRef.current = new window.kakao.maps.Map(mapEl.current, {
+            center: new window.kakao.maps.LatLng(37.5444, 127.0447), level: 5,
+          });
+          setMapReady(true);
+          setNotice("카카오맵이 연결됐어요");
+        });
+        script.onerror = () => setNotice("카카오 도메인 등록을 확인해주세요");
+        document.head.appendChild(script);
+      })
+      .catch(() => setNotice("지도 설정을 불러오지 못했어요"));
+    return () => { cancelled = true; script?.remove(); };
   }, []);
 
   useEffect(() => {
