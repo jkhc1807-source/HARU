@@ -17,6 +17,21 @@ const sampleSpots: Spot[] = [
 ];
 
 const categories = ["카페", "맛집", "전시", "산책"];
+const preferenceEmoji: Record<string, string> = {
+  카페: "☕",
+  맛집: "🍽️",
+  전시: "🖼️",
+  산책: "🌿",
+};
+
+function emojiForPlace(place: any) {
+  const category = `${place.category_group_name || ""} ${place.category_name || ""}`;
+  if (place.category_group_code === "CE7" || /카페/.test(category)) return preferenceEmoji.카페;
+  if (place.category_group_code === "FD6" || /음식점|식당|맛집/.test(category)) return preferenceEmoji.맛집;
+  if (/전시|미술|박물관|문화시설|공연/.test(category)) return preferenceEmoji.전시;
+  if (/공원|관광|산책|자연|명소/.test(category)) return preferenceEmoji.산책;
+  return "📍";
+}
 
 function distance(a: Spot, b: Spot) {
   const dx = (a.x - b.x) * 88;
@@ -141,9 +156,9 @@ export default function Home() {
       const ps = new window.kakao.maps.services.Places();
       ps.keywordSearch(term, (data: any[], status: string) => {
         if (status !== window.kakao.maps.services.Status.OK) return setNotice("검색 결과가 없어요");
-        const found = data.slice(0, 6).map((p: any, i: number): Spot => ({
+        const found = data.slice(0, 6).map((p: any): Spot => ({
           id: p.id, name: p.place_name, category: p.category_group_name || "장소", address: p.road_address_name || p.address_name,
-          x: Number(p.x), y: Number(p.y), stay: 60, emoji: ["📍", "☕", "🍽️", "🎨"][i % 4],
+          x: Number(p.x), y: Number(p.y), stay: 60, emoji: emojiForPlace(p),
         }));
         setSpots(found); setNotice(`‘${term}’ 실제 장소 ${found.length}곳을 찾았어요`);
       });
@@ -153,7 +168,7 @@ export default function Home() {
     }
   }
 
-  function fetchPlaces(term: string): Promise<Spot[]> {
+  function fetchPlaces(term: string, preference: string): Promise<Spot[]> {
     return new Promise((resolve) => {
       if (!mapReady || !window.kakao?.maps?.services) return resolve([]);
       const ps = new window.kakao.maps.services.Places();
@@ -167,7 +182,7 @@ export default function Home() {
           x: Number(p.x),
           y: Number(p.y),
           stay: 60,
-          emoji: p.category_group_code === "CE7" ? "☕" : p.category_group_code === "FD6" ? "🍽️" : "📍",
+          emoji: preferenceEmoji[preference] || "📍",
         })));
       });
     });
@@ -188,7 +203,7 @@ export default function Home() {
     }
 
     setNotice(`${city.trim()}의 장소를 찾고 있어요…`);
-    const searches = await Promise.all(selected.map((preference) => fetchPlaces(`${city.trim()} ${preference}`)));
+    const searches = await Promise.all(selected.map((preference) => fetchPlaces(`${city.trim()} ${preference}`, preference)));
     const unique = Array.from(new Map(searches.flat().map((spot) => [spot.id, spot])).values());
     if (!unique.length) {
       setNotice(`${city.trim()}에서 선택한 취향의 장소를 찾지 못했어요`);
