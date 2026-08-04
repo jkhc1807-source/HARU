@@ -80,6 +80,7 @@ export default function Home() {
   const [draggedSpot, setDraggedSpot] = useState<Spot | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const mapEl = useRef<HTMLDivElement>(null);
+  const timelineEl = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const mapObjectsRef = useRef<any[]>([]);
 
@@ -288,6 +289,9 @@ export default function Home() {
     event.dataTransfer.setData("text/plain", spot.id);
     setDraggedSpot(spot);
     setIsDragging(true);
+    if (!plan.some(item => item.id === spot.id)) {
+      window.requestAnimationFrame(() => timelineEl.current?.scrollIntoView({ behavior: "auto", block: "center" }));
+    }
   }
 
   function handleDropAt(index: number) {
@@ -359,7 +363,7 @@ export default function Home() {
       <section className="workspace">
         <div className="timeline-panel">
           <div className="section-head"><div><p>MY DAY</p><h2>{city}에서의 하루</h2></div><div className="summary"><b>{Math.floor(total / 60)}시간 {total % 60}분</b><span>{plan.length}개 장소 · 도보 {totalTravel}분</span></div></div>
-          <div className={`timeline ${isDragging ? "dragging" : ""}`}>
+          <div ref={timelineEl} className={`timeline ${isDragging ? "dragging" : ""}`}>
             {plan.length === 0 && <div className="empty-drop-zone" onDragOver={event => event.preventDefault()} onDrop={() => handleDropAt(0)}>
               <b>{isDragging ? "여기에 놓으세요" : "아직 일정이 비어 있어요"}</b>
               <span>아래 검색 결과를 끌어오거나 눌러서 첫 장소를 추가하세요.</span>
@@ -389,7 +393,7 @@ export default function Home() {
         <div><p className="eyebrow">FIND A PLACE</p><h2>일정에 장소 더하기</h2></div>
         <form onSubmit={searchPlaces}><input value={query} onChange={e => setQuery(e.target.value)} placeholder="카페, 전시관, 맛집을 검색해보세요"/><button disabled={isPlaceSearching}>{isPlaceSearching ? "검색 중…" : "검색"}</button></form>
         <p className="search-feedback" role="status">{searchNotice}</p>
-        <p className="drag-guide">장소 카드를 원하는 일정 사이로 끌어 놓거나, 눌러서 마지막에 추가하세요.</p>
+        <p className="drag-guide">장소 카드를 잡으면 일정 영역으로 자동 이동해요. 원하는 사이에 놓거나, 눌러서 마지막에 추가하세요.</p>
         <div className="results">{spots.map(s => {
           const isAdded = plan.some(item => item.id === s.id);
           return <button className={`result ${isAdded ? "added" : ""}`} draggable={!isAdded} disabled={isAdded} key={s.id} onDragStart={event => handleDragStart(event, s)} onDragEnd={handleDragEnd} onClick={() => addSpot(s)}><span>{s.emoji}</span><div><b>{s.name}</b><small>{s.category} · {s.address}</small></div><i>{isAdded ? "추가됨" : "＋"}</i></button>;
