@@ -19,6 +19,13 @@ const sampleSpots: Spot[] = [
 ];
 
 const categories = ["카페", "맛집", "전시", "산책"];
+const timeOptions = Array.from({ length: 48 }, (_, index) => {
+  const minutes = index * 30;
+  return {
+    value: `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`,
+    label: formatTimeChoice(minutes),
+  };
+});
 const preferenceEmoji: Record<string, string> = {
   카페: "☕",
   맛집: "🍽️",
@@ -66,6 +73,14 @@ function timeToMinutes(value: string) {
 function formatTime(totalMinutes: number) {
   const normalized = ((totalMinutes % 1440) + 1440) % 1440;
   return `${String(Math.floor(normalized / 60)).padStart(2, "0")}:${String(normalized % 60).padStart(2, "0")}`;
+}
+
+function formatTimeChoice(totalMinutes: number) {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  const period = hours < 12 ? "오전" : "오후";
+  const displayHour = hours % 12 || 12;
+  return `${period} ${displayHour}:${String(minutes).padStart(2, "0")}`;
 }
 
 function matchesPreference(spot: Spot, preference: string) {
@@ -279,6 +294,7 @@ export default function Home() {
   const total = useMemo(() => plan.reduce((sum, spot) => sum + spot.stay, 0) + schedule.reduce((sum, item) => sum + item.travelToNext, 0), [plan, schedule]);
   const totalTravel = useMemo(() => schedule.reduce((sum, item) => sum + item.travelToNext, 0), [schedule]);
   const timeBudget = Math.max(0, timeToMinutes(endTime) - timeToMinutes(startTime));
+  const hasInvalidTimeRange = timeToMinutes(endTime) <= timeToMinutes(startTime);
   const overrunMinutes = Math.max(0, total - timeBudget);
   const plannedEndTime = formatTime(timeToMinutes(startTime) + total);
 
@@ -562,10 +578,20 @@ export default function Home() {
                 >{region}</button>)}
               </div>}
             </div>
-            <div className="time-range">
-              <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} aria-label="시작 시간"/>
-              <span>—</span>
-              <input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} aria-label="종료 시간"/>
+            <div className={`time-range ${hasInvalidTimeRange ? "invalid" : ""}`}>
+              <label className="time-select-field">
+                <span className="time-select-label">시작</span>
+                <select value={startTime} onChange={e => setStartTime(e.target.value)} aria-label="시작 시간">
+                  {timeOptions.map(option => <option key={`start-${option.value}`} value={option.value}>{option.label}</option>)}
+                </select>
+              </label>
+              <span className="time-arrow" aria-hidden="true">→</span>
+              <label className="time-select-field">
+                <span className="time-select-label">종료</span>
+                <select value={endTime} onChange={e => setEndTime(e.target.value)} aria-label="종료 시간" aria-invalid={hasInvalidTimeRange}>
+                  {timeOptions.map(option => <option key={`end-${option.value}`} value={option.value}>{option.label}</option>)}
+                </select>
+              </label>
             </div>
           </div>
           <label>오늘의 취향</label>
