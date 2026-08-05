@@ -494,7 +494,11 @@ export default function Home() {
   return (
     <main>
       <header className="topbar">
-        <div className="brand"><span>하루</span>여행 <small>하루가 가벼워지는 여행 플래너</small></div>
+        <div className="brand">
+          <span className="brand-mark" aria-hidden="true"><i /></span>
+          <span className="brand-word"><b>하루</b>여행</span>
+          <small>하루가 가벼워지는 여행 플래너</small>
+        </div>
         <div className="topbar-actions">
           {undoState && <button className="ghost secondary" onClick={handleUndo}>↶ 실행 취소</button>}
           <button className="ghost" onClick={handleResetPlan}>새 일정 시작</button>
