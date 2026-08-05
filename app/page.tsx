@@ -10,6 +10,7 @@ declare global {
 type Spot = { id: string; name: string; category: string; address: string; x: number; y: number; stay: number; emoji: string; placeUrl?: string };
 type ScheduleItem = { spot: Spot; start: string; end: string; travelToNext: number };
 type UndoState = { plan: Spot[]; message: string };
+type TransitPlace = { id: string; name: string; distance: number; placeUrl: string; kind: "지하철" | "버스" };
 
 const sampleSpots: Spot[] = [
   { id: "1", name: "서울숲", category: "산책", address: "서울 성동구 뚝섬로 273", x: 127.0374, y: 37.5444, stay: 70, emoji: "🌳" },
@@ -158,6 +159,8 @@ export default function Home() {
   const [mapReady, setMapReady] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [locationNotice, setLocationNotice] = useState("");
+  const [nearbyTransit, setNearbyTransit] = useState<TransitPlace[]>([]);
+  const [isTransitSearching, setIsTransitSearching] = useState(false);
   const [regionSuggestions, setRegionSuggestions] = useState<string[]>([]);
   const [isRegionSearching, setIsRegionSearching] = useState(false);
   const [showRegionSuggestions, setShowRegionSuggestions] = useState(false);
@@ -267,6 +270,44 @@ export default function Home() {
       mapObjectsRef.current.push(polyline);
     }
     if (plan.length) mapRef.current.setBounds(bounds);
+  }, [plan, mapReady]);
+
+  useEffect(() => {
+    const firstSpot = plan[0];
+    if (!mapReady || !firstSpot) {
+      setNearbyTransit([]);
+      setIsTransitSearching(false);
+      return;
+    }
+
+    let cancelled = false;
+    const places = new window.kakao.maps.services.Places();
+    const location = new window.kakao.maps.LatLng(firstSpot.y, firstSpot.x);
+    const options = { location, radius: 2000, sort: window.kakao.maps.services.SortBy.DISTANCE };
+    setIsTransitSearching(true);
+
+    const searchSubway = new Promise<TransitPlace | null>(resolve => {
+      places.categorySearch("SW8", (results: any[], status: string) => {
+        if (status !== window.kakao.maps.services.Status.OK || !results[0]) return resolve(null);
+        const place = results[0];
+        resolve({ id: `subway-${place.id}`, name: place.place_name, distance: Number(place.distance), placeUrl: place.place_url, kind: "지하철" });
+      }, options);
+    });
+    const searchBus = new Promise<TransitPlace | null>(resolve => {
+      places.keywordSearch("버스정류장", (results: any[], status: string) => {
+        if (status !== window.kakao.maps.services.Status.OK || !results[0]) return resolve(null);
+        const place = results[0];
+        resolve({ id: `bus-${place.id}`, name: place.place_name, distance: Number(place.distance), placeUrl: place.place_url, kind: "버스" });
+      }, options);
+    });
+
+    Promise.all([searchSubway, searchBus]).then(results => {
+      if (cancelled) return;
+      setNearbyTransit(results.filter((place): place is TransitPlace => Boolean(place)));
+      setIsTransitSearching(false);
+    });
+
+    return () => { cancelled = true; };
   }, [plan, mapReady]);
 
   useEffect(() => {
@@ -671,6 +712,14 @@ export default function Home() {
       <section className="workspace">
         <div className="timeline-panel">
           <div className="section-head"><div><p>MY DAY</p><h2>{city}에서의 하루</h2></div><div className="section-tools"><div className="summary"><b>{Math.floor(total / 60)}시간 {total % 60}분</b><span>{plan.length}개 장소 · 도보 {totalTravel}분</span></div><div className="route-optimize-wrap"><button type="button" className="route-optimize" onClick={handleOptimizeRoute}>↗ 동선 정리</button><span role="status">{routeOptimizeMessage}</span></div></div></div>
+          {plan[0] && <aside className="transit-guide" aria-label="첫 번째 장소 주변 대중교통">
+            <div><span>첫 장소 가는 길</span><b>{plan[0].name} 주변 대중교통</b></div>
+            <div className="transit-options" aria-live="polite">
+              {isTransitSearching && <span className="transit-loading">가까운 역과 정류장을 찾고 있어요…</span>}
+              {!isTransitSearching && nearbyTransit.map(place => <a key={place.id} href={place.placeUrl} target="_blank" rel="noopener noreferrer"><small>{place.kind === "지하철" ? "🚇 지하철" : "🚌 버스"}</small><strong>{place.name}</strong><span>약 {place.distance < 1000 ? `${Math.round(place.distance / 10) * 10}m` : `${(place.distance / 1000).toFixed(1)}km`} · 도보 {Math.max(1, Math.ceil(place.distance / 75))}분</span></a>)}
+              {!isTransitSearching && nearbyTransit.length === 0 && <span className="transit-loading">2km 안에서 가까운 대중교통을 찾지 못했어요</span>}
+            </div>
+          </aside>}
           {overrunMinutes > 0 && <div className="time-warning" role="status"><div><b>선택한 종료 시간을 {overrunMinutes}분 초과해요</b><span>직접 추가한 장소는 임의로 지우지 않았어요.</span></div><button type="button" onClick={handleFitToTime}>시간에 맞게 줄이기</button></div>}
           <div ref={timelineEl} className={`timeline ${isDragging ? "dragging" : ""}`}>
             {plan.length === 0 && <div className={`empty-drop-zone ${activeDropIndex === 0 ? "active" : ""}`} data-drop-index="0" onDragOver={event => event.preventDefault()} onDragEnter={() => setActiveDropIndex(0)} onDrop={() => handleDropAt(0)}>
