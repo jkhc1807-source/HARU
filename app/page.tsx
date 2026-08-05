@@ -644,8 +644,22 @@ export default function Home() {
     if (pointerDragRef.current?.pointerId !== event.pointerId) return;
     event.preventDefault();
     setPointerPosition({ x: event.clientX, y: event.clientY });
-    const dropTarget = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>("[data-drop-index]");
-    const nextDropIndex = dropTarget ? Number(dropTarget.dataset.dropIndex) : null;
+    const pointedElement = document.elementFromPoint(event.clientX, event.clientY);
+    const dropTarget = pointedElement?.closest<HTMLElement>("[data-drop-index]");
+    const stopTarget = pointedElement?.closest<HTMLElement>("[data-stop-index]");
+    let nextDropIndex: number | null = null;
+    if (dropTarget) {
+      nextDropIndex = Number(dropTarget.dataset.dropIndex);
+    } else if (stopTarget) {
+      const stopIndex = Number(stopTarget.dataset.stopIndex);
+      const bounds = stopTarget.getBoundingClientRect();
+      nextDropIndex = event.clientY < bounds.top + bounds.height / 2 ? stopIndex : stopIndex + 1;
+    } else if (timelineEl.current) {
+      const timelineBounds = timelineEl.current.getBoundingClientRect();
+      if (event.clientY >= timelineBounds.top && event.clientY <= timelineBounds.bottom) {
+        nextDropIndex = event.clientY < timelineBounds.top + timelineBounds.height / 2 ? 0 : plan.length;
+      }
+    }
     activeDropIndexRef.current = nextDropIndex;
     setActiveDropIndex(nextDropIndex);
     if (event.clientY < 90) window.scrollBy(0, -24);
@@ -749,7 +763,7 @@ export default function Home() {
             </div>}
             {schedule.map(({ spot, start, end, travelToNext }, i) => <Fragment key={spot.id}>
               <div className={`drop-zone ${activeDropIndex === i ? "active" : ""}`} data-drop-index={i} onDragOver={event => event.preventDefault()} onDragEnter={() => setActiveDropIndex(i)} onDrop={() => handleDropAt(i)}><span>{i === 0 ? "맨 앞에 놓기" : "여기에 놓기"}</span></div>
-              <article className={`stop tone-${toneForSpot(spot)} ${i === schedule.length - 1 ? "last" : ""}`} onPointerDown={event => handlePointerDragStart(event, spot)} onPointerMove={handlePointerDragMove} onPointerUp={handlePointerDragEnd} onPointerCancel={handlePointerDragEnd} aria-label={`${spot.name} 일정 순서 이동`}>
+              <article className={`stop tone-${toneForSpot(spot)} ${i === schedule.length - 1 ? "last" : ""}`} data-stop-index={i} onDragOver={event => event.preventDefault()} onDragEnter={event => setActiveDropIndex(event.clientY < event.currentTarget.getBoundingClientRect().top + event.currentTarget.offsetHeight / 2 ? i : i + 1)} onDrop={event => { event.preventDefault(); const bounds = event.currentTarget.getBoundingClientRect(); handleDropAt(event.clientY < bounds.top + bounds.height / 2 ? i : i + 1); }} onPointerDown={event => handlePointerDragStart(event, spot)} onPointerMove={handlePointerDragMove} onPointerUp={handlePointerDragEnd} onPointerCancel={handlePointerDragEnd} aria-label={`${spot.name} 일정 순서 이동`}>
                 <div className="time"><b>{start}</b><span>{end}</span></div>
                 <div className="dot">{i + 1}</div>
                 <div className="stop-card"><span className="drag-handle" aria-hidden="true">⋮⋮</span><span className="emoji">{spot.emoji}</span><div><small>{spot.category} · 체류 {spot.stay}분</small><h3>{spot.name}</h3><p>{spot.address}</p><a className="kakao-review-link" href={kakaoPlaceUrl(spot)} target="_blank" rel="noopener noreferrer" draggable={false} aria-label={`${spot.name} 카카오맵 리뷰 새 창에서 열기`}>카카오맵 리뷰 ↗</a>{travelToNext > 0 && <p className="travel-meta">다음 장소까지 도보 약 {travelToNext}분</p>}</div><button aria-label={`${spot.name} 삭제`} onClick={() => updatePlan(plan.filter(p => p.id !== spot.id), `${spot.name} 삭제`)}>×</button></div>
