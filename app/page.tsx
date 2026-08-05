@@ -569,13 +569,61 @@ export default function Home() {
   }
 
   function handlePointerDragStart(event: ReactPointerEvent<HTMLElement>, spot: Spot) {
-    if (event.pointerType === "mouse") return;
     event.preventDefault();
-    event.currentTarget.setPointerCapture(event.pointerId);
-    pointerDragRef.current = { pointerId: event.pointerId, spot };
-    setDraggedSpot(spot);
-    setIsDragging(true);
-    setPointerPosition({ x: event.clientX, y: event.clientY });
+    const pointerId = event.pointerId;
+    const startX = event.clientX;
+    const startY = event.clientY;
+    let hasMoved = false;
+    let dropIndex: number | null = null;
+    pointerDragRef.current = { pointerId, spot };
+
+    const getDropIndex = (clientY: number) => {
+      const stops = Array.from(document.querySelectorAll<HTMLElement>("[data-stop-index]"));
+      if (!stops.length) return 0;
+      for (const stopElement of stops) {
+        const bounds = stopElement.getBoundingClientRect();
+        const index = Number(stopElement.dataset.stopIndex);
+        if (clientY < bounds.top + bounds.height / 2) return index;
+      }
+      return stops.length;
+    };
+
+    const handleWindowPointerMove = (pointerEvent: globalThis.PointerEvent) => {
+      if (pointerEvent.pointerId !== pointerId) return;
+      if (!hasMoved && Math.hypot(pointerEvent.clientX - startX, pointerEvent.clientY - startY) < 5) return;
+      pointerEvent.preventDefault();
+      if (!hasMoved) {
+        hasMoved = true;
+        setDraggedSpot(spot);
+        setIsDragging(true);
+      }
+      dropIndex = getDropIndex(pointerEvent.clientY);
+      setActiveDropIndex(dropIndex);
+      setPointerPosition({ x: pointerEvent.clientX, y: pointerEvent.clientY });
+      if (pointerEvent.clientY < 90) window.scrollBy(0, -24);
+      if (pointerEvent.clientY > window.innerHeight - 90) window.scrollBy(0, 24);
+    };
+
+    const handleWindowPointerEnd = (pointerEvent: globalThis.PointerEvent) => {
+      if (pointerEvent.pointerId !== pointerId) return;
+      window.removeEventListener("pointermove", handleWindowPointerMove);
+      window.removeEventListener("pointerup", handleWindowPointerEnd);
+      window.removeEventListener("pointercancel", handleWindowPointerEnd);
+      pointerDragRef.current = null;
+      if (hasMoved && dropIndex !== null) {
+        const previousIndex = plan.findIndex(item => item.id === spot.id);
+        const nextPlan = plan.filter(item => item.id !== spot.id);
+        const adjustedIndex = previousIndex >= 0 && previousIndex < dropIndex ? dropIndex - 1 : dropIndex;
+        nextPlan.splice(Math.max(0, Math.min(adjustedIndex, nextPlan.length)), 0, spot);
+        updatePlan(nextPlan, `${spot.name} 순서 변경`);
+        setSearchNotice(`${spot.name}의 일정 위치를 변경했어요`);
+      }
+      handleDragEnd();
+    };
+
+    window.addEventListener("pointermove", handleWindowPointerMove, { passive: false });
+    window.addEventListener("pointerup", handleWindowPointerEnd);
+    window.addEventListener("pointercancel", handleWindowPointerEnd);
     if (!plan.some(item => item.id === spot.id)) {
       window.requestAnimationFrame(() => timelineEl.current?.scrollIntoView({ behavior: "auto", block: "center" }));
     }
@@ -679,10 +727,10 @@ export default function Home() {
             </div>}
             {schedule.map(({ spot, start, end, travelToNext }, i) => <Fragment key={spot.id}>
               <div className={`drop-zone ${activeDropIndex === i ? "active" : ""}`} data-drop-index={i} onDragOver={event => event.preventDefault()} onDragEnter={() => setActiveDropIndex(i)} onDrop={() => handleDropAt(i)}><span>{i === 0 ? "맨 앞에 놓기" : "여기에 놓기"}</span></div>
-              <article className={`stop tone-${toneForSpot(spot)} ${i === schedule.length - 1 ? "last" : ""}`} draggable onDragStart={event => handleDragStart(event, spot)} onDragEnd={handleDragEnd} aria-label={`${spot.name} 일정 순서 이동`}>
+              <article className={`stop tone-${toneForSpot(spot)} ${i === schedule.length - 1 ? "last" : ""}`} data-stop-index={i} draggable onDragStart={event => handleDragStart(event, spot)} onDragEnd={handleDragEnd} onPointerDown={event => { if (!(event.target as HTMLElement).closest("a, button")) handlePointerDragStart(event, spot); }} aria-label={`${spot.name} 일정 순서 이동`}>
                 <div className="time"><b>{start}</b><span>{end}</span></div>
                 <div className="dot">{i + 1}</div>
-                <div className="stop-card"><span className="drag-handle" role="button" aria-label={`${spot.name} 순서 이동`} tabIndex={0} onPointerDown={event => handlePointerDragStart(event, spot)} onPointerMove={handlePointerDragMove} onPointerUp={handlePointerDragEnd} onPointerCancel={handlePointerDragEnd}>⋮⋮</span><span className="emoji">{spot.emoji}</span><div><small>{spot.category} · 체류 {spot.stay}분</small><h3>{spot.name}</h3><p>{spot.address}</p><a className="kakao-review-link" href={kakaoPlaceUrl(spot)} target="_blank" rel="noopener noreferrer" draggable={false} aria-label={`${spot.name} 카카오맵 리뷰 새 창에서 열기`}>카카오맵 리뷰 ↗</a>{travelToNext > 0 && <p className="travel-meta">다음 장소까지 도보 약 {travelToNext}분</p>}</div><button aria-label={`${spot.name} 삭제`} onClick={() => updatePlan(plan.filter(p => p.id !== spot.id), `${spot.name} 삭제`)}>×</button></div>
+                <div className="stop-card"><span className="drag-handle" role="button" aria-label={`${spot.name} 순서 이동`} tabIndex={0}>⋮⋮</span><span className="emoji">{spot.emoji}</span><div><small>{spot.category} · 체류 {spot.stay}분</small><h3>{spot.name}</h3><p>{spot.address}</p><a className="kakao-review-link" href={kakaoPlaceUrl(spot)} target="_blank" rel="noopener noreferrer" draggable={false} aria-label={`${spot.name} 카카오맵 리뷰 새 창에서 열기`}>카카오맵 리뷰 ↗</a>{travelToNext > 0 && <p className="travel-meta">다음 장소까지 도보 약 {travelToNext}분</p>}</div><button aria-label={`${spot.name} 삭제`} onClick={() => updatePlan(plan.filter(p => p.id !== spot.id), `${spot.name} 삭제`)}>×</button></div>
               </article>
             </Fragment>)}
             {plan.length > 0 && <div className={`drop-zone ${activeDropIndex === plan.length ? "active" : ""}`} data-drop-index={plan.length} onDragOver={event => event.preventDefault()} onDragEnter={() => setActiveDropIndex(plan.length)} onDrop={() => handleDropAt(plan.length)}><span>마지막에 놓기</span></div>}
@@ -710,7 +758,7 @@ export default function Home() {
         <p className="drag-guide">장소 카드를 잡으면 일정 영역으로 자동 이동해요. 원하는 사이에 놓거나, 눌러서 마지막에 추가하세요.</p>
         <div className="results">{spots.map(s => {
           const isAdded = plan.some(item => item.id === s.id);
-          return <button className={`result ${isAdded ? "added" : ""}`} draggable={!isAdded} disabled={isAdded} key={s.id} onDragStart={event => handleDragStart(event, s)} onDragEnd={handleDragEnd} onClick={() => addSpot(s)}><span className="result-drag-handle" aria-hidden="true" onPointerDown={event => handlePointerDragStart(event, s)} onPointerMove={handlePointerDragMove} onPointerUp={handlePointerDragEnd} onPointerCancel={handlePointerDragEnd}>⋮⋮</span><span>{s.emoji}</span><div><b>{s.name}</b><small>{s.category} · {s.address}</small></div><i>{isAdded ? "추가됨" : "＋"}</i></button>;
+          return <button className={`result ${isAdded ? "added" : ""}`} draggable={!isAdded} disabled={isAdded} key={s.id} onDragStart={event => handleDragStart(event, s)} onDragEnd={handleDragEnd} onClick={() => addSpot(s)}><span className="result-drag-handle" aria-hidden="true" onPointerDown={event => handlePointerDragStart(event, s)}>⋮⋮</span><span>{s.emoji}</span><div><b>{s.name}</b><small>{s.category} · {s.address}</small></div><i>{isAdded ? "추가됨" : "＋"}</i></button>;
         })}</div>
       </section>
       {isDragging && pointerPosition && draggedSpot && <div className="touch-drag-preview" style={{ left: pointerPosition.x, top: pointerPosition.y }}><span>{draggedSpot.emoji}</span>{draggedSpot.name}</div>}
