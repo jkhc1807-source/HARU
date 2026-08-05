@@ -183,8 +183,6 @@ export default function Home() {
   const autoPlanCandidatesRef = useRef<Spot[]>(sampleSpots);
   const planningSettingsRef = useRef(`${startTime}|${endTime}|${selected.join(",")}`);
   const pointerDragRef = useRef<{ pointerId: number; spot: Spot } | null>(null);
-  const draggedSpotRef = useRef<Spot | null>(null);
-  const activeDropIndexRef = useRef<number | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem("haru-trip-plan");
@@ -296,19 +294,11 @@ export default function Home() {
       }, options);
     });
     const searchBus = new Promise<TransitPlace | null>(resolve => {
-      const district = firstSpot.address.split(" ").slice(0, 2).join(" ");
-      const queries = [`${firstSpot.name} 버스정류장`, `${district} 버스정류장`, "버스정류장"];
-      Promise.all(queries.map(query => new Promise<any[]>(done => {
-        places.keywordSearch(query, (results: any[], status: string) => {
-          done(status === window.kakao.maps.services.Status.OK ? results : []);
-        }, options);
-      }))).then(groups => {
-        const place = groups.flat()
-          .filter(item => /버스|정류장|정류소/.test(`${item.place_name} ${item.category_name}`))
-          .sort((a, b) => Number(a.distance) - Number(b.distance))[0];
-        if (!place) return resolve(null);
+      places.keywordSearch("버스정류장", (results: any[], status: string) => {
+        if (status !== window.kakao.maps.services.Status.OK || !results[0]) return resolve(null);
+        const place = results[0];
         resolve({ id: `bus-${place.id}`, name: place.place_name, distance: Number(place.distance), placeUrl: place.place_url, kind: "버스" });
-      });
+      }, options);
     });
 
     Promise.all([searchSubway, searchBus]).then(results => {
@@ -592,7 +582,6 @@ export default function Home() {
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData("text/plain", spot.id);
     setDraggedSpot(spot);
-    draggedSpotRef.current = spot;
     setIsDragging(true);
     if (!plan.some(item => item.id === spot.id)) {
       window.requestAnimationFrame(() => timelineEl.current?.scrollIntoView({ behavior: "auto", block: "center" }));
@@ -600,15 +589,13 @@ export default function Home() {
   }
 
   function handleDropAt(index: number) {
-    const movingSpot = draggedSpotRef.current || draggedSpot;
-    if (!movingSpot) return;
-    const previousIndex = plan.findIndex(item => item.id === movingSpot.id);
-    const nextPlan = plan.filter(item => item.id !== movingSpot.id);
+    if (!draggedSpot) return;
+    const previousIndex = plan.findIndex(item => item.id === draggedSpot.id);
+    const nextPlan = plan.filter(item => item.id !== draggedSpot.id);
     const adjustedIndex = previousIndex >= 0 && previousIndex < index ? index - 1 : index;
-    nextPlan.splice(Math.max(0, Math.min(adjustedIndex, nextPlan.length)), 0, movingSpot);
-    updatePlan(nextPlan, `${movingSpot.name} 순서 변경`);
-    setSearchNotice(`${movingSpot.name}의 일정 위치를 변경했어요`);
-    draggedSpotRef.current = null;
+    nextPlan.splice(Math.max(0, Math.min(adjustedIndex, nextPlan.length)), 0, draggedSpot);
+    updatePlan(nextPlan, `${draggedSpot.name} 순서 변경`);
+    setSearchNotice(`${draggedSpot.name}의 일정 위치를 변경했어요`);
     setDraggedSpot(null);
     setIsDragging(false);
     setActiveDropIndex(null);
@@ -616,7 +603,6 @@ export default function Home() {
   }
 
   function handleDragEnd() {
-    draggedSpotRef.current = null;
     setDraggedSpot(null);
     setIsDragging(false);
     setActiveDropIndex(null);
@@ -628,7 +614,6 @@ export default function Home() {
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
     pointerDragRef.current = { pointerId: event.pointerId, spot };
-    draggedSpotRef.current = spot;
     setDraggedSpot(spot);
     setIsDragging(true);
     setPointerPosition({ x: event.clientX, y: event.clientY });
@@ -642,18 +627,15 @@ export default function Home() {
     event.preventDefault();
     setPointerPosition({ x: event.clientX, y: event.clientY });
     const dropTarget = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>("[data-drop-index]");
-    const nextDropIndex = dropTarget ? Number(dropTarget.dataset.dropIndex) : null;
-    activeDropIndexRef.current = nextDropIndex;
-    setActiveDropIndex(nextDropIndex);
+    setActiveDropIndex(dropTarget ? Number(dropTarget.dataset.dropIndex) : null);
     if (event.clientY < 90) window.scrollBy(0, -24);
     if (event.clientY > window.innerHeight - 90) window.scrollBy(0, 24);
   }
 
   function handlePointerDragEnd(event: ReactPointerEvent<HTMLElement>) {
     if (pointerDragRef.current?.pointerId !== event.pointerId) return;
-    const dropIndex = activeDropIndexRef.current;
+    const dropIndex = activeDropIndex;
     pointerDragRef.current = null;
-    activeDropIndexRef.current = null;
     if (dropIndex !== null) handleDropAt(dropIndex);
     else handleDragEnd();
   }
