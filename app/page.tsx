@@ -39,6 +39,15 @@ function kakaoPlaceUrl(spot: Spot) {
   return spot.placeUrl || `https://map.kakao.com/link/search/${encodeURIComponent(`${spot.name} ${spot.address}`)}`;
 }
 
+function toneForSpot(spot: Spot) {
+  const text = `${spot.category} ${spot.name}`;
+  if (/카페/.test(text)) return "cafe";
+  if (/맛집|음식점|식당|요리/.test(text)) return "food";
+  if (/전시|미술|박물관|문화|공연/.test(text)) return "culture";
+  if (/산책|공원|관광|자연|명소/.test(text)) return "walk";
+  return "place";
+}
+
 function distance(a: Spot, b: Spot) {
   const dx = (a.x - b.x) * 88;
   const dy = (a.y - b.y) * 111;
@@ -269,6 +278,7 @@ export default function Home() {
   const totalTravel = useMemo(() => schedule.reduce((sum, item) => sum + item.travelToNext, 0), [schedule]);
   const timeBudget = Math.max(0, timeToMinutes(endTime) - timeToMinutes(startTime));
   const overrunMinutes = Math.max(0, total - timeBudget);
+  const plannedEndTime = formatTime(timeToMinutes(startTime) + total);
 
   function updatePlan(nextPlan: Spot[], undoMessage: string) {
     setUndoState({ plan, message: undoMessage });
@@ -544,7 +554,7 @@ export default function Home() {
             </div>}
             {schedule.map(({ spot, start, end, travelToNext }, i) => <Fragment key={spot.id}>
               <div className={`drop-zone ${activeDropIndex === i ? "active" : ""}`} data-drop-index={i} onDragOver={event => event.preventDefault()} onDragEnter={() => setActiveDropIndex(i)} onDrop={() => handleDropAt(i)}><span>{i === 0 ? "맨 앞에 놓기" : "여기에 놓기"}</span></div>
-              <article className={`stop ${i === schedule.length - 1 ? "last" : ""}`} draggable onDragStart={event => handleDragStart(event, spot)} onDragEnd={handleDragEnd} aria-label={`${spot.name} 일정 순서 이동`}>
+              <article className={`stop tone-${toneForSpot(spot)} ${i === schedule.length - 1 ? "last" : ""}`} draggable onDragStart={event => handleDragStart(event, spot)} onDragEnd={handleDragEnd} aria-label={`${spot.name} 일정 순서 이동`}>
                 <div className="time"><b>{start}</b><span>{end}</span></div>
                 <div className="dot">{i + 1}</div>
                 <div className="stop-card"><span className="drag-handle" role="button" aria-label={`${spot.name} 순서 이동`} tabIndex={0} onPointerDown={event => handlePointerDragStart(event, spot)} onPointerMove={handlePointerDragMove} onPointerUp={handlePointerDragEnd} onPointerCancel={handlePointerDragEnd}>⋮⋮</span><span className="emoji">{spot.emoji}</span><div><small>{spot.category} · 체류 {spot.stay}분</small><h3>{spot.name}</h3><p>{spot.address}</p><a className="kakao-review-link" href={kakaoPlaceUrl(spot)} target="_blank" rel="noopener noreferrer" draggable={false} aria-label={`${spot.name} 카카오맵 리뷰 새 창에서 열기`}>카카오맵 리뷰 ↗</a>{travelToNext > 0 && <p className="travel-meta">다음 장소까지 도보 약 {travelToNext}분</p>}</div><button aria-label={`${spot.name} 삭제`} onClick={() => updatePlan(plan.filter(p => p.id !== spot.id), `${spot.name} 삭제`)}>×</button></div>
@@ -555,6 +565,7 @@ export default function Home() {
         </div>
 
         <div className="map-panel">
+          <div className="map-trip-summary" aria-label={`일정 요약, ${plan.length}개 장소, 도보 ${totalTravel}분, ${plannedEndTime} 종료`}><strong>{plan.length}곳</strong><span>도보 {totalTravel}분</span><span>{plannedEndTime} 종료</span></div>
           <div ref={mapEl} className={`map ${mapReady ? "live" : ""}`}>
             {!mapReady && <><div className="road r1"/><div className="road r2"/><div className="river"/><div className="map-label">서울숲</div>{plan.map((s, i) => <div key={s.id} className={`pin p${i + 1}`}>{i + 1}</div>)}</>}
           </div>
