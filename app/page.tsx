@@ -332,7 +332,14 @@ export default function Home() {
     setLocationNotice("현재 위치를 찾고 있어요…");
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
-        const position = new window.kakao.maps.LatLng(coords.latitude, coords.longitude);
+        const { latitude, longitude } = coords;
+        const isInsideKorea = latitude >= 32 && latitude <= 40 && longitude >= 123 && longitude <= 133;
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !isInsideKorea) {
+          setIsLocating(false);
+          setLocationNotice("브라우저 위치가 한국 밖으로 잡혀 지도 이동을 취소했어요. 기기의 위치 설정을 확인해주세요");
+          return;
+        }
+        const position = new window.kakao.maps.LatLng(latitude, longitude);
         currentLocationMarkerRef.current?.setMap(null);
         const content = document.createElement("div");
         content.className = "current-location-marker";
@@ -343,8 +350,9 @@ export default function Home() {
           content,
           yAnchor: 0.5,
         });
-        mapRef.current.setCenter(position);
         mapRef.current.setLevel(4);
+        mapRef.current.relayout();
+        mapRef.current.panTo(position);
         setIsLocating(false);
         setLocationNotice("현재 위치를 지도에 표시했어요");
       },
