@@ -12,6 +12,7 @@
 - 배포 주소: https://haru-trip-planner.njhina48.chatgpt.site
 - 현재 배포 버전: v22
 - Sites 프로젝트는 `.openai/hosting.json`의 기존 `project_id`를 계속 사용한다.
+- Vercel에서는 `vercel.json`을 통해 Sites용 `vinext build` 대신 표준 Next.js 빌드를 실행한다.
 - 카카오 JavaScript SDK 도메인에 배포 주소와 로컬 개발 주소가 등록되어 있다.
 
 ## 현재 구현된 기능
@@ -71,6 +72,7 @@
 
 ## 최근 결정 기록
 
+- Sites는 기존 `vinext` 빌드를 유지하고, Vercel만 표준 Next.js 빌드를 사용하도록 배포 명령을 분리했다. 사용하지 않는 Cloudflare D1 예제 코드는 Next.js 타입 검사 대상에서 제외한다.
 - Vercel처럼 `.env.local` 파일이 없는 빌드 환경을 지원하도록 지도 설정 생성 스크립트가 배포 환경변수를 먼저 읽고, 로컬 파일은 존재할 때만 보조로 읽도록 변경했다.
 - Google Maps 유료 사용 가능성 때문에 카카오맵으로 전환했다.
 - 비용을 최소화하기 위해 별도 서버 데이터베이스와 유료 길찾기 API는 사용하지 않는다.

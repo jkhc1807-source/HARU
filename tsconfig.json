@@ -30,5 +30,13 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "node_modules_incomplete",
+    "work-npm-cache",
+    "build",
+    "db",
+    "examples",
+    "worker"
+  ]
 }
