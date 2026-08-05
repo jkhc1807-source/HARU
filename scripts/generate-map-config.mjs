@@ -1,6 +1,7 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
-const envText = readFileSync(new URL("../.env.local", import.meta.url), "utf8");
+const localEnvUrl = new URL("../.env.local", import.meta.url);
+const envText = existsSync(localEnvUrl) ? readFileSync(localEnvUrl, "utf8") : "";
 const entries = Object.fromEntries(
   envText
     .split(/\r?\n/)
@@ -12,10 +13,16 @@ const entries = Object.fromEntries(
 );
 
 const kakaoJavaScriptKey =
-  entries.KAKAO_JAVASCRIPT_KEY || entries.NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY || "";
+  process.env.KAKAO_JAVASCRIPT_KEY ||
+  process.env.NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY ||
+  entries.KAKAO_JAVASCRIPT_KEY ||
+  entries.NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY ||
+  "";
 
 if (!/^[A-Za-z0-9_-]{20,}$/.test(kakaoJavaScriptKey)) {
-  throw new Error("A valid Kakao JavaScript key is required in .env.local");
+  throw new Error(
+    "Set a valid KAKAO_JAVASCRIPT_KEY in the environment or .env.local",
+  );
 }
 
 writeFileSync(
