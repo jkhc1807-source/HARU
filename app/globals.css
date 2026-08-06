@@ -123,3 +123,9 @@ body{background:#f3efe3}
 .stay-choice .choice-select-menu button{min-height:30px;padding:6px 8px;font-size:10px}
 .stop-card>div:has(.choice-select.is-open){overflow:visible}
 @media(max-width:800px){.choice-select-trigger{min-height:40px;font-size:13px}.choice-select-menu{max-height:210px}.stay-choice{width:70px}.stay-choice .choice-select-trigger{min-height:30px;font-size:10px}}
+.time-select-field::after{display:none}
+.choice-select{z-index:1}
+.choice-select.is-open{z-index:60}
+.planner-card:has(.choice-select.is-open){z-index:20}
+.workspace{overflow:visible}
+.timeline-panel,.timeline,.stop,.stop-card{overflow:visible}
