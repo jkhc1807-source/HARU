@@ -78,3 +78,12 @@ body{background:#f3efe3}
 @media(max-width:800px){.search-section form{width:100%;max-width:100%;display:flex}.search-section form input{width:auto;min-width:0;padding:13px 10px}.search-section form button{min-width:74px;flex-shrink:0;padding:0 14px}.desktop-guide{display:none}.mobile-guide{display:inline}.result-drag-handle{display:none}.result i{flex-shrink:0;font-size:11px;font-weight:800;white-space:nowrap}.mobile-order-controls{display:flex;flex-shrink:0;flex-direction:column;gap:4px;margin-left:4px}.mobile-order-controls button{width:34px;min-width:34px;min-height:34px;border:1px solid #d9e0dc;border-radius:8px;background:#fff;color:#52655c;font-size:15px}.mobile-order-controls button:disabled{opacity:.3}.stop-card>button[aria-label$="삭제"]{min-width:32px}.stop-card>div{overflow:hidden}}
 .mobile-order-controls .order-button{border:1px solid #c7d4c8;border-radius:7px;background:#f5f8ef;color:#4e684c;box-shadow:0 1px 2px rgba(42,67,48,.08);font-weight:800;line-height:1}.mobile-order-controls .order-button:active:not(:disabled){background:#e7f0d6;transform:translateY(1px)}.mobile-order-controls .order-button:focus-visible{outline:2px solid #9ab85b;outline-offset:2px}.remove-stop{width:32px!important;min-width:32px!important;height:32px;min-height:32px!important;margin-left:4px;border:1px solid #e4d0c8!important;border-radius:7px;background:#fff8f5!important;color:#a66b5b!important;font-size:17px!important;line-height:1}.remove-stop:hover{border-color:#c99988!important;background:#fff0eb!important}.remove-stop:focus-visible{outline:2px solid #d69a86;outline-offset:2px}
 @media(max-width:800px){.drag-handle,.result-drag-handle{display:none}.stop{cursor:default}.stop-card{padding-right:8px}.mobile-order-controls{margin-left:2px;gap:3px}.mobile-order-controls .order-button{width:30px;min-width:30px;min-height:30px}.remove-stop{width:30px!important;min-width:30px!important;height:30px}}
+@media(max-width:800px){
+  .stop{grid-template-columns:60px 38px minmax(0,1fr)}
+  .stop:not(.last):after{left:78px}
+  .stop-card{padding:14px 52px 14px 10px}
+  .stop-card>div{padding-right:0}
+  .mobile-order-controls{position:absolute;right:9px;top:50%;margin:0;transform:translateY(-50%);gap:3px}
+  .remove-stop{position:absolute;top:7px;right:7px;width:24px!important;min-width:24px!important;height:24px;min-height:24px!important;margin:0;border:0!important;background:transparent!important;color:#8f9b94!important;font-size:18px!important}
+  .remove-stop:hover{border:0!important;background:transparent!important;color:#5f7067!important}
+}
