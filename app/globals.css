@@ -105,3 +105,21 @@ body{background:#f3efe3}
 .stay-select:hover{border-color:#a9c176;background:#fbfdf7}
 .stay-select:focus-visible{border-radius:8px;box-shadow:0 0 0 3px rgba(154,184,46,.2);outline:none}
 @media(max-width:800px){.time-select-field select{min-height:40px;font-size:13px}.time-select-field::after{right:13px;bottom:14px}.stay-select{min-height:30px}}
+.choice-select{position:relative;width:100%;min-width:0}
+.choice-select-trigger{width:100%;min-height:38px;padding:0 29px 0 11px;border:1px solid #d8e2d1;border-radius:10px;background:linear-gradient(180deg,#ffffff 0%,#f5f9ef 100%);box-shadow:0 2px 6px rgba(42,67,48,.06);color:#365544;text-align:left;font:inherit;font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative}
+.choice-select-trigger i{position:absolute;right:12px;top:50%;width:7px;height:7px;border-right:2px solid #6d865f;border-bottom:2px solid #6d865f;transform:translateY(-65%) rotate(45deg);transition:transform .15s}
+.choice-select.is-open .choice-select-trigger i{transform:translateY(-30%) rotate(225deg)}
+.choice-select-trigger:hover:not(:disabled){border-color:#a9c176;background:#fbfdf7}
+.choice-select-trigger:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(154,184,46,.22),0 2px 6px rgba(42,67,48,.06)}
+.choice-select-trigger:disabled{border-color:#e2e7df;background:#f2f4f0;box-shadow:none;color:#aab3af;cursor:not-allowed}
+.choice-select-menu{position:absolute;z-index:30;top:calc(100% + 5px);left:0;width:max(100%,130px);max-height:230px;overflow:auto;padding:5px;border:1px solid #d3dfc7;border-radius:12px;background:#fffef9;box-shadow:0 12px 28px rgba(35,60,42,.18)}
+.choice-select-menu button{display:block;width:100%;min-height:34px;padding:7px 9px;border:0;border-radius:8px;background:transparent;color:#52655c;text-align:left;font:inherit;font-size:11px;font-weight:700;white-space:nowrap}
+.choice-select-menu button:hover,.choice-select-menu button:focus-visible{outline:none;background:#edf7d4;color:#456015}
+.choice-select-menu button.selected{background:#e4f2b5;color:#516d16;font-weight:900}
+.stay-choice{width:66px}
+.stay-choice .choice-select-trigger{min-height:28px;padding:0 20px 0 8px;border-radius:8px;font-size:10px;color:#516d16}
+.stay-choice .choice-select-trigger i{right:8px;width:5px;height:5px;border-width:1.5px}
+.stay-choice .choice-select-menu{width:82px;min-width:82px;left:auto;right:0;border-radius:10px}
+.stay-choice .choice-select-menu button{min-height:30px;padding:6px 8px;font-size:10px}
+.stop-card>div:has(.choice-select.is-open){overflow:visible}
+@media(max-width:800px){.choice-select-trigger{min-height:40px;font-size:13px}.choice-select-menu{max-height:210px}.stay-choice{width:70px}.stay-choice .choice-select-trigger{min-height:30px;font-size:10px}}

@@ -10,6 +10,52 @@ declare global {
 type Spot = { id: string; name: string; category: string; address: string; x: number; y: number; stay: number; emoji: string; placeUrl?: string };
 type ScheduleItem = { spot: Spot; start: string; end: string; travelToNext: number };
 type UndoState = { plan: Spot[]; message: string };
+type ChoiceOption = { value: string; label: string };
+
+function ChoiceSelect({ value, options, placeholder, ariaLabel, disabled = false, className = "", onChange }: {
+  value: string;
+  options: ChoiceOption[];
+  placeholder: string;
+  ariaLabel: string;
+  disabled?: boolean;
+  className?: string;
+  onChange: (value: string) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const selected = options.find(option => option.value === value);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setIsOpen(false);
+    };
+    window.addEventListener("pointerdown", handlePointerDown);
+    return () => window.removeEventListener("pointerdown", handlePointerDown);
+  }, [isOpen]);
+
+  function handleKeyDown(event: React.KeyboardEvent<HTMLButtonElement>) {
+    if (event.key === "Escape") {
+      setIsOpen(false);
+      return;
+    }
+    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+    event.preventDefault();
+    const currentIndex = Math.max(0, options.findIndex(option => option.value === value));
+    const nextIndex = Math.max(0, Math.min(options.length - 1, currentIndex + (event.key === "ArrowDown" ? 1 : -1)));
+    onChange(options[nextIndex].value);
+    setIsOpen(true);
+  }
+
+  return <div ref={rootRef} className={`choice-select ${isOpen ? "is-open" : ""} ${className}`}>
+    <button type="button" className="choice-select-trigger" disabled={disabled} aria-label={ariaLabel} aria-haspopup="listbox" aria-expanded={isOpen} onClick={() => setIsOpen(open => !open)} onKeyDown={handleKeyDown}>
+      <span>{selected?.label || placeholder}</span><i aria-hidden="true" />
+    </button>
+    {isOpen && <div className="choice-select-menu" role="listbox" aria-label={ariaLabel}>
+      {options.map(option => <button type="button" role="option" aria-selected={option.value === value} className={option.value === value ? "selected" : ""} key={option.value} onClick={() => { onChange(option.value); setIsOpen(false); }}>{option.label}</button>)}
+    </div>}
+  </div>;
+}
 
 function isStoredSpot(value: unknown): value is Spot {
   if (!value || typeof value !== "object") return false;
@@ -756,21 +802,15 @@ export default function Home() {
               </div>}
             </div>
             <div className={`time-range ${hasInvalidTimeRange ? "invalid" : ""}`}>
-              <label className="time-select-field">
+              <div className="time-select-field">
                 <span className="time-select-label">시작</span>
-                <select value={startTime} onChange={e => { setStartTime(e.target.value); setEndTime(""); setPlannerNotice(""); }} aria-label="시작 시간">
-                  <option value="">시간 선택</option>
-                  {timeOptions.filter(option => option.value !== "24:00").map(option => <option key={`start-${option.value}`} value={option.value}>{option.label}</option>)}
-                </select>
-              </label>
+                <ChoiceSelect value={startTime} placeholder="시간 선택" ariaLabel="시작 시간" options={timeOptions.filter(option => option.value !== "24:00")} onChange={value => { setStartTime(value); setEndTime(""); setPlannerNotice(""); }} />
+              </div>
               <span className="time-arrow" aria-hidden="true">→</span>
-              <label className="time-select-field">
+              <div className="time-select-field">
                 <span className="time-select-label">종료</span>
-                <select disabled={!startTime} value={endTime} onChange={e => { setEndTime(e.target.value); setPlannerNotice(""); }} aria-label="종료 시간" aria-invalid={hasInvalidTimeRange}>
-                  <option value="">{startTime ? "시간 선택" : "시작 먼저 선택"}</option>
-                  {timeOptions.filter(option => timeToMinutes(option.value) > timeToMinutes(startTime)).map(option => <option key={`end-${option.value}`} value={option.value}>{option.label}</option>)}
-                </select>
-              </label>
+                <ChoiceSelect disabled={!startTime} value={endTime} placeholder={startTime ? "시간 선택" : "시작 먼저 선택"} ariaLabel="종료 시간" options={timeOptions.filter(option => timeToMinutes(option.value) > timeToMinutes(startTime))} onChange={value => { setEndTime(value); setPlannerNotice(""); }} />
+              </div>
             </div>
           </div>
           <label>오늘의 취향</label>
@@ -794,7 +834,7 @@ export default function Home() {
               <article className={`stop tone-${toneForSpot(spot)} ${i === schedule.length - 1 ? "last" : ""}`} data-stop-index={i} onPointerDown={event => { if (event.pointerType !== "touch" && !(event.target as HTMLElement).closest("a, button, select")) handlePointerDragStart(event, spot); }} aria-label={`${spot.name} 일정 순서 이동`}>
                 <div className="time"><b>{start}</b><span>{end}</span></div>
                 <div className="dot">{i + 1}</div>
-                <div className="stop-card"><span className="drag-handle" role="button" aria-label={`${spot.name} 순서 이동`} tabIndex={0} onPointerDown={event => { event.stopPropagation(); handlePointerDragStart(event, spot); }}>⋮⋮</span><span className="emoji">{spot.emoji}</span><div><div className="stop-meta"><small>{spot.category}</small><label className="stay-control">체류 <select className="stay-select" value={spot.stay} aria-label={`${spot.name} 체류 시간`} onChange={event => handleStayChange(i, Number(event.target.value))}>{stayOptions.map(option => <option key={option} value={option}>{option}분</option>)}</select></label></div><h3>{spot.name}</h3><p>{spot.address}</p><a className="kakao-review-link" href={kakaoPlaceUrl(spot)} target="_blank" rel="noopener noreferrer" draggable={false} aria-label={`${spot.name} 카카오맵 리뷰 새 창에서 열기`}>카카오맵 리뷰 ↗</a>{travelToNext > 0 && <p className="travel-meta">다음 장소까지 도보 약 {travelToNext}분</p>}</div><span className="mobile-order-controls"><button className="order-button" type="button" disabled={i === 0} aria-label={`${spot.name} 한 칸 위로 이동`} onClick={() => handleMoveSpot(i, -1)}>↑</button><button className="order-button" type="button" disabled={i === plan.length - 1} aria-label={`${spot.name} 한 칸 아래로 이동`} onClick={() => handleMoveSpot(i, 1)}>↓</button></span><button className="remove-stop" aria-label={`${spot.name} 삭제`} onClick={() => updatePlan(plan.filter(p => p.id !== spot.id), `${spot.name} 삭제`)}>×</button></div>
+                <div className="stop-card"><span className="drag-handle" role="button" aria-label={`${spot.name} 순서 이동`} tabIndex={0} onPointerDown={event => { event.stopPropagation(); handlePointerDragStart(event, spot); }}>⋮⋮</span><span className="emoji">{spot.emoji}</span><div><div className="stop-meta"><small>{spot.category}</small><span className="stay-control">체류 <ChoiceSelect className="stay-choice" value={String(spot.stay)} ariaLabel={`${spot.name} 체류 시간`} options={stayOptions.map(option => ({ value: String(option), label: `${option}분` }))} onChange={value => handleStayChange(i, Number(value))} /></span></div><h3>{spot.name}</h3><p>{spot.address}</p><a className="kakao-review-link" href={kakaoPlaceUrl(spot)} target="_blank" rel="noopener noreferrer" draggable={false} aria-label={`${spot.name} 카카오맵 리뷰 새 창에서 열기`}>카카오맵 리뷰 ↗</a>{travelToNext > 0 && <p className="travel-meta">다음 장소까지 도보 약 {travelToNext}분</p>}</div><span className="mobile-order-controls"><button className="order-button" type="button" disabled={i === 0} aria-label={`${spot.name} 한 칸 위로 이동`} onClick={() => handleMoveSpot(i, -1)}>↑</button><button className="order-button" type="button" disabled={i === plan.length - 1} aria-label={`${spot.name} 한 칸 아래로 이동`} onClick={() => handleMoveSpot(i, 1)}>↓</button></span><button className="remove-stop" aria-label={`${spot.name} 삭제`} onClick={() => updatePlan(plan.filter(p => p.id !== spot.id), `${spot.name} 삭제`)}>×</button></div>
               </article>
             </Fragment>)}
             {plan.length > 0 && <div className={`drop-zone ${activeDropIndex === plan.length ? "active" : ""}`} data-drop-index={plan.length} onDragOver={event => event.preventDefault()} onDragEnter={() => setActiveDropIndex(plan.length)} onDrop={() => handleDropAt(plan.length)}><span>마지막에 놓기</span></div>}
