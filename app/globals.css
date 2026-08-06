@@ -130,3 +130,9 @@ body{background:#f3efe3}
 .workspace{overflow:visible}
 .timeline-panel,.timeline,.stop,.stop-card{overflow:visible}
 .stop:has(.choice-select.is-open),.stop-card:has(.choice-select.is-open){z-index:80}
+.start-badge,.start-stop-button{display:inline-flex;align-items:center;min-height:22px;padding:2px 7px;border-radius:999px;font-size:9px;font-weight:800;white-space:nowrap}
+.stop-card .start-stop-button{min-width:0;min-height:22px;border:1px solid #d6e2c7;background:#fbfdf7;color:#6b8159;font-size:9px}
+.start-badge{background:#dceca8;color:#526d16}
+.start-stop-button{border:1px solid #d6e2c7;background:#fbfdf7;color:#6b8159;cursor:pointer}
+.start-stop-button:hover,.start-stop-button:focus-visible{border-color:#a9c176;background:#edf7d4;color:#4c6813;outline:none}
+@media(max-width:800px){.start-badge,.start-stop-button{min-height:24px;padding-inline:6px;font-size:8px}.stop-meta{flex-wrap:wrap}}
