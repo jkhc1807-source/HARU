@@ -139,3 +139,12 @@ body{background:#f3efe3}
 .result i{font-size:11px;font-weight:800;color:#698023}
 .choice-select-trigger:focus-visible,.choice-select-menu button:focus-visible,.order-button:focus-visible,.start-stop-button:focus-visible,.remove-stop:focus-visible{outline:3px solid rgba(126,163,49,.38);outline-offset:2px}
 .planner-card{min-width:0}
+.location-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.location-heading>label{margin:0!important}
+.region-mode{display:flex;align-items:center;gap:8px;color:#718078;font-size:10px;font-weight:800;white-space:nowrap}
+.region-mode label{display:inline-flex;align-items:center;gap:4px;margin:0!important;cursor:pointer}
+.region-mode input{width:13px;height:13px;margin:0;accent-color:#89a92c}
+.location-row{position:relative;z-index:90}
+.region-field{z-index:100}
+.region-suggestions{z-index:300!important}
+@media(max-width:800px){.location-heading{align-items:flex-start;flex-direction:column;gap:8px}.region-mode{font-size:11px}.region-mode label{min-height:30px}.location-row{z-index:90}}

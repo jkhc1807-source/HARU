@@ -97,6 +97,7 @@ const sampleSpots: Spot[] = [
 ];
 
 const subwayCategory = "\uC9C0\uD558\uCCA0";
+const regionModeLabels = { administrative: "\uD589\uC815\uB3D9", subway: "\uC9C0\uD558\uCCA0\uC5ED" } as const;
 const categories = ["카페", "맛집", "전시", "산책"];
 const timeOptions = Array.from({ length: 35 }, (_, index) => {
   const minutes = 7 * 60 + index * 30;
@@ -242,6 +243,7 @@ function optimizeRoute(spots: Spot[]) {
 export default function Home() {
   const [city, setCity] = useState("성수동");
   const [query, setQuery] = useState("");
+  const [regionMode, setRegionMode] = useState<keyof typeof regionModeLabels>("administrative");
   const [selected, setSelected] = useState<string[]>(["카페", "맛집", "산책"]);
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
@@ -309,7 +311,7 @@ export default function Home() {
 
   useEffect(() => {
     const keyword = city.trim();
-    if (!mapReady || keyword.length < 2 || !showRegionSuggestions) {
+    if (regionMode !== "administrative" || !mapReady || keyword.length < 2 || !showRegionSuggestions) {
       setRegionSuggestions([]);
       setIsRegionSearching(false);
       return;
@@ -333,11 +335,11 @@ export default function Home() {
     }, 300);
 
     return () => window.clearTimeout(timer);
-  }, [city, mapReady, showRegionSuggestions]);
+  }, [city, mapReady, showRegionSuggestions, regionMode]);
 
   useEffect(() => {
     const keyword = city.trim();
-    if (!mapReady || keyword.length < 2 || !showRegionSuggestions || !/[^0-9]\uB3D9$/u.test(keyword)) return;
+    if (regionMode !== "administrative" || !mapReady || keyword.length < 2 || !showRegionSuggestions || !/[^0-9]\uB3D9$/u.test(keyword)) return;
     let cancelled = false;
     const timer = window.setTimeout(() => {
       const base = keyword.slice(0, -1);
@@ -356,7 +358,26 @@ export default function Home() {
       });
     }, 350);
     return () => { cancelled = true; window.clearTimeout(timer); };
-  }, [city, mapReady, showRegionSuggestions]);
+  }, [city, mapReady, showRegionSuggestions, regionMode]);
+
+  useEffect(() => {
+    const keyword = city.trim();
+    if (regionMode !== "subway" || !mapReady || keyword.length < 2 || !showRegionSuggestions) return;
+    let cancelled = false;
+    setIsRegionSearching(true);
+    const timer = window.setTimeout(() => {
+      const ps = new window.kakao.maps.services.Places();
+      ps.keywordSearch(`${keyword} \uC9C0\uD558\uCCA0\uC5ED`, (data: any[], status: string) => {
+        if (cancelled) return;
+        const suggestions = status === window.kakao.maps.services.Status.OK
+          ? data.slice(0, 8).map(place => place.place_name).filter(Boolean)
+          : [];
+        setRegionSuggestions(Array.from(new Set(suggestions)) as string[]);
+        setIsRegionSearching(false);
+      });
+    }, 300);
+    return () => { cancelled = true; window.clearTimeout(timer); setIsRegionSearching(false); };
+  }, [city, mapReady, showRegionSuggestions, regionMode]);
 
   useEffect(() => {
     localStorage.setItem("haru-trip-plan", JSON.stringify({ city, plan }));
@@ -831,7 +852,7 @@ export default function Home() {
       <section className="hero">
         <div className="hero-copy"><p className="eyebrow">ONE DAY, ONE PERFECT ROUTE</p><h1>오늘 어디로<br/><em>떠나볼까요?</em></h1><p>취향과 시간을 고르면, 걷기 좋은 순서로 하루를 정리해드려요.</p></div>
         <div className="planner-card">
-          <label>어디로 갈까요?</label>
+          <div className="location-heading"><label>어디로 갈까요?</label><div className="region-mode" role="radiogroup" aria-label="검색 대상"><label><input type="radio" name="region-mode" value="administrative" checked={regionMode === "administrative"} onChange={() => { setRegionMode("administrative"); setRegionSuggestions([]); setShowRegionSuggestions(true); }} />{regionModeLabels.administrative}</label><label><input type="radio" name="region-mode" value="subway" checked={regionMode === "subway"} onChange={() => { setRegionMode("subway"); setRegionSuggestions([]); setShowRegionSuggestions(true); }} />{regionModeLabels.subway}</label></div></div>
           <div className="location-row">
             <div className="region-field">
               <input
@@ -845,6 +866,7 @@ export default function Home() {
                 aria-autocomplete="list"
                 role="combobox"
                 autoComplete="off"
+                placeholder={regionMode === "subway" ? `${regionModeLabels.subway} 검색` : `${regionModeLabels.administrative} 검색`}
               />
               {showRegionSuggestions && (isRegionSearching || regionSuggestions.length > 0) && <div className="region-suggestions" id="region-suggestions" role="listbox">
                 {isRegionSearching && <span>지역을 찾고 있어요…</span>}
@@ -871,7 +893,7 @@ export default function Home() {
             </div>
           </div>
           <label>오늘의 취향</label>
-          <div className="chips">{[...categories, subwayCategory].map(c => <button type="button" key={c} className={selected.includes(c) ? "active" : ""} aria-pressed={selected.includes(c)} onClick={() => setSelected(selected.includes(c) ? selected.filter(x => x !== c) : [...selected, c])}>{c}</button>)}</div>
+          <div className="chips">{categories.map(c => <button type="button" key={c} className={selected.includes(c) ? "active" : ""} aria-pressed={selected.includes(c)} onClick={() => setSelected(selected.includes(c) ? selected.filter(x => x !== c) : [...selected, c])}>{c}</button>)}</div>
           <button type="button" className="primary" disabled={isGeneratingPlan} onClick={generatePlan}>{isGeneratingPlan ? "장소를 찾고 있어요…" : "나만의 하루 만들기"} <span>{isGeneratingPlan ? "···" : "→"}</span></button>
           <p className="planner-feedback" role="status" aria-live="polite">{plannerNotice}</p>
         </div>
