@@ -50,6 +50,7 @@ const timeOptions = Array.from({ length: 35 }, (_, index) => {
     label: formatTimeChoice(minutes),
   };
 });
+const stayOptions = [30, 45, 60, 75, 90, 120, 150, 180];
 const preferenceEmoji: Record<string, string> = {
   카페: "☕",
   맛집: "🍽️",
@@ -572,6 +573,13 @@ export default function Home() {
     setNotice(`${movingSpot.name}을 ${direction < 0 ? "앞" : "뒤"}으로 옮겼어요`);
   }
 
+  function handleStayChange(index: number, stay: number) {
+    if (!Number.isFinite(stay) || stay <= 0) return;
+    const nextPlan = plan.map((spot, spotIndex) => spotIndex === index ? { ...spot, stay } : spot);
+    updatePlan(nextPlan, `${plan[index].name} 체류시간 변경`);
+    setNotice(`${plan[index].name} 체류시간을 ${stay}분으로 바꿨어요`);
+  }
+
   function handleOptimizeRoute() {
     if (plan.length < 3) {
       setNotice("동선을 정리하려면 장소가 3개 이상 필요해요");
@@ -783,10 +791,10 @@ export default function Home() {
             </div>}
             {schedule.map(({ spot, start, end, travelToNext }, i) => <Fragment key={spot.id}>
               <div className={`drop-zone ${activeDropIndex === i ? "active" : ""}`} data-drop-index={i} onDragOver={event => event.preventDefault()} onDragEnter={() => setActiveDropIndex(i)} onDrop={() => handleDropAt(i)}><span>{i === 0 ? "맨 앞에 놓기" : "여기에 놓기"}</span></div>
-              <article className={`stop tone-${toneForSpot(spot)} ${i === schedule.length - 1 ? "last" : ""}`} data-stop-index={i} onPointerDown={event => { if (event.pointerType !== "touch" && !(event.target as HTMLElement).closest("a, button")) handlePointerDragStart(event, spot); }} aria-label={`${spot.name} 일정 순서 이동`}>
+              <article className={`stop tone-${toneForSpot(spot)} ${i === schedule.length - 1 ? "last" : ""}`} data-stop-index={i} onPointerDown={event => { if (event.pointerType !== "touch" && !(event.target as HTMLElement).closest("a, button, select")) handlePointerDragStart(event, spot); }} aria-label={`${spot.name} 일정 순서 이동`}>
                 <div className="time"><b>{start}</b><span>{end}</span></div>
                 <div className="dot">{i + 1}</div>
-                <div className="stop-card"><span className="drag-handle" role="button" aria-label={`${spot.name} 순서 이동`} tabIndex={0} onPointerDown={event => { event.stopPropagation(); handlePointerDragStart(event, spot); }}>⋮⋮</span><span className="emoji">{spot.emoji}</span><div><small>{spot.category} · 체류 {spot.stay}분</small><h3>{spot.name}</h3><p>{spot.address}</p><a className="kakao-review-link" href={kakaoPlaceUrl(spot)} target="_blank" rel="noopener noreferrer" draggable={false} aria-label={`${spot.name} 카카오맵 리뷰 새 창에서 열기`}>카카오맵 리뷰 ↗</a>{travelToNext > 0 && <p className="travel-meta">다음 장소까지 도보 약 {travelToNext}분</p>}</div><span className="mobile-order-controls"><button className="order-button" type="button" disabled={i === 0} aria-label={`${spot.name} 한 칸 위로 이동`} onClick={() => handleMoveSpot(i, -1)}>↑</button><button className="order-button" type="button" disabled={i === plan.length - 1} aria-label={`${spot.name} 한 칸 아래로 이동`} onClick={() => handleMoveSpot(i, 1)}>↓</button></span><button className="remove-stop" aria-label={`${spot.name} 삭제`} onClick={() => updatePlan(plan.filter(p => p.id !== spot.id), `${spot.name} 삭제`)}>×</button></div>
+                <div className="stop-card"><span className="drag-handle" role="button" aria-label={`${spot.name} 순서 이동`} tabIndex={0} onPointerDown={event => { event.stopPropagation(); handlePointerDragStart(event, spot); }}>⋮⋮</span><span className="emoji">{spot.emoji}</span><div><div className="stop-meta"><small>{spot.category}</small><label className="stay-control">체류 <select className="stay-select" value={spot.stay} aria-label={`${spot.name} 체류 시간`} onChange={event => handleStayChange(i, Number(event.target.value))}>{stayOptions.map(option => <option key={option} value={option}>{option}분</option>)}</select></label></div><h3>{spot.name}</h3><p>{spot.address}</p><a className="kakao-review-link" href={kakaoPlaceUrl(spot)} target="_blank" rel="noopener noreferrer" draggable={false} aria-label={`${spot.name} 카카오맵 리뷰 새 창에서 열기`}>카카오맵 리뷰 ↗</a>{travelToNext > 0 && <p className="travel-meta">다음 장소까지 도보 약 {travelToNext}분</p>}</div><span className="mobile-order-controls"><button className="order-button" type="button" disabled={i === 0} aria-label={`${spot.name} 한 칸 위로 이동`} onClick={() => handleMoveSpot(i, -1)}>↑</button><button className="order-button" type="button" disabled={i === plan.length - 1} aria-label={`${spot.name} 한 칸 아래로 이동`} onClick={() => handleMoveSpot(i, 1)}>↓</button></span><button className="remove-stop" aria-label={`${spot.name} 삭제`} onClick={() => updatePlan(plan.filter(p => p.id !== spot.id), `${spot.name} 삭제`)}>×</button></div>
               </article>
             </Fragment>)}
             {plan.length > 0 && <div className={`drop-zone ${activeDropIndex === plan.length ? "active" : ""}`} data-drop-index={plan.length} onDragOver={event => event.preventDefault()} onDragEnter={() => setActiveDropIndex(plan.length)} onDrop={() => handleDropAt(plan.length)}><span>마지막에 놓기</span></div>}
