@@ -148,3 +148,10 @@ body{background:#f3efe3}
 .region-field{z-index:100}
 .region-suggestions{z-index:300!important}
 @media(max-width:800px){.location-heading{align-items:flex-start;flex-direction:column;gap:8px}.region-mode{font-size:11px}.region-mode label{min-height:30px}.location-row{z-index:90}}
+.location-heading{justify-content:flex-start;align-items:center;flex-wrap:wrap;gap:12px;padding:2px 2px 11px}
+.location-heading>label{font-size:17px!important;line-height:1.2;letter-spacing:-.35px;white-space:nowrap}
+.region-mode{gap:5px;padding:3px;border:1px solid #d8e2d1;border-radius:999px;background:#f5f9ef;box-shadow:0 2px 7px rgba(42,67,48,.07);font-size:11px}
+.region-mode label{min-height:32px;padding:4px 10px;border-radius:999px;color:#718078;transition:background .15s,color .15s,box-shadow .15s}
+.region-mode label:has(input:checked){background:#dceca8;color:#4f6a18;box-shadow:0 1px 4px rgba(78,107,23,.15);font-weight:900}
+.region-mode input{width:16px;height:16px;accent-color:#789b25}
+@media(max-width:800px){.location-heading{align-items:center;flex-direction:row;gap:10px;padding-bottom:10px}.location-heading>label{font-size:16px!important}.region-mode{font-size:10px}.region-mode label{min-height:30px;padding-inline:8px}}
