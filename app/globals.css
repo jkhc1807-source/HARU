@@ -129,3 +129,4 @@ body{background:#f3efe3}
 .planner-card:has(.choice-select.is-open){z-index:20}
 .workspace{overflow:visible}
 .timeline-panel,.timeline,.stop,.stop-card{overflow:visible}
+.stop:has(.choice-select.is-open),.stop-card:has(.choice-select.is-open){z-index:80}
