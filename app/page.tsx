@@ -206,35 +206,25 @@ function routeTravelMinutes(spots: Spot[]) {
 
 function optimizeRoute(spots: Spot[]) {
   if (spots.length < 3) return spots;
+  const start = spots[0];
+  const remaining = spots.slice(1);
   let best = spots;
   let bestMinutes = routeTravelMinutes(spots);
 
-  for (const start of spots) {
-    const route = [start];
-    const remaining = spots.filter(spot => spot.id !== start.id);
-    while (remaining.length) {
-      remaining.sort((a, b) => distance(route[route.length - 1], a) - distance(route[route.length - 1], b));
-      route.push(remaining.shift()!);
-    }
-    let improved = true;
-    while (improved) {
-      improved = false;
-      for (let from = 1; from < route.length - 1; from += 1) {
-        for (let to = from + 1; to < route.length; to += 1) {
-          const candidate = [...route.slice(0, from), ...route.slice(from, to + 1).reverse(), ...route.slice(to + 1)];
-          if (routeTravelMinutes(candidate) < routeTravelMinutes(route)) {
-            route.splice(0, route.length, ...candidate);
-            improved = true;
-          }
-        }
+  function visit(permutation: Spot[], left: Spot[]) {
+    if (!left.length) {
+      const candidate = [start, ...permutation];
+      const minutes = routeTravelMinutes(candidate);
+      if (minutes < bestMinutes) {
+        best = candidate;
+        bestMinutes = minutes;
       }
+      return;
     }
-    const minutes = routeTravelMinutes(route);
-    if (minutes < bestMinutes) {
-      best = route;
-      bestMinutes = minutes;
-    }
+    left.forEach((spot, index) => visit([...permutation, spot], [...left.slice(0, index), ...left.slice(index + 1)]));
   }
+
+  visit([], remaining);
   return best;
 }
 
