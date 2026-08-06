@@ -138,3 +138,4 @@ body{background:#f3efe3}
 @media(max-width:800px){.start-badge,.start-stop-button{min-height:24px;padding-inline:6px;font-size:8px}.stop-meta{flex-wrap:wrap}}
 .result i{font-size:11px;font-weight:800;color:#698023}
 .choice-select-trigger:focus-visible,.choice-select-menu button:focus-visible,.order-button:focus-visible,.start-stop-button:focus-visible,.remove-stop:focus-visible{outline:3px solid rgba(126,163,49,.38);outline-offset:2px}
+.planner-card{min-width:0}
