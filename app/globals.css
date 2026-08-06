@@ -136,3 +136,4 @@ body{background:#f3efe3}
 .start-stop-button{border:1px solid #d6e2c7;background:#fbfdf7;color:#6b8159;cursor:pointer}
 .start-stop-button:hover,.start-stop-button:focus-visible{border-color:#a9c176;background:#edf7d4;color:#4c6813;outline:none}
 @media(max-width:800px){.start-badge,.start-stop-button{min-height:24px;padding-inline:6px;font-size:8px}.stop-meta{flex-wrap:wrap}}
+.result i{font-size:11px;font-weight:800;color:#698023}
