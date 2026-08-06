@@ -179,6 +179,27 @@ function fitSpotsToTime(candidates: Spot[], startTime: string, endTime: string) 
   return ordered;
 }
 
+function fillPlanWithCandidates(current: Spot[], candidates: Spot[], startTime: string, endTime: string) {
+  const budget = timeToMinutes(endTime) - timeToMinutes(startTime);
+  const candidateIds = new Set(candidates.map(spot => spot.id));
+  const ordered = current.filter(spot => candidateIds.has(spot.id));
+  if (!ordered.length) return fitSpotsToTime(candidates, startTime, endTime);
+
+  let used = ordered.reduce((sum, spot) => sum + spot.stay, 0) + routeTravelMinutes(ordered);
+  if (used > budget) return fitSpotsToTime(candidates, startTime, endTime);
+
+  const rest = candidates.filter(spot => !ordered.some(existing => existing.id === spot.id));
+  while (rest.length && ordered.length < 6) {
+    rest.sort((a, b) => distance(ordered[ordered.length - 1], a) - distance(ordered[ordered.length - 1], b));
+    const candidate = rest.shift()!;
+    const travel = travelMinutes(ordered[ordered.length - 1], candidate);
+    if (used + travel + candidate.stay > budget) continue;
+    used += travel + candidate.stay;
+    ordered.push(candidate);
+  }
+  return ordered;
+}
+
 function routeTravelMinutes(spots: Spot[]) {
   return spots.slice(0, -1).reduce((sum, spot, index) => sum + travelMinutes(spot, spots[index + 1]), 0);
 }
@@ -571,7 +592,7 @@ export default function Home() {
       setSpots(refreshedSpots);
       const pool = refreshedSpots.filter((spot) => selected.some((preference) => matchesPreference(spot, preference)));
       const candidates = pool.length ? pool : refreshedSpots;
-      const ordered = fitSpotsToTime(candidates, startTime, endTime);
+      const ordered = fillPlanWithCandidates(plan, candidates, startTime, endTime);
       if (!ordered.length) {
         const message = "선택한 시간 안에 담을 장소가 없어요. 이용 시간을 조금 늘려주세요";
         setPlannerNotice(message);
