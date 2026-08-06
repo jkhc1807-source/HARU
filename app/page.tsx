@@ -341,13 +341,17 @@ export default function Home() {
     let cancelled = false;
     const timer = window.setTimeout(() => {
       const base = keyword.slice(0, -1);
-      const queries = Array.from({ length: 10 }, (_, index) => `${base}${index + 1}\uB3D9`);
+      const queries = [`${keyword} \uC8FC\uBBFC\uC13C\uD130`, ...Array.from({ length: 10 }, (_, index) => `${base}${index + 1}\uB3D9 \uC8FC\uBBFC\uC13C\uD130`)];
       Promise.all(queries.map(query => new Promise<any[]>(resolve => {
         const ps = new window.kakao.maps.services.Places();
         ps.keywordSearch(query, (data: any[], status: string) => resolve(status === window.kakao.maps.services.Status.OK ? data : []));
       }))).then(results => {
         if (cancelled) return;
-        const regions = results.flat().map(place => place.address_name?.split(" ").slice(0, 3).join(" ")).filter(Boolean);
+        const regions = results.flat().map(place => {
+          const administrativeName = place.place_name?.match(/([^\s]+\d\uB3D9)(?:\uC8FC\uBBFC\uC13C\uD130|\uD589\uC815\uBCF5\uC9C0\uC13C\uD130)/u)?.[1];
+          const prefix = place.address_name?.split(" ").slice(0, 2).join(" ");
+          return administrativeName && prefix ? `${prefix} ${administrativeName}` : null;
+        }).filter(Boolean);
         if (regions.length) setRegionSuggestions(Array.from(new Set(regions)).slice(0, 8) as string[]);
       });
     }, 350);
