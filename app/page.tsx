@@ -96,6 +96,7 @@ const sampleSpots: Spot[] = [
   { id: "4", name: "뚝도시장", category: "맛집", address: "서울 성동구 성덕정길 115", x: 127.0558, y: 37.5383, stay: 80, emoji: "🍜" },
 ];
 
+const subwayCategory = "\uC9C0\uD558\uCCA0";
 const categories = ["카페", "맛집", "전시", "산책"];
 const timeOptions = Array.from({ length: 35 }, (_, index) => {
   const minutes = 7 * 60 + index * 30;
@@ -111,6 +112,7 @@ const preferenceEmoji: Record<string, string> = {
   전시: "🖼️",
   산책: "🌿",
 };
+preferenceEmoji[subwayCategory] = "\uD83D\uDE87";
 
 function emojiForPlace(place: any) {
   const category = `${place.category_group_name || ""} ${place.category_name || ""}`;
@@ -165,6 +167,7 @@ function formatTimeChoice(totalMinutes: number) {
 
 function matchesPreference(spot: Spot, preference: string) {
   const text = `${spot.category} ${spot.name}`;
+  if (preference === subwayCategory) return /\uC9C0\uD558\uCCA0|\uC5ED/.test(text);
   if (preference === "맛집") return /음식점|맛집|식당|요리/.test(text);
   if (preference === "전시") return /문화|전시|미술|박물관|공연/.test(text);
   if (preference === "산책") return /공원|관광|산책|자연|명소/.test(text);
@@ -330,6 +333,25 @@ export default function Home() {
     }, 300);
 
     return () => window.clearTimeout(timer);
+  }, [city, mapReady, showRegionSuggestions]);
+
+  useEffect(() => {
+    const keyword = city.trim();
+    if (!mapReady || keyword.length < 2 || !showRegionSuggestions || !/[^0-9]\uB3D9$/u.test(keyword)) return;
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      const base = keyword.slice(0, -1);
+      const queries = Array.from({ length: 10 }, (_, index) => `${base}${index + 1}\uB3D9`);
+      Promise.all(queries.map(query => new Promise<any[]>(resolve => {
+        const ps = new window.kakao.maps.services.Places();
+        ps.keywordSearch(query, (data: any[], status: string) => resolve(status === window.kakao.maps.services.Status.OK ? data : []));
+      }))).then(results => {
+        if (cancelled) return;
+        const regions = results.flat().map(place => place.address_name?.split(" ").slice(0, 3).join(" ")).filter(Boolean);
+        if (regions.length) setRegionSuggestions(Array.from(new Set(regions)).slice(0, 8) as string[]);
+      });
+    }, 350);
+    return () => { cancelled = true; window.clearTimeout(timer); };
   }, [city, mapReady, showRegionSuggestions]);
 
   useEffect(() => {
@@ -845,7 +867,7 @@ export default function Home() {
             </div>
           </div>
           <label>오늘의 취향</label>
-          <div className="chips">{categories.map(c => <button type="button" key={c} className={selected.includes(c) ? "active" : ""} aria-pressed={selected.includes(c)} onClick={() => setSelected(selected.includes(c) ? selected.filter(x => x !== c) : [...selected, c])}>{c}</button>)}</div>
+          <div className="chips">{[...categories, subwayCategory].map(c => <button type="button" key={c} className={selected.includes(c) ? "active" : ""} aria-pressed={selected.includes(c)} onClick={() => setSelected(selected.includes(c) ? selected.filter(x => x !== c) : [...selected, c])}>{c}</button>)}</div>
           <button type="button" className="primary" disabled={isGeneratingPlan} onClick={generatePlan}>{isGeneratingPlan ? "장소를 찾고 있어요…" : "나만의 하루 만들기"} <span>{isGeneratingPlan ? "···" : "→"}</span></button>
           <p className="planner-feedback" role="status" aria-live="polite">{plannerNotice}</p>
         </div>
