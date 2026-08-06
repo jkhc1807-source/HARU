@@ -520,6 +520,16 @@ export default function Home() {
     setSearchNotice(`${spot.name}을 일정 마지막에 추가했어요`);
   }
 
+  function handleMoveSpot(index: number, direction: -1 | 1) {
+    const nextIndex = index + direction;
+    if (nextIndex < 0 || nextIndex >= plan.length) return;
+    const nextPlan = [...plan];
+    const [movingSpot] = nextPlan.splice(index, 1);
+    nextPlan.splice(nextIndex, 0, movingSpot);
+    updatePlan(nextPlan, `${movingSpot.name} 순서 변경`);
+    setNotice(`${movingSpot.name}을 ${direction < 0 ? "앞" : "뒤"}으로 옮겼어요`);
+  }
+
   function handleOptimizeRoute() {
     if (plan.length < 3) {
       setNotice("동선을 정리하려면 장소가 3개 이상 필요해요");
@@ -733,7 +743,7 @@ export default function Home() {
               <article className={`stop tone-${toneForSpot(spot)} ${i === schedule.length - 1 ? "last" : ""}`} data-stop-index={i} onPointerDown={event => { if (!(event.target as HTMLElement).closest("a, button")) handlePointerDragStart(event, spot); }} aria-label={`${spot.name} 일정 순서 이동`}>
                 <div className="time"><b>{start}</b><span>{end}</span></div>
                 <div className="dot">{i + 1}</div>
-                <div className="stop-card"><span className="drag-handle" role="button" aria-label={`${spot.name} 순서 이동`} tabIndex={0} onPointerDown={event => { event.stopPropagation(); handlePointerDragStart(event, spot); }}>⋮⋮</span><span className="emoji">{spot.emoji}</span><div><small>{spot.category} · 체류 {spot.stay}분</small><h3>{spot.name}</h3><p>{spot.address}</p><a className="kakao-review-link" href={kakaoPlaceUrl(spot)} target="_blank" rel="noopener noreferrer" draggable={false} aria-label={`${spot.name} 카카오맵 리뷰 새 창에서 열기`}>카카오맵 리뷰 ↗</a>{travelToNext > 0 && <p className="travel-meta">다음 장소까지 도보 약 {travelToNext}분</p>}</div><button aria-label={`${spot.name} 삭제`} onClick={() => updatePlan(plan.filter(p => p.id !== spot.id), `${spot.name} 삭제`)}>×</button></div>
+                <div className="stop-card"><span className="drag-handle" role="button" aria-label={`${spot.name} 순서 이동`} tabIndex={0} onPointerDown={event => { event.stopPropagation(); handlePointerDragStart(event, spot); }}>⋮⋮</span><span className="emoji">{spot.emoji}</span><div><small>{spot.category} · 체류 {spot.stay}분</small><h3>{spot.name}</h3><p>{spot.address}</p><a className="kakao-review-link" href={kakaoPlaceUrl(spot)} target="_blank" rel="noopener noreferrer" draggable={false} aria-label={`${spot.name} 카카오맵 리뷰 새 창에서 열기`}>카카오맵 리뷰 ↗</a>{travelToNext > 0 && <p className="travel-meta">다음 장소까지 도보 약 {travelToNext}분</p>}</div><span className="mobile-order-controls"><button type="button" disabled={i === 0} aria-label={`${spot.name} 한 칸 위로 이동`} onClick={() => handleMoveSpot(i, -1)}>↑</button><button type="button" disabled={i === plan.length - 1} aria-label={`${spot.name} 한 칸 아래로 이동`} onClick={() => handleMoveSpot(i, 1)}>↓</button></span><button aria-label={`${spot.name} 삭제`} onClick={() => updatePlan(plan.filter(p => p.id !== spot.id), `${spot.name} 삭제`)}>×</button></div>
               </article>
             </Fragment>)}
             {plan.length > 0 && <div className={`drop-zone ${activeDropIndex === plan.length ? "active" : ""}`} data-drop-index={plan.length} onDragOver={event => event.preventDefault()} onDragEnter={() => setActiveDropIndex(plan.length)} onDrop={() => handleDropAt(plan.length)}><span>마지막에 놓기</span></div>}
@@ -758,10 +768,10 @@ export default function Home() {
         <div><p className="eyebrow">FIND A PLACE</p><h2>일정에 장소 더하기</h2></div>
         <form onSubmit={searchPlaces}><input value={query} onChange={e => setQuery(e.target.value)} placeholder="카페, 전시관, 맛집을 검색해보세요"/><button disabled={isPlaceSearching}>{isPlaceSearching ? "검색 중…" : "검색"}</button></form>
         <p className="search-feedback" role="status">{searchNotice}</p>
-        <p className="drag-guide">장소 카드를 잡으면 일정 영역으로 자동 이동해요. 원하는 사이에 놓거나, 눌러서 마지막에 추가하세요.</p>
+        <p className="drag-guide"><span className="desktop-guide">장소 카드를 잡으면 일정 영역으로 자동 이동해요. 원하는 사이에 놓거나, 눌러서 마지막에 추가하세요.</span><span className="mobile-guide">모바일에서는 장소 카드를 눌러 일정에 추가하고, 위쪽 일정에서 ↑ ↓ 버튼으로 순서를 바꾸세요.</span></p>
         <div className="results">{spots.map(s => {
           const isAdded = plan.some(item => item.id === s.id);
-          return <button className={`result ${isAdded ? "added" : ""}`} disabled={isAdded} key={s.id} onPointerDown={event => handlePointerDragStart(event, s)} onClick={() => { if (!suppressResultClickRef.current) addSpot(s); }}><span className="result-drag-handle" aria-hidden="true" onPointerDown={event => { event.stopPropagation(); handlePointerDragStart(event, s); }}>⋮⋮</span><span>{s.emoji}</span><div><b>{s.name}</b><small>{s.category} · {s.address}</small></div><i>{isAdded ? "추가됨" : "＋"}</i></button>;
+          return <button className={`result ${isAdded ? "added" : ""}`} disabled={isAdded} key={s.id} onPointerDown={event => handlePointerDragStart(event, s)} onClick={() => { if (!suppressResultClickRef.current) addSpot(s); }}><span className="result-drag-handle" aria-hidden="true" onPointerDown={event => { event.stopPropagation(); handlePointerDragStart(event, s); }}>⋮⋮</span><span>{s.emoji}</span><div><b>{s.name}</b><small>{s.category} · {s.address}</small></div><i>{isAdded ? "추가됨" : "일정에 추가"}</i></button>;
         })}</div>
       </section>
       {isDragging && pointerPosition && draggedSpot && <div className="touch-drag-preview" style={{ left: pointerPosition.x, top: pointerPosition.y }}><span>{draggedSpot.emoji}</span>{draggedSpot.name}</div>}
