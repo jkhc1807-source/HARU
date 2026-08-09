@@ -153,5 +153,6 @@ body{background:#f3efe3}
 .region-mode{gap:5px;padding:3px;border:1px solid #d8e2d1;border-radius:999px;background:#f5f9ef;box-shadow:0 2px 7px rgba(42,67,48,.07);font-size:11px}
 .region-mode label{min-height:32px;padding:4px 10px;border-radius:999px;color:#718078;transition:background .15s,color .15s,box-shadow .15s}
 .region-mode label:has(input:checked){background:#dceca8;color:#4f6a18;box-shadow:0 1px 4px rgba(78,107,23,.15);font-weight:900}
-.region-mode input{width:16px;height:16px;accent-color:#789b25}
+.region-mode input{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;padding:0}
+.region-mode label:has(input:focus-visible){outline:2px solid rgba(126,163,49,.45);outline-offset:1px}
 @media(max-width:800px){.location-heading{align-items:center;flex-direction:row;gap:10px;padding-bottom:10px}.location-heading>label{font-size:16px!important}.region-mode{font-size:10px}.region-mode label{min-height:30px;padding-inline:8px}}
