@@ -237,5 +237,6 @@ html,body{overflow-x:clip}
 .saved-trip-choice{width:150px;flex-shrink:0}
 .saved-trip-choice .choice-select-trigger{min-height:40px;border-radius:999px;padding-left:14px;font-size:11px}
 .saved-trip-choice .choice-select-menu{width:220px;left:auto;right:0}
-@media(max-width:800px){.missing-preferences{margin:14px 0 2px;font-size:11px}}
+.share-trip-button{white-space:nowrap}
+@media(max-width:800px){.missing-preferences{margin:14px 0 2px;font-size:11px}.save-trip-button,.share-trip-button{padding-inline:8px;font-size:11px}.saved-trip-choice{width:132px}}
 @media(max-width:800px){.location-heading{align-items:center;flex-direction:row;gap:10px;padding-bottom:10px}.location-heading>label{font-size:16px!important}.region-mode{font-size:10px}.region-mode label{min-height:30px;padding-inline:8px}}
