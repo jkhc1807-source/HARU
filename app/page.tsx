@@ -98,7 +98,14 @@ const sampleSpots: Spot[] = [
 
 const subwayCategory = "\uC9C0\uD558\uCCA0";
 const regionModeLabels = { administrative: "\uD589\uC815\uB3D9", subway: "\uC9C0\uD558\uCCA0\uC5ED" } as const;
-const categories = ["카페", "맛집", "전시", "산책"];
+type PreferenceConfig = { label: string; query: string; emoji: string; matches: RegExp; defaultSelected?: boolean };
+const preferenceConfigs: PreferenceConfig[] = [
+  { label: "카페", query: "카페", emoji: "☕", matches: /카페|커피|디저트/, defaultSelected: true },
+  { label: "맛집", query: "맛집", emoji: "🍽️", matches: /음식점|맛집|식당|요리/, defaultSelected: true },
+  { label: "전시", query: "전시", emoji: "🖼️", matches: /문화|전시|미술|박물관|공연/ },
+  { label: "산책", query: "공원 산책", emoji: "🌿", matches: /공원|관광|산책|자연|명소/, defaultSelected: true },
+];
+const categories = preferenceConfigs.map(preference => preference.label);
 const timeOptions = Array.from({ length: 35 }, (_, index) => {
   const minutes = 7 * 60 + index * 30;
   return {
@@ -107,20 +114,15 @@ const timeOptions = Array.from({ length: 35 }, (_, index) => {
   };
 });
 const stayOptions = [30, 45, 60, 75, 90, 120, 150, 180];
-const preferenceEmoji: Record<string, string> = {
-  카페: "☕",
-  맛집: "🍽️",
-  전시: "🖼️",
-  산책: "🌿",
-};
+const preferenceEmoji: Record<string, string> = Object.fromEntries(preferenceConfigs.map(preference => [preference.label, preference.emoji]));
 preferenceEmoji[subwayCategory] = "\uD83D\uDE87";
 
 function emojiForPlace(place: any) {
   const category = `${place.category_group_name || ""} ${place.category_name || ""}`;
-  if (place.category_group_code === "CE7" || /카페/.test(category)) return preferenceEmoji.카페;
-  if (place.category_group_code === "FD6" || /음식점|식당|맛집/.test(category)) return preferenceEmoji.맛집;
-  if (/전시|미술|박물관|문화시설|공연/.test(category)) return preferenceEmoji.전시;
-  if (/공원|관광|산책|자연|명소/.test(category)) return preferenceEmoji.산책;
+  if (place.category_group_code === "CE7") return preferenceEmoji.카페;
+  if (place.category_group_code === "FD6") return preferenceEmoji.맛집;
+  const matched = preferenceConfigs.find(preference => preference.matches.test(category));
+  if (matched) return matched.emoji;
   return "📍";
 }
 
@@ -169,10 +171,8 @@ function formatTimeChoice(totalMinutes: number) {
 function matchesPreference(spot: Spot, preference: string) {
   const text = `${spot.category} ${spot.name}`;
   if (preference === subwayCategory) return /\uC9C0\uD558\uCCA0|\uC5ED/.test(text);
-  if (preference === "맛집") return /음식점|맛집|식당|요리/.test(text);
-  if (preference === "전시") return /문화|전시|미술|박물관|공연/.test(text);
-  if (preference === "산책") return /공원|관광|산책|자연|명소/.test(text);
-  return text.includes(preference);
+  const config = preferenceConfigs.find(item => item.label === preference);
+  return config ? config.matches.test(text) : text.includes(preference);
 }
 
 function fitSpotsToTime(candidates: Spot[], startTime: string, endTime: string) {
@@ -244,7 +244,7 @@ export default function Home() {
   const [city, setCity] = useState("성수동");
   const [query, setQuery] = useState("");
   const [regionMode, setRegionMode] = useState<keyof typeof regionModeLabels>("administrative");
-  const [selected, setSelected] = useState<string[]>(["카페", "맛집", "산책"]);
+  const [selected, setSelected] = useState<string[]>(() => preferenceConfigs.filter(preference => preference.defaultSelected).map(preference => preference.label));
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [spots, setSpots] = useState<Spot[]>(sampleSpots);
@@ -638,7 +638,10 @@ export default function Home() {
     setPlannerNotice(`${city.trim()}의 장소를 찾고 있어요…`);
     setNotice(`${city.trim()}의 장소를 찾고 있어요…`);
     try {
-      const searches = await Promise.all(selected.map((preference) => fetchPlaces(`${city.trim()} ${preference}`, preference)));
+      const searches = await Promise.all(selected.map((preference) => {
+        const config = preferenceConfigs.find(item => item.label === preference);
+        return fetchPlaces(`${city.trim()} ${config?.query || preference}`, preference);
+      }));
       const unique = Array.from(new Map(searches.flat().map((spot) => [spot.id, spot])).values());
       if (!unique.length) {
         const message = `${city.trim()}에서 선택한 취향의 장소를 찾지 못했어요`;
