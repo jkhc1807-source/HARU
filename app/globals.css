@@ -248,5 +248,6 @@ html,body{overflow-x:clip}
 .spot-note[open] summary{background:#edf7d4;color:#4d6818}
 .spot-note textarea{display:block;width:min(100%,280px);min-height:30px;max-height:120px;margin-top:6px;padding:6px 9px;border:1px solid #d6e2c7;border-radius:8px;background:#fffef9;color:var(--ink);font:inherit;font-size:11px;line-height:1.45;resize:none;overflow-y:auto;outline:none}
 .spot-note textarea:focus{border-color:#a9c176;box-shadow:0 0 0 3px rgba(154,184,46,.16)}
+.transit-meta{margin-top:5px!important;color:#56766a!important;font-size:10px!important;font-weight:700;white-space:normal!important;line-height:1.4}
 @media(max-width:800px){.spot-note textarea{width:100%;min-height:34px;font-size:12px}}
 @media(max-width:800px){.location-heading{align-items:center;flex-direction:row;gap:10px;padding-bottom:10px}.location-heading>label{font-size:16px!important}.region-mode{font-size:10px}.region-mode label{min-height:30px;padding-inline:8px}}

@@ -11,6 +11,7 @@ type Spot = { id: string; name: string; category: string; address: string; x: nu
 type ScheduleItem = { spot: Spot; start: string; end: string; travelToNext: number };
 type UndoState = { plan: Spot[]; message: string };
 type SavedTrip = { id: string; name: string; city: string; plan: Spot[]; updatedAt: number };
+type TransitInfo = { subway?: string; bus?: string };
 type ChoiceOption = { value: string; label: string };
 
 function ChoiceSelect({ value, options, placeholder, ariaLabel, disabled = false, className = "", onChange }: {
@@ -295,6 +296,7 @@ export default function Home() {
   const [missingPreferences, setMissingPreferences] = useState<string[]>([]);
   const [savedTrips, setSavedTrips] = useState<SavedTrip[]>([]);
   const [selectedSavedTripId, setSelectedSavedTripId] = useState("");
+  const [transitBySpot, setTransitBySpot] = useState<Record<string, TransitInfo>>({});
   const [searchNotice, setSearchNotice] = useState("지역과 장소 종류를 함께 검색해보세요");
   const [draggedSpot, setDraggedSpot] = useState<Spot | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -313,6 +315,7 @@ export default function Home() {
   const pointerDragRef = useRef<{ pointerId: number; spot: Spot } | null>(null);
   const suppressResultClickRef = useRef(false);
   const savedTripsReadyRef = useRef(false);
+  const planSpotIds = plan.map(spot => spot.id).join(",");
 
   useEffect(() => {
     const storedTrip = readStoredTrip(localStorage.getItem("haru-trip-plan"));
@@ -475,6 +478,32 @@ export default function Home() {
     }
     if (plan.length) mapRef.current.setBounds(bounds);
   }, [plan, mapReady]);
+
+  useEffect(() => {
+    if (!mapReady || !window.kakao?.maps?.services || !plan.length) {
+      setTransitBySpot({});
+      return;
+    }
+    let cancelled = false;
+    const searchNearby = (spot: Spot, query: string, categoryCode?: string) => new Promise<any[]>((resolve) => {
+      const ps = new window.kakao.maps.services.Places();
+      const location = new window.kakao.maps.LatLng(spot.y, spot.x);
+      const options = { location, radius: 1200, sort: window.kakao.maps.services.SortBy.DISTANCE };
+      const callback = (data: any[], status: string) => resolve(status === window.kakao.maps.services.Status.OK ? data : []);
+      if (categoryCode) ps.categorySearch(categoryCode, callback, options);
+      else ps.keywordSearch(query, callback, options);
+    });
+    Promise.all(plan.map(async spot => {
+      const [subways, buses] = await Promise.all([
+        searchNearby(spot, "", "SW8"),
+        searchNearby(spot, "버스정류장"),
+      ]);
+      return [spot.id, { subway: subways[0]?.place_name, bus: buses[0]?.place_name }] as const;
+    })).then(entries => {
+      if (!cancelled) setTransitBySpot(Object.fromEntries(entries));
+    });
+    return () => { cancelled = true; };
+  }, [mapReady, planSpotIds]);
 
   useEffect(() => {
     if (savedTripsReadyRef.current) localStorage.setItem("haru-trip-plans", JSON.stringify(savedTrips));
@@ -1071,7 +1100,7 @@ export default function Home() {
               <article className={`stop tone-${toneForSpot(spot)} ${i === schedule.length - 1 ? "last" : ""}`} data-stop-index={i} onPointerDown={event => { if (event.pointerType !== "touch" && !(event.target as HTMLElement).closest("a, button, select")) handlePointerDragStart(event, spot); }} aria-label={`${spot.name} 일정 순서 이동`}>
                 <div className="time"><b>{start}</b><span>{end}</span></div>
                 <div className="dot">{i + 1}</div>
-                <div className="stop-card"><span className="drag-handle" role="button" aria-label={`${spot.name} 순서 이동`} tabIndex={0} onPointerDown={event => { event.stopPropagation(); handlePointerDragStart(event, spot); }}>⋮⋮</span><span className="emoji">{spot.emoji}</span><div><div className="stop-meta"><small>{spot.category}</small>{i === 0 ? <span className="start-badge">출발지</span> : <button type="button" className="start-stop-button" onClick={() => handleSetStart(i)}>출발지로 설정</button>}<span className="stay-control">체류 <ChoiceSelect className="stay-choice" value={String(spot.stay)} placeholder={`${spot.stay}분`} ariaLabel={`${spot.name} 체류 시간`} options={stayOptions.map(option => ({ value: String(option), label: `${option}분` }))} onChange={value => handleStayChange(i, Number(value))} /></span></div><h3>{spot.name}</h3><p>{spot.address}</p><details className="spot-note" onPointerDown={event => event.stopPropagation()}><summary>{spot.note ? "메모 있음" : "메모 추가"}</summary><textarea rows={1} value={spot.note || ""} maxLength={160} placeholder="예: 웨이팅 확인, 꼭 먹을 메뉴" aria-label={`${spot.name} 메모`} onChange={event => { event.currentTarget.style.height = "auto"; event.currentTarget.style.height = `${Math.min(event.currentTarget.scrollHeight, 120)}px`; handleNoteChange(spot.id, event.target.value); }} ref={element => { if (element) { element.style.height = "auto"; element.style.height = `${Math.min(element.scrollHeight, 120)}px`; } }} /></details><a className="kakao-review-link" href={kakaoPlaceUrl(spot)} target="_blank" rel="noopener noreferrer" draggable={false} aria-label={`${spot.name} 카카오맵 리뷰 새 창에서 열기`}>카카오맵 리뷰 ↗</a>{travelToNext > 0 && <p className="travel-meta">다음 장소까지 도보 약 {travelToNext}분</p>}</div><span className="mobile-order-controls"><button className="order-button" type="button" disabled={i === 0} aria-label={`${spot.name} 한 칸 위로 이동`} onClick={() => handleMoveSpot(i, -1)}>↑</button><button className="order-button" type="button" disabled={i === plan.length - 1} aria-label={`${spot.name} 한 칸 아래로 이동`} onClick={() => handleMoveSpot(i, 1)}>↓</button></span><button className="remove-stop" aria-label={`${spot.name} 삭제`} onClick={() => updatePlan(plan.filter(p => p.id !== spot.id), `${spot.name} 삭제`)}>×</button></div>
+                <div className="stop-card"><span className="drag-handle" role="button" aria-label={`${spot.name} 순서 이동`} tabIndex={0} onPointerDown={event => { event.stopPropagation(); handlePointerDragStart(event, spot); }}>⋮⋮</span><span className="emoji">{spot.emoji}</span><div><div className="stop-meta"><small>{spot.category}</small>{i === 0 ? <span className="start-badge">출발지</span> : <button type="button" className="start-stop-button" onClick={() => handleSetStart(i)}>출발지로 설정</button>}<span className="stay-control">체류 <ChoiceSelect className="stay-choice" value={String(spot.stay)} placeholder={`${spot.stay}분`} ariaLabel={`${spot.name} 체류 시간`} options={stayOptions.map(option => ({ value: String(option), label: `${option}분` }))} onChange={value => handleStayChange(i, Number(value))} /></span></div><h3>{spot.name}</h3><p>{spot.address}</p><details className="spot-note" onPointerDown={event => event.stopPropagation()}><summary>{spot.note ? "메모 있음" : "메모 추가"}</summary><textarea rows={1} value={spot.note || ""} maxLength={160} placeholder="예: 웨이팅 확인, 꼭 먹을 메뉴" aria-label={`${spot.name} 메모`} onChange={event => { event.currentTarget.style.height = "auto"; event.currentTarget.style.height = `${Math.min(event.currentTarget.scrollHeight, 120)}px`; handleNoteChange(spot.id, event.target.value); }} ref={element => { if (element) { element.style.height = "auto"; element.style.height = `${Math.min(element.scrollHeight, 120)}px`; } }} /></details>{transitBySpot[spot.id] && (transitBySpot[spot.id].subway || transitBySpot[spot.id].bus) && <p className="transit-meta">{transitBySpot[spot.id].subway && `지하철 ${transitBySpot[spot.id].subway}`}{transitBySpot[spot.id].subway && transitBySpot[spot.id].bus ? " · " : ""}{transitBySpot[spot.id].bus && `버스 ${transitBySpot[spot.id].bus}`}</p>}<a className="kakao-review-link" href={kakaoPlaceUrl(spot)} target="_blank" rel="noopener noreferrer" draggable={false} aria-label={`${spot.name} 카카오맵 리뷰 새 창에서 열기`}>카카오맵 리뷰 ↗</a>{travelToNext > 0 && <p className="travel-meta">다음 장소까지 도보 약 {travelToNext}분</p>}</div><span className="mobile-order-controls"><button className="order-button" type="button" disabled={i === 0} aria-label={`${spot.name} 한 칸 위로 이동`} onClick={() => handleMoveSpot(i, -1)}>↑</button><button className="order-button" type="button" disabled={i === plan.length - 1} aria-label={`${spot.name} 한 칸 아래로 이동`} onClick={() => handleMoveSpot(i, 1)}>↓</button></span><button className="remove-stop" aria-label={`${spot.name} 삭제`} onClick={() => updatePlan(plan.filter(p => p.id !== spot.id), `${spot.name} 삭제`)}>×</button></div>
               </article>
             </Fragment>)}
             {plan.length > 0 && <div className={`drop-zone ${activeDropIndex === plan.length ? "active" : ""}`} data-drop-index={plan.length} onDragOver={event => event.preventDefault()} onDragEnter={() => setActiveDropIndex(plan.length)} onDrop={() => handleDropAt(plan.length)}><span>마지막에 놓기</span></div>}
