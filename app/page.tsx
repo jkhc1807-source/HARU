@@ -935,10 +935,7 @@ export default function Home() {
         </div>
         <div className="topbar-actions">
           <button className="ghost save-trip-button" onClick={handleSaveTrip}>일정 저장</button>
-          {savedTrips.length > 0 && <select className="saved-trip-select" value={selectedSavedTripId} onChange={event => handleLoadTrip(event.target.value)} aria-label="저장한 일정 불러오기">
-            <option value="">저장한 일정</option>
-            {savedTrips.map(trip => <option key={trip.id} value={trip.id}>{trip.name}</option>)}
-          </select>}
+          {savedTrips.length > 0 && <ChoiceSelect className="saved-trip-choice" value={selectedSavedTripId} placeholder="저장한 일정" ariaLabel="저장한 일정 불러오기" options={savedTrips.map(trip => ({ value: trip.id, label: trip.name }))} onChange={handleLoadTrip} />}
           {selectedSavedTripId && <button className="ghost secondary" onClick={handleDeleteSavedTrip}>삭제</button>}
           {undoState && <button className="ghost secondary" onClick={handleUndo}>↶ 실행 취소</button>}
           <button className="ghost" onClick={handleResetPlan}>새 일정 시작</button>
