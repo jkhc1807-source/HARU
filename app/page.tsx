@@ -15,10 +15,10 @@ type SavedTrip = TripSettings & { id: string; name: string; updatedAt: number };
 type TransitInfo = { subway?: string; bus?: string };
 type ChoiceOption = { value: string; label: string };
 
-function ChoiceSelect({ value, options, placeholder, ariaLabel, disabled = false, className = "", onChange }: {
+function ChoiceSelect({ value, options, placeholder = "", ariaLabel, disabled = false, className = "", onChange }: {
   value: string;
   options: ChoiceOption[];
-  placeholder: string;
+  placeholder?: string;
   ariaLabel: string;
   disabled?: boolean;
   className?: string;
