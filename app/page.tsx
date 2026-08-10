@@ -10,7 +10,8 @@ declare global {
 type Spot = { id: string; name: string; category: string; address: string; x: number; y: number; stay: number; emoji: string; placeUrl?: string; note?: string };
 type ScheduleItem = { spot: Spot; start: string; end: string; travelToNext: number };
 type UndoState = { plan: Spot[]; message: string };
-type SavedTrip = { id: string; name: string; city: string; plan: Spot[]; updatedAt: number };
+type TripSettings = { version: 2; city: string; startTime: string; endTime: string; selected: string[]; plan: Spot[] };
+type SavedTrip = TripSettings & { id: string; name: string; updatedAt: number };
 type TransitInfo = { subway?: string; bus?: string };
 type ChoiceOption = { value: string; label: string };
 
@@ -80,12 +81,19 @@ function readStoredTrip(value: string | null) {
   try {
     const parsed: unknown = JSON.parse(value);
     if (Array.isArray(parsed)) {
-      return parsed.every(isStoredSpot) ? { city: null, plan: parsed } : null;
+      return parsed.every(isStoredSpot) ? { version: 1, city: null, startTime: "", endTime: "", selected: null, plan: parsed } : null;
     }
     if (!parsed || typeof parsed !== "object") return null;
-    const trip = parsed as { city?: unknown; plan?: unknown };
+    const trip = parsed as { version?: unknown; city?: unknown; startTime?: unknown; endTime?: unknown; selected?: unknown; plan?: unknown };
     if (!Array.isArray(trip.plan) || !trip.plan.every(isStoredSpot)) return null;
-    return { city: typeof trip.city === "string" ? trip.city : null, plan: trip.plan };
+    return {
+      version: trip.version === 2 ? 2 : 1,
+      city: typeof trip.city === "string" ? trip.city : null,
+      startTime: typeof trip.startTime === "string" ? trip.startTime : "",
+      endTime: typeof trip.endTime === "string" ? trip.endTime : "",
+      selected: Array.isArray(trip.selected) && trip.selected.every(item => typeof item === "string") ? trip.selected : null,
+      plan: trip.plan,
+    };
   } catch {
     return null;
   }
@@ -101,7 +109,10 @@ function readStoredTrips(value: string | null): SavedTrip[] {
       const trip = item as Partial<SavedTrip>;
       return typeof trip.id === "string" && typeof trip.name === "string" && typeof trip.city === "string"
         && Number.isFinite(trip.updatedAt) && Array.isArray(trip.plan) && trip.plan.every(isStoredSpot);
-    }) as SavedTrip[];
+    }).map(item => {
+      const trip = item as Partial<SavedTrip>;
+      return { ...trip, version: 2, startTime: typeof trip.startTime === "string" ? trip.startTime : "", endTime: typeof trip.endTime === "string" ? trip.endTime : "", selected: Array.isArray(trip.selected) ? trip.selected : [] } as SavedTrip;
+    });
   } catch {
     return [];
   }
@@ -252,26 +263,30 @@ function routeTravelMinutes(spots: Spot[]) {
 
 function optimizeRoute(spots: Spot[]) {
   if (spots.length < 3) return spots;
-  const start = spots[0];
   const remaining = spots.slice(1);
-  let best = spots;
-  let bestMinutes = routeTravelMinutes(spots);
-
-  function visit(permutation: Spot[], left: Spot[]) {
-    if (!left.length) {
-      const candidate = [start, ...permutation];
-      const minutes = routeTravelMinutes(candidate);
-      if (minutes < bestMinutes) {
-        best = candidate;
-        bestMinutes = minutes;
-      }
-      return;
+  const route = [spots[0]];
+  while (remaining.length) {
+    const current = route[route.length - 1];
+    let nearestIndex = 0;
+    for (let index = 1; index < remaining.length; index += 1) {
+      if (distance(current, remaining[index]) < distance(current, remaining[nearestIndex])) nearestIndex = index;
     }
-    left.forEach((spot, index) => visit([...permutation, spot], [...left.slice(0, index), ...left.slice(index + 1)]));
+    route.push(remaining.splice(nearestIndex, 1)[0]);
   }
-
-  visit([], remaining);
-  return best;
+  let improved = true;
+  while (improved) {
+    improved = false;
+    for (let startIndex = 1; startIndex < route.length - 1; startIndex += 1) {
+      for (let endIndex = startIndex + 1; endIndex < route.length; endIndex += 1) {
+        const candidate = [...route.slice(0, startIndex), ...route.slice(startIndex, endIndex + 1).reverse(), ...route.slice(endIndex + 1)];
+        if (routeTravelMinutes(candidate) < routeTravelMinutes(route)) {
+          route.splice(0, route.length, ...candidate);
+          improved = true;
+        }
+      }
+    }
+  }
+  return route;
 }
 
 export default function Home() {
@@ -315,6 +330,8 @@ export default function Home() {
   const pointerDragRef = useRef<{ pointerId: number; spot: Spot } | null>(null);
   const suppressResultClickRef = useRef(false);
   const savedTripsReadyRef = useRef(false);
+  const regionRequestRef = useRef(0);
+  const placeRequestRef = useRef(0);
   const planSpotIds = plan.map(spot => spot.id).join(",");
 
   useEffect(() => {
@@ -333,7 +350,11 @@ export default function Home() {
       setNotice("공유된 일정을 불러왔어요");
     } else if (storedTrip) {
       if (storedTrip.city) setCity(storedTrip.city);
+      if (storedTrip.startTime) setStartTime(storedTrip.startTime);
+      if (storedTrip.endTime) setEndTime(storedTrip.endTime);
+      if (storedTrip.selected?.length) setSelected(storedTrip.selected);
       setPlan(storedTrip.plan);
+      setSpots(storedTrip.plan);
     } else if (localStorage.getItem("haru-trip-plan")) {
       localStorage.removeItem("haru-trip-plan");
       setNotice("저장된 일정이 손상되어 새 일정으로 시작해요");
@@ -364,15 +385,18 @@ export default function Home() {
   useEffect(() => {
     const keyword = city.trim();
     if (regionMode !== "administrative" || !mapReady || keyword.length < 2 || !showRegionSuggestions) {
+      regionRequestRef.current += 1;
       setRegionSuggestions([]);
       setIsRegionSearching(false);
       return;
     }
 
+    const requestId = ++regionRequestRef.current;
     setIsRegionSearching(true);
     const timer = window.setTimeout(() => {
       const ps = new window.kakao.maps.services.Places();
       ps.keywordSearch(keyword, (data: any[], status: string) => {
+        if (requestId !== regionRequestRef.current) return;
         if (status !== window.kakao.maps.services.Status.OK) {
           setRegionSuggestions([]);
           setIsRegionSearching(false);
@@ -416,6 +440,7 @@ export default function Home() {
     const keyword = city.trim();
     if (regionMode !== "subway" || !mapReady || keyword.length < 2 || !showRegionSuggestions) return;
     let cancelled = false;
+    const requestId = ++regionRequestRef.current;
     setIsRegionSearching(true);
     const timer = window.setTimeout(() => {
       const ps = new window.kakao.maps.services.Places();
@@ -446,7 +471,7 @@ export default function Home() {
   }, [city, mapReady, showRegionSuggestions, regionMode]);
 
   useEffect(() => {
-    localStorage.setItem("haru-trip-plan", JSON.stringify({ city, plan }));
+    localStorage.setItem("haru-trip-plan", JSON.stringify({ version: 2, city, startTime, endTime, selected, plan } satisfies TripSettings));
     if (!mapReady || !mapRef.current) return;
     mapObjectsRef.current.forEach((object) => object.setMap(null));
     mapObjectsRef.current = [];
@@ -477,7 +502,7 @@ export default function Home() {
       mapObjectsRef.current.push(polyline);
     }
     if (plan.length) mapRef.current.setBounds(bounds);
-  }, [plan, mapReady]);
+  }, [city, startTime, endTime, selected, plan, mapReady]);
 
   useEffect(() => {
     if (!mapReady || !window.kakao?.maps?.services || !plan.length) {
@@ -628,7 +653,7 @@ export default function Home() {
     const suggestedName = `${city.trim() || "새 지역"} 하루`;
     const name = window.prompt("일정 이름을 입력해주세요", suggestedName)?.trim();
     if (!name) return;
-    const trip: SavedTrip = { id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, name, city, plan, updatedAt: Date.now() };
+    const trip: SavedTrip = { version: 2, id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, name, city, startTime, endTime, selected, plan, updatedAt: Date.now() };
     setSavedTrips(current => [trip, ...current.filter(item => item.name !== name)].slice(0, 12));
     setSelectedSavedTripId(trip.id);
     setNotice(`'${name}' 일정을 저장했어요`);
@@ -673,6 +698,9 @@ export default function Home() {
     const trip = savedTrips.find(item => item.id === id);
     if (!trip) return;
     setCity(trip.city);
+    setStartTime(trip.startTime);
+    setEndTime(trip.endTime);
+    if (trip.selected.length) setSelected(trip.selected);
     setPlan(trip.plan);
     setSpots(trip.plan);
     setIsPlanAutoGenerated(false);
@@ -710,10 +738,12 @@ export default function Home() {
     }
     const term = `${city.trim()} ${keyword}`.trim();
     if (mapReady && window.kakao?.maps?.services) {
+      const requestId = ++placeRequestRef.current;
       setIsPlaceSearching(true);
       setSearchNotice(`‘${term}’ 장소를 찾고 있어요…`);
       const ps = new window.kakao.maps.services.Places();
       ps.keywordSearch(term, (data: any[], status: string) => {
+        if (requestId !== placeRequestRef.current) return;
         setIsPlaceSearching(false);
         if (status !== window.kakao.maps.services.Status.OK) {
           setSearchNotice("검색 결과가 없어요. 다른 검색어를 입력해보세요");

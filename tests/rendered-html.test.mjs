@@ -42,4 +42,9 @@ test("keeps metadata and safe trip persistence logic in the app", async () => {
   assert.match(page, /localStorage\.removeItem\("haru-trip-plan"\)/);
   assert.match(page, /handleCityChange/);
   assert.match(page, /지역이 바뀌어 이전 일정을 비웠어요/);
+  assert.match(page, /version: 2, city, startTime, endTime, selected, plan/);
+  assert.match(page, /placeRequestRef/);
+  assert.match(page, /regionRequestRef/);
+  assert.doesNotMatch(page, /function visit\(permutation/);
+  assert.match(page, /while \(improved\)/);
 });

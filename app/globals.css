@@ -251,3 +251,9 @@ html,body{overflow-x:clip}
 .transit-meta{margin-top:5px!important;color:#56766a!important;font-size:10px!important;font-weight:700;white-space:normal!important;line-height:1.4}
 @media(max-width:800px){.spot-note textarea{width:100%;min-height:34px;font-size:12px}}
 @media(max-width:800px){.location-heading{align-items:center;flex-direction:row;gap:10px;padding-bottom:10px}.location-heading>label{font-size:16px!important}.region-mode{font-size:10px}.region-mode label{min-height:30px;padding-inline:8px}}
+
+/* Keep core planner controls visible and usable with keyboard, touch, or mouse. */
+.location-row input:focus-visible,.search-section form input:focus-visible{outline:3px solid rgba(126,163,49,.42);outline-offset:2px;border-radius:4px}
+.drag-handle:focus-visible{outline:3px solid rgba(126,163,49,.42);outline-offset:3px;border-radius:4px}
+@media(min-width:801px){.mobile-order-controls{display:flex;flex-shrink:0;flex-direction:column;gap:4px;margin-left:4px}.mobile-order-controls .order-button{width:34px;min-width:34px;min-height:34px}}
+@media(max-width:800px){.mobile-order-controls .order-button{width:44px;min-width:44px;min-height:44px}.remove-stop{width:44px!important;min-width:44px!important;height:44px;min-height:44px!important}.spot-note summary{min-height:44px;padding-inline:12px}}
