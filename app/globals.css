@@ -180,4 +180,33 @@ body{background:#f3efe3}
 .result{box-shadow:0 2px 0 rgba(55,76,57,.02);transition:transform .15s ease,box-shadow .15s ease,background .15s ease}
 .result:not(.added):hover{background:#f0f6e6;box-shadow:0 9px 20px rgba(44,57,49,.12)}
 @media(max-width:800px){.hero::after{width:360px;height:360px;right:-220px;bottom:-190px}.hero-copy>p:last-child{line-height:1.6}.planner-card{box-shadow:0 18px 45px rgba(6,37,28,.24),0 0 0 5px rgba(255,255,255,.04)}.summary b{font-size:14px}}
+
+/* Product-level visual pass: make the planner feel like a guided journey. */
+.hero{min-height:590px;overflow:hidden}
+.hero-copy{position:relative;padding-left:22px}
+.hero-copy::before{content:"";position:absolute;left:0;top:4px;width:4px;height:86px;border-radius:999px;background:var(--lime);box-shadow:0 0 22px rgba(205,239,111,.38)}
+.hero h1{max-width:570px;font-size:clamp(54px,6vw,78px);line-height:1.02}
+.hero-copy>p:last-child{font-size:15px}
+.planner-card{position:relative;padding:34px 34px 30px;border-radius:28px;box-shadow:0 30px 80px rgba(4,31,23,.34),0 0 0 1px rgba(255,255,255,.7)}
+.planner-card::before{content:"오늘의 여행을 설계해보세요";display:block;margin-bottom:20px;color:#78922d;font-size:11px;font-weight:800;letter-spacing:1.2px}
+.location-row{border-radius:15px;background:#fbfcf8}
+.location-row input{background:transparent}
+.time-range{border-radius:0 14px 14px 0}
+.chips{gap:9px}
+.chips button{border-radius:999px;padding-inline:17px}
+.primary{border-radius:15px;min-height:62px;font-size:14px}
+.workspace{background:#f3f1e9}
+.timeline-panel{background:linear-gradient(180deg,#fffdf8 0%,#f7f5ec 100%)}
+.section-head{border-bottom:0;padding:0 0 24px}
+.section-head h2{font-size:clamp(30px,2.8vw,40px)}
+.timeline{padding:22px 0 8px}
+.stop-card{border:0;border-radius:20px;box-shadow:0 10px 28px rgba(47,57,40,.08);padding:17px 15px}
+.stop-card h3{font-size:17px;letter-spacing:-.45px}
+.dot{box-shadow:0 0 0 5px #fffdf8,0 4px 12px rgba(25,70,53,.2)}
+.stop:not(.last):after{border-color:#c5cfb8}
+.map-panel{border-left:1px solid rgba(49,77,60,.1)}
+.search-section{position:relative;overflow:hidden}
+.search-section::before{content:"";position:absolute;top:-120px;right:-110px;width:260px;height:260px;border:1px solid rgba(126,155,50,.2);border-radius:50%;box-shadow:0 0 0 24px rgba(126,155,50,.05),0 0 0 48px rgba(126,155,50,.035);pointer-events:none}
+.search-section>div:first-child,.search-section form,.search-feedback,.results{position:relative}
+@media(max-width:800px){.hero{min-height:auto}.hero-copy{padding-left:16px}.hero-copy::before{height:70px}.hero h1{font-size:46px}.planner-card{padding:26px 20px 22px;border-radius:22px}.planner-card::before{margin-bottom:16px}.workspace{background:#f3f1e9}.stop-card{border-radius:16px;padding:14px 11px}.map-panel{border-left:0}.search-section::before{width:180px;height:180px;top:-80px;right:-80px}}
 @media(max-width:800px){.location-heading{align-items:center;flex-direction:row;gap:10px;padding-bottom:10px}.location-heading>label{font-size:16px!important}.region-mode{font-size:10px}.region-mode label{min-height:30px;padding-inline:8px}}
