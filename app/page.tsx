@@ -367,13 +367,27 @@ export default function Home() {
     setIsRegionSearching(true);
     const timer = window.setTimeout(() => {
       const ps = new window.kakao.maps.services.Places();
-      ps.keywordSearch(`${keyword} \uC9C0\uD558\uCCA0\uC5ED`, (data: any[], status: string) => {
+      const applySuggestions = (data: any[], status: string) => {
         if (cancelled) return;
         const suggestions = status === window.kakao.maps.services.Status.OK
           ? data.slice(0, 8).map(place => place.place_name).filter(Boolean)
           : [];
         setRegionSuggestions(Array.from(new Set(suggestions)) as string[]);
         setIsRegionSearching(false);
+      };
+      const fallbackKeywordSearch = () => ps.keywordSearch(`${keyword} \uC9C0\uD558\uCCA0\uC5ED`, applySuggestions);
+      const geocoder = new window.kakao.maps.services.Geocoder();
+      geocoder.addressSearch(keyword, (addresses: any[], status: string) => {
+        if (status !== window.kakao.maps.services.Status.OK || !addresses.length) {
+          fallbackKeywordSearch();
+          return;
+        }
+        const center = new window.kakao.maps.LatLng(Number(addresses[0].y), Number(addresses[0].x));
+        ps.categorySearch("SW8", applySuggestions, {
+          location: center,
+          radius: 5000,
+          sort: window.kakao.maps.services.SortBy.DISTANCE,
+        });
       });
     }, 300);
     return () => { cancelled = true; window.clearTimeout(timer); setIsRegionSearching(false); };
