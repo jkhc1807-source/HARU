@@ -979,7 +979,7 @@ export default function Home() {
           {savedTrips.length > 0 && <ChoiceSelect className="saved-trip-choice" value={selectedSavedTripId} placeholder="저장한 일정" ariaLabel="저장한 일정 불러오기" options={savedTrips.map(trip => ({ value: trip.id, label: trip.name }))} onChange={handleLoadTrip} />}
           {selectedSavedTripId && <button className="ghost secondary" onClick={handleDeleteSavedTrip}>삭제</button>}
           {undoState && <button className="ghost secondary" onClick={handleUndo}>↶ 실행 취소</button>}
-          <button className="ghost" onClick={handleResetPlan}>새 일정 시작</button>
+          <button className="ghost new-trip-button" onClick={handleResetPlan}>새 일정 시작</button>
         </div>
       </header>
 
