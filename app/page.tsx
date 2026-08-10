@@ -612,11 +612,30 @@ export default function Home() {
     }
     const payload = { city, startTime, endTime, selected, plan };
     const shareUrl = `${window.location.origin}${window.location.pathname}#trip=${encodeURIComponent(JSON.stringify(payload))}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "하루여행 일정", text: `${city} 하루 일정`, url: shareUrl });
+        setNotice("일정 공유를 완료했어요");
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+      }
+    }
     try {
       await navigator.clipboard.writeText(shareUrl);
       setNotice("일정 공유 링크를 클립보드에 복사했어요");
     } catch {
-      window.prompt("아래 링크를 복사해주세요", shareUrl);
+      const textarea = document.createElement("textarea");
+      textarea.value = shareUrl;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      const copied = document.execCommand("copy");
+      textarea.remove();
+      if (copied) setNotice("일정 공유 링크를 클립보드에 복사했어요");
+      else window.prompt("아래 링크를 복사해주세요", shareUrl);
     }
   }
 
