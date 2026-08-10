@@ -103,7 +103,8 @@ const preferenceConfigs: PreferenceConfig[] = [
   { label: "카페", query: "카페", emoji: "☕", matches: /카페|커피|디저트/, defaultSelected: true },
   { label: "맛집", query: "맛집", emoji: "🍽️", matches: /음식점|맛집|식당|요리/, defaultSelected: true },
   { label: "전시", query: "전시", emoji: "🖼️", matches: /문화|전시|미술|박물관|공연/ },
-  { label: "산책", query: "공원 산책", emoji: "🌿", matches: /공원|관광|산책|자연|명소/, defaultSelected: true },
+  { label: "공원", query: "공원", emoji: "🌿", matches: /공원|관광|산책|자연|명소/, defaultSelected: true },
+  { label: "서점", query: "서점", emoji: "📚", matches: /서점|도서관|책방/ },
 ];
 const categories = preferenceConfigs.map(preference => preference.label);
 const timeOptions = Array.from({ length: 35 }, (_, index) => {
