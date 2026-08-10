@@ -212,6 +212,7 @@ body{background:#f3efe3}
 
 /* Typography and composition pass: make hierarchy visible at a glance. */
 body{font-weight:450;letter-spacing:-.12px}
+html,body{overflow-x:clip}
 .brand{font-weight:850;letter-spacing:-1px}
 .hero{grid-template-columns:minmax(0,1.05fr) minmax(430px,520px);gap:clamp(52px,8vw,124px)}
 .hero-copy{align-self:center}
