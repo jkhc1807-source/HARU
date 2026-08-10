@@ -232,4 +232,6 @@ body{font-weight:450;letter-spacing:-.12px}
 .hero{overflow:visible}
 .hero-copy,.planner-card{z-index:2}
 .hero::after{z-index:-1}
+.missing-preferences{margin:18px 0 4px;padding:11px 14px;border:1px dashed #c7d2b4;border-radius:12px;background:#f7faed;color:#6d7e43;font-size:12px;font-weight:700;line-height:1.5}
+@media(max-width:800px){.missing-preferences{margin:14px 0 2px;font-size:11px}}
 @media(max-width:800px){.location-heading{align-items:center;flex-direction:row;gap:10px;padding-bottom:10px}.location-heading>label{font-size:16px!important}.region-mode{font-size:10px}.region-mode label{min-height:30px;padding-inline:8px}}
