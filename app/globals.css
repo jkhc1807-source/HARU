@@ -227,4 +227,9 @@ body{font-weight:450;letter-spacing:-.12px}
 .stop-card h3{font-weight:750;letter-spacing:-.7px}
 .result b{font-size:15px;letter-spacing:-.3px}
 @media(max-width:800px){.hero{grid-template-columns:1fr;gap:26px}.hero h1{font-weight:800;letter-spacing:-2.8px}.planner-card{transform:none}.planner-card label{font-size:12px}.location-row input{font-size:15px}.section-head h2{letter-spacing:-1.2px}}
+
+/* Autocomplete must escape the hero card instead of being clipped by it. */
+.hero{overflow:visible}
+.hero-copy,.planner-card{z-index:2}
+.hero::after{z-index:-1}
 @media(max-width:800px){.location-heading{align-items:center;flex-direction:row;gap:10px;padding-bottom:10px}.location-heading>label{font-size:16px!important}.region-mode{font-size:10px}.region-mode label{min-height:30px;padding-inline:8px}}
