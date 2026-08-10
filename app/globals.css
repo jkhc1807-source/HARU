@@ -209,4 +209,22 @@ body{background:#f3efe3}
 .search-section::before{content:"";position:absolute;top:-120px;right:-110px;width:260px;height:260px;border:1px solid rgba(126,155,50,.2);border-radius:50%;box-shadow:0 0 0 24px rgba(126,155,50,.05),0 0 0 48px rgba(126,155,50,.035);pointer-events:none}
 .search-section>div:first-child,.search-section form,.search-feedback,.results{position:relative}
 @media(max-width:800px){.hero{min-height:auto}.hero-copy{padding-left:16px}.hero-copy::before{height:70px}.hero h1{font-size:46px}.planner-card{padding:26px 20px 22px;border-radius:22px}.planner-card::before{margin-bottom:16px}.workspace{background:#f3f1e9}.stop-card{border-radius:16px;padding:14px 11px}.map-panel{border-left:0}.search-section::before{width:180px;height:180px;top:-80px;right:-80px}}
+
+/* Typography and composition pass: make hierarchy visible at a glance. */
+body{font-weight:450;letter-spacing:-.12px}
+.brand{font-weight:850;letter-spacing:-1px}
+.hero{grid-template-columns:minmax(0,1.05fr) minmax(430px,520px);gap:clamp(52px,8vw,124px)}
+.hero-copy{align-self:center}
+.hero h1{font-weight:800;letter-spacing:-4.4px}
+.hero-copy>p:last-child{letter-spacing:-.25px}
+.planner-card{transform:translateY(12px)}
+.planner-card label{font-size:13px;letter-spacing:-.2px}
+.location-row input{font-size:16px;letter-spacing:-.4px}
+.chips button{font-size:13px;font-weight:700}
+.primary{font-weight:850;letter-spacing:-.25px}
+.section-head h2{font-weight:800;letter-spacing:-1.8px}
+.summary b{font-weight:800}
+.stop-card h3{font-weight:750;letter-spacing:-.7px}
+.result b{font-size:15px;letter-spacing:-.3px}
+@media(max-width:800px){.hero{grid-template-columns:1fr;gap:26px}.hero h1{font-weight:800;letter-spacing:-2.8px}.planner-card{transform:none}.planner-card label{font-size:12px}.location-row input{font-size:15px}.section-head h2{letter-spacing:-1.2px}}
 @media(max-width:800px){.location-heading{align-items:center;flex-direction:row;gap:10px;padding-bottom:10px}.location-heading>label{font-size:16px!important}.region-mode{font-size:10px}.region-mode label{min-height:30px;padding-inline:8px}}
