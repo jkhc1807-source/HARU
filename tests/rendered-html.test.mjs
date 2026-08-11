@@ -30,21 +30,23 @@ test("server-renders the 하루여행 planner shell", async () => {
 });
 
 test("keeps metadata and safe trip persistence logic in the app", async () => {
-  const [page, layout] = await Promise.all([
+  const [page, layout, storage, schedule] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../lib/trip-storage.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
   ]);
 
   assert.match(layout, /lang="ko"/);
   assert.match(layout, /generateMetadata/);
   assert.match(layout, /og\.png/);
-  assert.match(page, /readStoredTrip/);
+  assert.match(storage, /readStoredTrip/);
   assert.match(page, /localStorage\.removeItem\("haru-trip-plan"\)/);
   assert.match(page, /handleCityChange/);
   assert.match(page, /지역이 바뀌어 이전 일정을 비웠어요/);
   assert.match(page, /version: 2, city, startTime, endTime, selected, plan/);
   assert.match(page, /placeRequestRef/);
   assert.match(page, /regionRequestRef/);
-  assert.doesNotMatch(page, /function visit\(permutation/);
-  assert.match(page, /while \(improved\)/);
+  assert.doesNotMatch(schedule, /function visit\(permutation/);
+  assert.match(schedule, /while \(improved\)/);
 });

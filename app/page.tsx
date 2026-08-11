@@ -2,136 +2,16 @@
 
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { DragEvent, PointerEvent as ReactPointerEvent } from "react";
+import { ChoiceSelect } from "@/components/atoms/ChoiceSelect";
+import { SiteHeader } from "@/components/organisms/SiteHeader";
+import { TimeRangePicker } from "@/components/molecules/TimeRangePicker";
+import type { SavedTrip, ScheduleItem, Spot, TransitInfo, TripSettings, UndoState } from "@/lib/trip-types";
+import { readSharedTrip, readStoredTrip, readStoredTrips } from "@/lib/trip-storage";
 
 declare global {
   interface Window { kakao: any }
 }
 
-type Spot = { id: string; name: string; category: string; address: string; x: number; y: number; stay: number; emoji: string; placeUrl?: string; note?: string };
-type ScheduleItem = { spot: Spot; start: string; end: string; travelToNext: number };
-type UndoState = { plan: Spot[]; message: string };
-type TripSettings = { version: 2; city: string; startTime: string; endTime: string; selected: string[]; plan: Spot[] };
-type SavedTrip = TripSettings & { id: string; name: string; updatedAt: number };
-type TransitInfo = { subway?: string; bus?: string };
-type ChoiceOption = { value: string; label: string };
-
-function ChoiceSelect({ value, options, placeholder = "", ariaLabel, disabled = false, className = "", onChange }: {
-  value: string;
-  options: ChoiceOption[];
-  placeholder?: string;
-  ariaLabel: string;
-  disabled?: boolean;
-  className?: string;
-  onChange: (value: string) => void;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const selected = options.find(option => option.value === value);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const handlePointerDown = (event: PointerEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) setIsOpen(false);
-    };
-    window.addEventListener("pointerdown", handlePointerDown);
-    return () => window.removeEventListener("pointerdown", handlePointerDown);
-  }, [isOpen]);
-
-  function handleKeyDown(event: React.KeyboardEvent<HTMLButtonElement>) {
-    if (event.key === "Escape") {
-      setIsOpen(false);
-      triggerRef.current?.focus();
-      return;
-    }
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      setIsOpen(true);
-      return;
-    }
-    if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
-    event.preventDefault();
-    const currentIndex = Math.max(0, options.findIndex(option => option.value === value));
-    const nextIndex = event.key === "Home" ? 0 : event.key === "End" ? options.length - 1 : Math.max(0, Math.min(options.length - 1, currentIndex + (event.key === "ArrowDown" ? 1 : -1)));
-    onChange(options[nextIndex].value);
-    setIsOpen(true);
-  }
-
-  return <div ref={rootRef} className={`choice-select ${isOpen ? "is-open" : ""} ${className}`}>
-    <button ref={triggerRef} type="button" className="choice-select-trigger" disabled={disabled} aria-label={ariaLabel} aria-haspopup="listbox" aria-expanded={isOpen} onClick={() => setIsOpen(open => !open)} onKeyDown={handleKeyDown}>
-      <span>{selected?.label || placeholder}</span><i aria-hidden="true" />
-    </button>
-    {isOpen && <div className="choice-select-menu" role="listbox" aria-label={ariaLabel}>
-      {options.map((option, index) => <button ref={element => { optionRefs.current[index] = element; }} type="button" role="option" aria-selected={option.value === value} className={option.value === value ? "selected" : ""} key={option.value} onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); setIsOpen(false); triggerRef.current?.focus(); } else if (event.key === "ArrowDown" || event.key === "ArrowUp") { event.preventDefault(); optionRefs.current[Math.max(0, Math.min(options.length - 1, index + (event.key === "ArrowDown" ? 1 : -1)))]?.focus(); } }} onClick={() => { onChange(option.value); setIsOpen(false); triggerRef.current?.focus(); }}>{option.label}</button>)}
-    </div>}
-  </div>;
-}
-
-function isStoredSpot(value: unknown): value is Spot {
-  if (!value || typeof value !== "object") return false;
-  const spot = value as Partial<Spot>;
-  return typeof spot.id === "string" && typeof spot.name === "string" && typeof spot.category === "string"
-    && typeof spot.address === "string" && Number.isFinite(spot.x) && Number.isFinite(spot.y)
-    && Number.isFinite(spot.stay) && typeof spot.emoji === "string" && (spot.note === undefined || typeof spot.note === "string");
-}
-
-function readStoredTrip(value: string | null) {
-  if (!value) return null;
-  try {
-    const parsed: unknown = JSON.parse(value);
-    if (Array.isArray(parsed)) {
-      return parsed.every(isStoredSpot) ? { version: 1, city: null, startTime: "", endTime: "", selected: null, plan: parsed } : null;
-    }
-    if (!parsed || typeof parsed !== "object") return null;
-    const trip = parsed as { version?: unknown; city?: unknown; startTime?: unknown; endTime?: unknown; selected?: unknown; plan?: unknown };
-    if (!Array.isArray(trip.plan) || !trip.plan.every(isStoredSpot)) return null;
-    return {
-      version: trip.version === 2 ? 2 : 1,
-      city: typeof trip.city === "string" ? trip.city : null,
-      startTime: typeof trip.startTime === "string" ? trip.startTime : "",
-      endTime: typeof trip.endTime === "string" ? trip.endTime : "",
-      selected: Array.isArray(trip.selected) && trip.selected.every(item => typeof item === "string") ? trip.selected : null,
-      plan: trip.plan,
-    };
-  } catch {
-    return null;
-  }
-}
-
-function readStoredTrips(value: string | null): SavedTrip[] {
-  if (!value) return [];
-  try {
-    const parsed: unknown = JSON.parse(value);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(item => {
-      if (!item || typeof item !== "object") return false;
-      const trip = item as Partial<SavedTrip>;
-      return typeof trip.id === "string" && typeof trip.name === "string" && typeof trip.city === "string"
-        && Number.isFinite(trip.updatedAt) && Array.isArray(trip.plan) && trip.plan.every(isStoredSpot);
-    }).map(item => {
-      const trip = item as Partial<SavedTrip>;
-      return { ...trip, version: 2, startTime: typeof trip.startTime === "string" ? trip.startTime : "", endTime: typeof trip.endTime === "string" ? trip.endTime : "", selected: Array.isArray(trip.selected) ? trip.selected : [] } as SavedTrip;
-    });
-  } catch {
-    return [];
-  }
-}
-
-function readSharedTrip(hash: string) {
-  if (!hash.startsWith("#trip=")) return null;
-  try {
-    const parsed: unknown = JSON.parse(decodeURIComponent(hash.slice(6)));
-    if (!parsed || typeof parsed !== "object") return null;
-    const trip = parsed as { city?: unknown; startTime?: unknown; endTime?: unknown; selected?: unknown; plan?: unknown };
-    if (typeof trip.city !== "string" || typeof trip.startTime !== "string" || typeof trip.endTime !== "string"
-      || !Array.isArray(trip.selected) || !trip.selected.every(item => typeof item === "string")
-      || !Array.isArray(trip.plan) || !trip.plan.every(isStoredSpot)) return null;
-    return { city: trip.city, startTime: trip.startTime, endTime: trip.endTime, selected: trip.selected as string[], plan: trip.plan as Spot[] };
-  } catch {
-    return null;
-  }
-}
 
 const sampleSpots: Spot[] = [
   { id: "1", name: "서울숲", category: "산책", address: "서울 성동구 뚝섬로 273", x: 127.0374, y: 37.5444, stay: 70, emoji: "🌳" },
@@ -1050,21 +930,14 @@ export default function Home() {
 
   return (
     <main>
-      <header className="topbar">
-        <div className="brand">
-          <span className="brand-mark" aria-hidden="true"><i /></span>
-          <span className="brand-word"><b>하루</b>여행</span>
-          <small>하루가 가벼워지는 여행 플래너</small>
-        </div>
-        <div className="topbar-actions">
+      <SiteHeader>
           <button className="ghost save-trip-button" onClick={handleSaveTrip}>일정 저장</button>
           <button className="ghost share-trip-button" onClick={handleShareTrip}>공유</button>
           {savedTrips.length > 0 && <ChoiceSelect className="saved-trip-choice" value={selectedSavedTripId} placeholder="저장한 일정" ariaLabel="저장한 일정 불러오기" options={savedTrips.map(trip => ({ value: trip.id, label: trip.name }))} onChange={handleLoadTrip} />}
           {selectedSavedTripId && <button className="ghost secondary" onClick={handleDeleteSavedTrip}>삭제</button>}
           {undoState && <button className="ghost secondary" onClick={handleUndo}>↶ 실행 취소</button>}
           <button className="ghost new-trip-button" onClick={handleResetPlan}>새 일정 시작</button>
-        </div>
-      </header>
+      </SiteHeader>
 
       <section className="hero">
         <div className="hero-copy"><p className="eyebrow">ONE DAY, ONE PERFECT ROUTE</p><h1>오늘 어디로<br/><em>떠나볼까요?</em></h1><p>취향과 시간을 고르면, 걷기 좋은 순서로 하루를 정리해드려요.</p></div>
@@ -1097,17 +970,7 @@ export default function Home() {
                 >{region}</button>)}
               </div>}
             </div>
-            <div className={`time-range ${hasInvalidTimeRange ? "invalid" : ""}`}>
-              <div className="time-select-field">
-                <span className="time-select-label">시작</span>
-                <ChoiceSelect value={startTime} placeholder="시간 선택" ariaLabel="시작 시간" options={timeOptions.filter(option => option.value !== "24:00")} onChange={value => { setStartTime(value); setEndTime(""); setPlannerNotice(""); }} />
-              </div>
-              <span className="time-arrow" aria-hidden="true">→</span>
-              <div className="time-select-field">
-                <span className="time-select-label">종료</span>
-                <ChoiceSelect disabled={!startTime} value={endTime} placeholder={startTime ? "시간 선택" : "시작 먼저 선택"} ariaLabel="종료 시간" options={timeOptions.filter(option => timeToMinutes(option.value) > timeToMinutes(startTime))} onChange={value => { setEndTime(value); setPlannerNotice(""); }} />
-              </div>
-            </div>
+            <TimeRangePicker startTime={startTime} endTime={endTime} options={timeOptions} isInvalid={hasInvalidTimeRange} onStartChange={value => { setStartTime(value); setEndTime(""); setPlannerNotice(""); }} onEndChange={value => { setEndTime(value); setPlannerNotice(""); }} />
           </div>
           <label>오늘의 취향</label>
           <div className="chips">{categories.map(c => <button type="button" key={c} className={selected.includes(c) ? "active" : ""} aria-pressed={selected.includes(c)} onClick={() => handlePreferenceToggle(c)}>{c}</button>)}</div>
