@@ -982,6 +982,7 @@ export default function Home() {
       <section className="workspace">
         <div className="timeline-panel">
           <div className="section-head"><div><p>MY DAY</p><h2>{city}에서의 하루</h2></div><div className="section-tools"><div className="summary"><b>{Math.floor(total / 60)}시간 {total % 60}분</b><span>{plan.length}개 장소 · 도보 {totalTravel}분</span></div><div className="route-optimize-wrap"><button type="button" className="route-optimize" onClick={handleOptimizeRoute}>↗ 동선 정리</button><span role="status">{routeOptimizeMessage}</span></div></div></div>
+          <a className="place-search-shortcut" href="#place-search-input">+ 장소 찾아 추가하기</a>
           {overrunMinutes > 0 && <div className="time-warning" role="status"><div><b>선택한 종료 시간을 {overrunMinutes}분 초과해요</b><span>직접 추가한 장소는 임의로 지우지 않았어요.</span></div><button type="button" onClick={handleFitToTime}>시간에 맞게 줄이기</button></div>}
           <div ref={timelineEl} className={`timeline ${isDragging ? "dragging" : ""}`}>
             {plan.length === 0 && <div className={`empty-drop-zone ${activeDropIndex === 0 ? "active" : ""}`} data-drop-index="0" onDragOver={event => event.preventDefault()} onDragEnter={() => setActiveDropIndex(0)} onDrop={() => handleDropAt(0)}>
@@ -1015,9 +1016,9 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="search-section">
+      <section className="search-section" id="place-search">
         <div><p className="eyebrow">FIND A PLACE</p><h2>일정에 장소 더하기</h2></div>
-        <form onSubmit={searchPlaces}><input value={query} onChange={e => setQuery(e.target.value)} placeholder="카페, 전시관, 맛집을 검색해보세요"/><button disabled={isPlaceSearching}>{isPlaceSearching ? "검색 중…" : "검색"}</button></form>
+        <form onSubmit={searchPlaces}><input id="place-search-input" aria-label="일정에 추가할 장소 검색" value={query} onChange={e => setQuery(e.target.value)} placeholder="카페, 전시관, 맛집을 검색해보세요"/><button disabled={isPlaceSearching}>{isPlaceSearching ? "검색 중…" : "검색"}</button></form>
         <p className="search-feedback" role="status">{searchNotice}</p>
         <p className="drag-guide"><span className="desktop-guide">장소 카드를 잡으면 일정 영역으로 자동 이동해요. 원하는 사이에 놓거나, 눌러서 마지막에 추가하세요.</span><span className="mobile-guide">모바일에서는 장소 카드를 눌러 일정에 추가하고, 위쪽 일정에서 ↑ ↓ 버튼으로 순서를 바꾸세요.</span></p>
         <div className="results">{spots.map(s => {

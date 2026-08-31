@@ -27,6 +27,7 @@ test("server-renders the 하루여행 planner shell", async () => {
   assert.match(html, /일정에 장소 더하기/);
   assert.match(html, /카카오맵 리뷰/);
   assert.match(html, /role="status"/);
+  assert.match(html, /<input[^>]*aria-label="일정에 추가할 장소 검색"/);
 });
 
 test("keeps metadata and safe trip persistence logic in the app", async () => {

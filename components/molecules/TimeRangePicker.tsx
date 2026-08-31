@@ -23,7 +23,7 @@ export function TimeRangePicker({ startTime, endTime, options, isInvalid, onStar
     <span className="time-arrow" aria-hidden="true">→</span>
     <div className="time-select-field">
       <span className="time-select-label">종료</span>
-      <ChoiceSelect disabled={!startTime} value={endTime} placeholder={startTime ? "시간 선택" : "시작 먼저 선택"} ariaLabel="종료 시간" options={endOptions} onChange={onEndChange} />
+      <ChoiceSelect disabled={!startTime} value={endTime} placeholder={startTime ? "시간 선택" : "시작 먼저"} ariaLabel="종료 시간" options={endOptions} onChange={onEndChange} />
     </div>
   </div>;
 }
