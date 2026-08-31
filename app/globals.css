@@ -325,11 +325,14 @@ html,body{overflow-x:clip}
 /* Quiet itinerary cards: one visible action, editing on demand. */
 .timeline .stop{display:block;padding:0;cursor:default}
 .timeline .stop>.time,.timeline .stop>.dot,.timeline .stop::after{display:none}
-.timeline .compact-stop{display:block;position:relative;min-height:0;padding:20px 64px 18px 22px;border:1px solid #dfe4da;border-radius:14px;background:#fffefb;box-shadow:none}
+.timeline .compact-stop{display:block;position:relative;min-height:0;padding:20px 64px 18px 48px;border:1px solid #dfe4da;border-radius:14px;background:#fffefb;box-shadow:none}
 .timeline .compact-stop:hover{transform:none;box-shadow:none}
-.compact-stop .drag-handle{position:absolute;left:5px;top:23px;margin:0;font-size:14px}
-.compact-stop h3{margin:0 0 5px;font-size:18px}
-.stop-number{margin-right:5px;color:#6b825d;font-size:14px;font-weight:600}
+.compact-stop .drag-handle{position:absolute;left:10px;top:50%;transform:translateY(-50%);margin:0;font-size:14px}
+.compact-stop h3{display:flex;align-items:center;gap:9px;margin:0 0 9px;font-size:18px;line-height:1.45;letter-spacing:-.4px}
+.stop-number{display:inline-grid;place-items:center;flex:0 0 26px;width:26px;height:26px;border-radius:8px;background:#e8eee1;color:#365c42;font-size:13px;font-weight:800;line-height:1;letter-spacing:0}
+.tone-cafe .stop-number{background:#f3e8d8;color:#805b31}
+.tone-food .stop-number{background:#f7e5dc;color:#95543e}
+.tone-culture .stop-number{background:#eee8f6;color:#71568d}
 .compact-stop .stop-info{margin-bottom:5px;font-size:12px;color:#6b786f}
 .compact-stop .kakao-review-link{min-height:36px;margin-top:5px;padding:0;border:0;border-radius:0;background:none;box-shadow:none}
 .stop-actions{position:absolute;top:12px;right:10px}
