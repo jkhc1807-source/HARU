@@ -37,6 +37,9 @@ test("server-renders the 하루여행 planner shell", async () => {
     assert.match(content, /체류 시간/);
     assert.match(content, /<textarea/);
   }
+  const footers = [...html.matchAll(/<div class="spot-actions-footer">([\s\S]*?)<\/div>/g)];
+  assert.equal(footers.length, 4);
+  for (const [, content] of footers) assert.match(content, /장소 삭제<\/button>[\s\S]*class="confirm-spot-edit"[^>]*>확인<\/button>/);
   assert.match(html, /<input[^>]*aria-label="일정에 추가할 장소 검색"/);
 });
 

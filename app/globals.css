@@ -283,7 +283,9 @@ html,body{overflow-x:clip}
 .spot-editor-fields .stay-choice{flex:0 0 90px}
 .spot-editor .spot-note{display:block;margin:0;font-size:13px}
 .spot-editor .spot-note textarea{width:100%;min-height:60px;font-size:13px}
-.stop-card .spot-note-preview{margin-top:8px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.stop-card .spot-note-preview{margin-top:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+.spot-actions-footer .confirm-spot-edit{min-width:64px;min-height:44px;padding:8px 16px;border-radius:8px;background:var(--green);color:#fff;font-size:13px;font-weight:700}
+.confirm-spot-edit:focus-visible{outline:2px solid #789345;outline-offset:3px}
 .stop-card h3{font-size:18px;line-height:1.4;overflow-wrap:anywhere}
 .stop-card p{font-size:13px;line-height:1.6;white-space:normal;overflow-wrap:anywhere;color:#596d62}
 .stop-card small,.stay-control,.spot-note,.kakao-review-link{font-size:12px}
@@ -345,7 +347,8 @@ html,body{overflow-x:clip}
 .compact-stop .stop-actions-panel>button{display:block;width:100%;min-height:44px;padding:8px;text-align:left;font-size:13px;color:#294e3b;border-radius:6px}
 .stop-actions-panel>button:disabled{opacity:.35;cursor:default}
 .stop-actions-panel>button:hover:not(:disabled){background:#f1f5e9}
-.compact-stop .stop-actions-panel>.delete-place{color:#a44c3f;border-top:1px solid #e4e8df;border-radius:0}
+.spot-actions-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px;padding-top:8px;border-top:1px solid #e4e8df}
+.compact-stop .spot-actions-footer .delete-place{min-height:44px;padding:8px;color:#a44c3f;font-size:13px}
 .stop-actions .spot-editor{margin:0;padding:0 8px}
 .stop-actions .spot-editor>summary{font-size:13px}
 .between-stops{margin:0;padding:12px 22px 4px;color:#778471;font-size:12px}
