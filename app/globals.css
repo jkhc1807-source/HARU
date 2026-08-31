@@ -271,6 +271,19 @@ html,body{overflow-x:clip}
 .time-range .choice-select-trigger{min-height:44px}
 .stop-meta{flex-wrap:wrap;gap:8px}
 .stay-control::after{display:none}
+.stay-duration{font-size:12px;color:#596d62}
+.spot-editor{margin-top:8px;font-size:13px;color:var(--green)}
+.spot-editor>summary{display:flex;align-items:center;justify-content:space-between;min-height:44px;cursor:pointer;list-style:none;font-weight:700}
+.spot-editor>summary::-webkit-details-marker{display:none}
+.spot-editor>summary::after{content:"＋"}
+.spot-editor[open]>summary::after{content:"−"}
+.spot-editor>summary:focus-visible{outline:2px solid #9ab85b;outline-offset:2px;border-radius:6px}
+.spot-editor-fields{display:grid;gap:12px;padding:12px 0;border-top:1px solid rgba(31,77,61,.15)}
+.spot-editor-fields .stay-control{justify-content:space-between;font-size:13px}
+.spot-editor-fields .stay-choice{flex:0 0 90px}
+.spot-editor .spot-note{display:block;margin:0;font-size:13px}
+.spot-editor .spot-note textarea{width:100%;min-height:60px;font-size:13px}
+.stop-card .spot-note-preview{margin-top:8px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .stop-card h3{font-size:18px;line-height:1.4;overflow-wrap:anywhere}
 .stop-card p{font-size:13px;line-height:1.6;white-space:normal;overflow-wrap:anywhere;color:#596d62}
 .stop-card small,.stay-control,.spot-note,.kakao-review-link{font-size:12px}
@@ -306,5 +319,32 @@ html,body{overflow-x:clip}
   .map-panel{position:relative;top:auto;height:340px}
   .section-head{flex-wrap:wrap;gap:16px}
 .section-tools{flex-direction:row;align-items:center;justify-content:space-between;width:100%}
-  .summary{text-align:left}
+.summary{text-align:left}
 }
+
+/* Quiet itinerary cards: one visible action, editing on demand. */
+.timeline .stop{display:block;padding:0;cursor:default}
+.timeline .stop>.time,.timeline .stop>.dot,.timeline .stop::after{display:none}
+.timeline .compact-stop{display:block;position:relative;min-height:0;padding:20px 64px 18px 22px;border:1px solid #dfe4da;border-radius:14px;background:#fffefb;box-shadow:none}
+.timeline .compact-stop:hover{transform:none;box-shadow:none}
+.compact-stop .drag-handle{position:absolute;left:5px;top:23px;margin:0;font-size:14px}
+.compact-stop h3{margin:0 0 5px;font-size:18px}
+.stop-number{margin-right:5px;color:#6b825d;font-size:14px;font-weight:600}
+.compact-stop .stop-info{margin-bottom:5px;font-size:12px;color:#6b786f}
+.compact-stop .kakao-review-link{min-height:36px;margin-top:5px;padding:0;border:0;border-radius:0;background:none;box-shadow:none}
+.stop-actions{position:absolute;top:12px;right:10px}
+.stop-actions>summary{display:grid;place-items:center;width:44px;height:44px;list-style:none;cursor:pointer;color:#52675a;font-size:24px;border-radius:8px}
+.stop-actions>summary::-webkit-details-marker{display:none}
+.stop-actions>summary:hover,.stop-actions[open]>summary{background:#f0f3eb}
+.stop-actions>summary:focus-visible{outline:2px solid #789345;outline-offset:2px}
+.stop:has(.stop-actions[open]){z-index:100}
+.stop-actions-panel{position:absolute;right:0;top:48px;width:240px;max-width:calc(100vw - 80px);padding:8px 12px;border:1px solid #d9e0d3;border-radius:12px;background:#fffefb;box-shadow:0 8px 24px #19372820}
+.compact-stop .stop-actions-panel>button{display:block;width:100%;min-height:44px;padding:8px;text-align:left;font-size:13px;color:#294e3b;border-radius:6px}
+.stop-actions-panel>button:disabled{opacity:.35;cursor:default}
+.stop-actions-panel>button:hover:not(:disabled){background:#f1f5e9}
+.compact-stop .stop-actions-panel>.delete-place{color:#a44c3f;border-top:1px solid #e4e8df;border-radius:0}
+.stop-actions .spot-editor{margin:0;padding:0 8px}
+.stop-actions .spot-editor>summary{font-size:13px}
+.between-stops{margin:0;padding:12px 22px 4px;color:#778471;font-size:12px}
+.timeline>.drop-zone{margin-left:0;height:10px}
+@media(max-width:800px){.timeline .compact-stop{padding:16px 60px 14px 16px}.compact-stop h3{font-size:17px}.stop-actions{top:8px;right:6px}}

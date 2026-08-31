@@ -27,6 +27,16 @@ test("server-renders the 하루여행 planner shell", async () => {
   assert.match(html, /일정에 장소 더하기/);
   assert.match(html, /카카오맵 리뷰/);
   assert.match(html, /role="status"/);
+  const editors = [...html.matchAll(/<details class="spot-editor"[^>]*>([\s\S]*?)<\/details>/g)];
+  assert.equal((html.match(/class="stop-actions"/g) || []).length, 4);
+  assert.equal((html.match(/class="between-stops"/g) || []).length, 3);
+  assert.equal(editors.length, 4, "Each sample stop has a collapsed editor");
+  for (const [markup, content] of editors) {
+    assert.doesNotMatch(markup.split(">", 1)[0], /\bopen(?:\s|=|$)/);
+    assert.match(content, /시간·메모 수정/);
+    assert.match(content, /체류 시간/);
+    assert.match(content, /<textarea/);
+  }
   assert.match(html, /<input[^>]*aria-label="일정에 추가할 장소 검색"/);
 });
 
