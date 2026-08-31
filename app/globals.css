@@ -349,5 +349,8 @@ html,body{overflow-x:clip}
 .stop-actions .spot-editor{margin:0;padding:0 8px}
 .stop-actions .spot-editor>summary{font-size:13px}
 .between-stops{margin:0;padding:12px 22px 4px;color:#778471;font-size:12px}
-.timeline>.drop-zone{margin-left:0;height:10px}
+.timeline>.drop-zone{height:10px;margin:0;transition:background-color .15s,border-color .15s}
+.timeline.dragging>.drop-zone{display:grid;place-items:center;height:36px;margin:12px 0;padding:0 12px;text-align:center}
+.timeline.dragging>.drop-zone span{line-height:1.4}
+.timeline.dragging .between-stops{display:none}
 @media(max-width:800px){.timeline .compact-stop{padding:16px 60px 14px 16px}.compact-stop h3{font-size:17px}.stop-actions{top:8px;right:6px}}
