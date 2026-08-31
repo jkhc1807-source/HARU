@@ -31,6 +31,13 @@ const preferenceConfigs: PreferenceConfig[] = [
   { label: "서점", query: "서점", emoji: "📚", matches: /서점|도서관|책방/ },
 ];
 const categories = preferenceConfigs.map(preference => preference.label);
+const categoryIconPaths: Record<string, string> = {
+  카페: "M4 9h12v7a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V9Zm12 1h2a3 3 0 0 1 0 6h-2M7 3v3m5-3v3M3 22h16",
+  맛집: "M5 3v6m3-6v6M2 3v6a3 3 0 0 0 6 0M5 12v9M18 3c-3 3-4 7-4 10h5M19 3v18",
+  전시: "M3 4h18v16H3V4Zm0 12 5-5 5 5 3-3 5 5M16 8h.01",
+  공원: "M12 21v-5M12 3 6 10h3l-5 6h16l-5-6h3L12 3Z",
+  서점: "M12 6v15M3 4c4-1 7 0 9 2 2-2 5-3 9-2v15c-4-1-7 0-9 2-2-2-5-3-9-2V4Z",
+};
 const timeOptions = Array.from({ length: 35 }, (_, index) => {
   const minutes = 7 * 60 + index * 30;
   return {
@@ -936,7 +943,15 @@ export default function Home() {
       </SiteHeader>
 
       <section className="hero">
-        <div className="hero-copy"><p className="eyebrow">ONE DAY, ONE PERFECT ROUTE</p><h1>오늘 어디로<br/><em>떠나볼까요?</em></h1><p>취향과 시간을 고르면, 걷기 좋은 순서로 하루를 정리해드려요.</p></div>
+        <div className="hero-copy">
+          <p className="eyebrow">HARU / A DAY WELL SPENT</p>
+          <h1>오늘 어디로<br/><em>떠나볼까요?</em></h1>
+          <p>좋아하는 곳을 따라, 나다운 하루.<br/>취향과 시간을 고르면 여행의 순서가 완성돼요.</p>
+          <figure className="journey-photo">
+            <img src="/haru-forest.jpg" width="1200" height="800" alt="햇살이 나무 사이로 스며드는 숲속 산책길" fetchPriority="high" />
+            <figcaption><span>조금 천천히, 조금 가까이.</span><a href="https://unsplash.com/photos/F7HGqkkMYAU" target="_blank" rel="noopener noreferrer">Photo · Charles Black / Unsplash ↗</a></figcaption>
+          </figure>
+        </div>
         <div className="planner-card">
           <div className="location-heading"><label>어디로 갈까요?</label><div className="region-mode" role="radiogroup" aria-label="검색 대상"><label><input type="radio" name="region-mode" value="administrative" checked={regionMode === "administrative"} onChange={() => { setRegionMode("administrative"); setRegionSuggestions([]); setShowRegionSuggestions(true); }} />{regionModeLabels.administrative}</label><label><input type="radio" name="region-mode" value="subway" checked={regionMode === "subway"} onChange={() => { setRegionMode("subway"); setRegionSuggestions([]); setShowRegionSuggestions(true); }} />{regionModeLabels.subway}</label></div></div>
           <div className="location-row">
@@ -1041,13 +1056,21 @@ export default function Home() {
       </section>
 
       <section className="search-section" id="place-search">
-        <div><p className="eyebrow">FIND A PLACE</p><h2>일정에 장소 더하기</h2></div>
-        <form onSubmit={searchPlaces}><input id="place-search-input" aria-label="일정에 추가할 장소 검색" value={query} onChange={e => setQuery(e.target.value)} placeholder="카페, 전시관, 맛집을 검색해보세요"/><button disabled={isPlaceSearching}>{isPlaceSearching ? "검색 중…" : "검색"}</button></form>
+        <div className="discovery-header">
+          <div><p className="eyebrow">MAKE ROOM FOR A LITTLE DISCOVERY</p><h2>일정에 장소 더하기</h2><p className="discovery-description">가보고 싶던 그곳,<br/>오늘의 코스에 담아보세요.</p></div>
+          <form onSubmit={searchPlaces}><input id="place-search-input" aria-label="일정에 추가할 장소 검색" value={query} onChange={e => setQuery(e.target.value)} placeholder="카페, 전시관, 맛집을 검색해보세요"/><button disabled={isPlaceSearching}>{isPlaceSearching ? "검색 중…" : "검색"}</button></form>
+        </div>
         <p className="search-feedback" role="status">{searchNotice}</p>
-        <p className="drag-guide"><span className="desktop-guide">장소 카드를 잡으면 일정 영역으로 자동 이동해요. 원하는 사이에 놓거나, 눌러서 마지막에 추가하세요.</span><span className="mobile-guide">모바일에서는 장소 카드를 눌러 일정에 추가하고, 위쪽 일정에서 ↑ ↓ 버튼으로 순서를 바꾸세요.</span></p>
+        <p className="drag-guide"><span className="desktop-guide">장소 카드를 잡으면 일정 영역으로 자동 이동해요. 원하는 사이에 놓거나, 눌러서 마지막에 추가하세요.</span><span className="mobile-guide">장소를 눌러 추가하세요. 일정의 손잡이를 끌거나 ⋯ 메뉴의 위로·아래로 이동으로 순서를 바꿀 수 있어요.</span></p>
         <div className="results">{spots.map(s => {
           const isAdded = plan.some(item => item.id === s.id);
-          return <button className={`result ${isAdded ? "added" : ""}`} disabled={isAdded} key={s.id} onPointerDown={event => { if (event.pointerType !== "touch") handlePointerDragStart(event, s); }} onClick={() => { if (!suppressResultClickRef.current) addSpot(s); }}><span className="result-drag-handle" aria-hidden="true" onPointerDown={event => { event.stopPropagation(); handlePointerDragStart(event, s); }}>⋮⋮</span><span>{s.emoji}</span><div><b>{s.name}</b><small>{s.category} · {s.address}</small></div><i>{isAdded ? "추가됨" : "일정에 추가"}</i></button>;
+          const categoryType = preferenceConfigs.find(preference => preference.matches.test(s.category))?.label || "기타";
+          return <button className={`result ${isAdded ? "added" : ""}`} data-category={categoryType} disabled={isAdded} key={s.id} onPointerDown={event => { if (event.pointerType !== "touch") handlePointerDragStart(event, s); }} onClick={() => { if (!suppressResultClickRef.current) addSpot(s); }}>
+            <span className="result-drag-handle" aria-hidden="true" onPointerDown={event => { event.stopPropagation(); handlePointerDragStart(event, s); }}>⋮⋮</span>
+            <span className="place-category-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d={categoryIconPaths[categoryType] || "M12 22s8-8 8-13A8 8 0 0 0 4 9c0 5 8 13 8 13ZM12 6a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"}/></svg></span>
+            <span className="result-content"><span className="result-category">{s.category}</span><b>{s.name}</b><small>{s.address}</small></span>
+            <span className="result-add-state"><span aria-hidden="true">{isAdded ? "✓" : "+"}</span>{isAdded ? "추가됨" : "일정에 추가"}</span>
+          </button>;
         })}</div>
       </section>
       {isDragging && pointerPosition && draggedSpot && <div className="touch-drag-preview" style={{ left: pointerPosition.x, top: pointerPosition.y }}><span>{draggedSpot.emoji}</span>{draggedSpot.name}</div>}

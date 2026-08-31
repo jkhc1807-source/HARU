@@ -25,6 +25,8 @@ test("server-renders the 하루여행 planner shell", async () => {
   assert.match(html, /오늘 어디로/);
   assert.match(html, /나만의 하루 만들기/);
   assert.match(html, /일정에 장소 더하기/);
+  assert.match(html, /class="discovery-header"/);
+  assert.equal((html.match(/class="place-category-icon"/g) || []).length, 4);
   assert.match(html, /카카오맵 리뷰/);
   assert.match(html, /role="status"/);
   const editors = [...html.matchAll(/<details class="spot-editor"[^>]*>([\s\S]*?)<\/details>/g)];
