@@ -25,6 +25,7 @@ test("server-renders the 하루여행 planner shell", async () => {
   assert.match(html, /오늘 어디로/);
   assert.match(html, /나만의 하루 만들기/);
   assert.match(html, /Google로 로그인/);
+  assert.match(html, /로그인하면 저장 일정이 여러 기기에서 동기화돼요/);
   assert.match(html, /일정에 장소 더하기/);
   assert.match(html, /class="discovery-header"/);
   assert.equal((html.match(/class="place-category-icon"/g) || []).length, 4);

@@ -11,6 +11,8 @@ import type { SavedTrip, ScheduleItem, Spot, TransitInfo, TripSettings, UndoStat
 import { findDepartureTransit } from "@/lib/transit";
 import { readSharedTrip, readStoredTrip, readStoredTrips } from "@/lib/trip-storage";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { deleteSavedTrip, listSavedTrips, upsertSavedTrip } from "@/lib/saved-trip-repository";
+import { mergeSavedTrips } from "@/lib/trip-sync";
 
 declare global {
   interface Window { kakao: any }
@@ -225,6 +227,8 @@ export default function Home() {
   const pointerDragRef = useRef<{ pointerId: number; spot: Spot } | null>(null);
   const suppressResultClickRef = useRef(false);
   const savedTripsReadyRef = useRef(false);
+  const authUserIdRef = useRef<string | null>(null);
+  const syncedUserRef = useRef("");
   const regionRequestRef = useRef(0);
   const placeRequestRef = useRef(0);
   const planSpotIds = plan.map(spot => spot.id).join(",");
@@ -284,14 +288,23 @@ export default function Home() {
     setIsAuthLoading(true);
     supabase.auth.getSession().then(({ data, error }) => {
       if (cancelled) return;
+      authUserIdRef.current = data.session?.user.id ?? null;
       setAuthUser(data.session?.user ?? null);
       setAuthNotice(error ? "로그인 상태를 확인하지 못했어요" : "");
       setIsAuthLoading(false);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!cancelled) {
+        const previousUserId = authUserIdRef.current;
+        authUserIdRef.current = session?.user.id ?? null;
         setAuthUser(session?.user ?? null);
         setIsAuthLoading(false);
+        if (!session && previousUserId) {
+          localStorage.removeItem(`haru-trip-plans:${previousUserId}`);
+          setSavedTrips(readStoredTrips(localStorage.getItem("haru-trip-plans")));
+          setSelectedSavedTripId("");
+          syncedUserRef.current = "";
+        }
       }
     });
     return () => { cancelled = true; subscription.unsubscribe(); };
@@ -440,8 +453,35 @@ export default function Home() {
   }, [mapReady, planSpotIds]);
 
   useEffect(() => {
-    if (savedTripsReadyRef.current) localStorage.setItem("haru-trip-plans", JSON.stringify(savedTrips));
-  }, [savedTrips]);
+    if (!savedTripsReadyRef.current) return;
+    const key = authUser ? `haru-trip-plans:${authUser.id}` : "haru-trip-plans";
+    localStorage.setItem(key, JSON.stringify(savedTrips));
+  }, [savedTrips, authUser]);
+
+  useEffect(() => {
+    if (!authUser || syncedUserRef.current === authUser.id) return;
+    syncedUserRef.current = authUser.id;
+    let cancelled = false;
+    const localTrips = readStoredTrips(localStorage.getItem("haru-trip-plans"));
+    listSavedTrips(authUser.id).then(async remoteTrips => {
+      if (cancelled) return;
+      const shouldSyncLocal = localTrips.length > 0
+        && window.confirm("이 기기에 저장된 일정을 계정에 동기화할까요?");
+      if (shouldSyncLocal) {
+        await Promise.all(localTrips.map(trip => upsertSavedTrip(authUser.id, trip)));
+        if (!cancelled) setSavedTrips(mergeSavedTrips(localTrips, remoteTrips));
+      } else {
+        setSavedTrips(remoteTrips);
+      }
+      setSelectedSavedTripId("");
+    }).catch(() => {
+      if (!cancelled) {
+        setSavedTrips(localTrips);
+        setAuthNotice("계정 일정을 불러오지 못해 이 기기의 일정을 보여드려요.");
+      }
+    });
+    return () => { cancelled = true; };
+  }, [authUser]);
 
   useEffect(() => {
     const settingsKey = `${startTime}|${endTime}|${selected.join(",")}`;
@@ -581,7 +621,7 @@ export default function Home() {
     setIsAuthLoading(false);
   }
 
-  function handleSaveTrip() {
+  async function handleSaveTrip() {
     if (!plan.length) {
       setNotice("저장할 장소가 아직 없어요");
       return;
@@ -593,6 +633,13 @@ export default function Home() {
     setSavedTrips(current => [trip, ...current.filter(item => item.name !== name)].slice(0, 12));
     setSelectedSavedTripId(trip.id);
     setNotice(`'${name}' 일정을 저장했어요`);
+    if (authUser) {
+      try {
+        await upsertSavedTrip(authUser.id, trip);
+      } catch {
+        setAuthNotice("이 기기에는 저장했지만 계정 동기화는 실패했어요.");
+      }
+    }
   }
 
   async function handleShareTrip() {
@@ -644,12 +691,21 @@ export default function Home() {
     setNotice(`'${trip.name}' 일정을 불러왔어요`);
   }
 
-  function handleDeleteSavedTrip() {
+  async function handleDeleteSavedTrip() {
     if (!selectedSavedTripId) return;
     const trip = savedTrips.find(item => item.id === selectedSavedTripId);
+    const previousTrips = savedTrips;
     setSavedTrips(current => current.filter(item => item.id !== selectedSavedTripId));
     setSelectedSavedTripId("");
     setNotice(trip ? `'${trip.name}' 저장 일정을 삭제했어요` : "저장 일정을 삭제했어요");
+    if (authUser) {
+      try {
+        await deleteSavedTrip(authUser.id, selectedSavedTripId);
+      } catch {
+        setSavedTrips(previousTrips);
+        setAuthNotice("계정에서 삭제하지 못했어요. 다시 시도해주세요.");
+      }
+    }
   }
 
   function handleFitToTime() {
@@ -984,6 +1040,7 @@ export default function Home() {
       <SiteHeader>
           <AuthControl user={authUser} isLoading={isAuthLoading} onSignIn={handleSignIn} onSignOut={handleSignOut} />
           <span className="auth-notice" role="status" aria-live="polite">{authNotice}</span>
+          {!authUser && <span className="sync-hint">로그인하면 저장 일정이 여러 기기에서 동기화돼요</span>}
           <button className="ghost save-trip-button" onClick={handleSaveTrip}>일정 저장</button>
           <button className="ghost share-trip-button" onClick={handleShareTrip}>공유</button>
           {savedTrips.length > 0 && <ChoiceSelect className="saved-trip-choice" value={selectedSavedTripId} placeholder="저장한 일정" ariaLabel="저장한 일정 불러오기" options={savedTrips.map(trip => ({ value: trip.id, label: trip.name }))} onChange={handleLoadTrip} />}
