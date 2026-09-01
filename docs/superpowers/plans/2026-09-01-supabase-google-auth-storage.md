@@ -1,16 +1,35 @@
-# Supabase Google Auth and Trip Storage Implementation Plan
+# Supabase 구글 로그인·일정 저장 구현 계획
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> 이 문서는 작업을 순서대로 진행하고 완료 여부를 체크하기 위한 실행 계획입니다. 구현할 때 `superpowers:subagent-driven-development` 또는 `superpowers:executing-plans` 절차를 사용합니다.
 
-**Goal:** Add optional Google login and account-synced saved trips without breaking the existing guest planner or local storage fallback.
+**목표:** 기존 비로그인 일정 기능과 브라우저 저장을 유지하면서, 선택적으로 구글 로그인하고 저장 일정을 여러 기기에서 동기화할 수 있게 합니다.
 
-**Architecture:** Keep `app/page.tsx` as the owner of current planner and saved-trip state. Add one browser Supabase client, a small auth control, and a saved-trip repository; Supabase RLS remains the real data boundary. Guests continue using `localStorage`, while signed-in users load and explicitly save/delete the same `SavedTrip` shape in Supabase.
+**구조:** 현재 일정 상태는 기존 `app/page.tsx`가 계속 관리합니다. Supabase 연결 파일, 작은 로그인 UI, 일정 저장 모듈만 추가하고 데이터 보안은 Supabase RLS가 담당합니다. 비로그인 사용자는 지금처럼 `localStorage`를 사용하며, 로그인 사용자는 같은 일정 데이터를 Supabase에도 저장·불러오기·삭제합니다.
 
-**Tech Stack:** Next.js/Vinext, React 19, TypeScript, `@supabase/supabase-js`, Supabase Auth with Google OAuth PKCE, Supabase Postgres/RLS, Node test runner.
+**사용 기술:** Next.js/Vinext, React 19, TypeScript, `@supabase/supabase-js`, Supabase 구글 로그인(PKCE), Supabase Postgres/RLS, Node 테스트.
 
-**Spec:** `docs/superpowers/specs/2026-09-01-origin-auth-transit-admin-design.md`
+**기준 설계:** `docs/superpowers/specs/2026-09-01-origin-auth-transit-admin-design.md`
 
-## Global Constraints
+## 사용자가 알면 되는 핵심 요약
+
+1. 지금 사용하던 비로그인 일정 기능은 그대로 유지합니다.
+2. `Google로 로그인` 버튼을 추가합니다.
+3. 로그인하면 저장 일정이 Supabase 계정에 저장되어 다른 PC나 휴대폰에서도 보입니다.
+4. 처음 로그인할 때 기존 브라우저 일정을 계정에 옮길지 물어봅니다.
+5. 사용자마다 자신의 일정만 볼 수 있도록 DB 보안 규칙을 적용합니다.
+6. 두 개의 서로 다른 구글 계정으로 데이터가 섞이지 않는지 직접 검증합니다.
+7. 이 단계에서는 출발지 즐겨찾기, 교통 안내, 관리자 화면을 아직 만들지 않습니다. 로그인과 일정 동기화가 정상 작동한 뒤 차례로 진행합니다.
+
+### 이 단계에서 사용자가 해줄 일
+
+- Supabase 프로젝트 생성
+- Google Cloud에서 로그인용 OAuth 앱 생성
+- 제가 안내하는 두 개의 공개 설정값을 로컬과 Vercel 환경변수에 등록
+- 실제 구글 계정으로 로그인 시험
+
+비밀키는 채팅이나 Git에 올리지 않고 각 서비스의 환경변수 설정 화면에만 저장합니다.
+
+## 전체 작업 원칙
 
 - The existing guest itinerary creation, local persistence, map, drag, share, and responsive behavior must remain available without login.
 - Request only Google basic profile and email scopes; do not request Drive, Calendar, or other Google permissions.
@@ -24,7 +43,7 @@
 
 ---
 
-## File Map
+## 파일별 역할
 
 - `lib/supabase/client.ts`: creates and memoizes the browser Supabase client using PKCE.
 - `lib/saved-trip-repository.ts`: converts `SavedTrip` values to/from Supabase rows and performs list/upsert/delete operations.
@@ -40,7 +59,7 @@
 
 ---
 
-### Task 1: Supabase browser client and safe configuration
+### 작업 1: Supabase 브라우저 연결과 안전한 설정
 
 **Files:**
 - Modify: `package.json`
@@ -118,7 +137,7 @@ git commit -m "feat: add Supabase browser client"
 
 ---
 
-### Task 2: Database schema, grants, and RLS
+### 작업 2: 데이터베이스 구조와 사용자별 접근 보안
 
 **Files:**
 - Create: `supabase/migrations/202609010001_auth_and_saved_trips.sql`
@@ -246,7 +265,7 @@ git commit -m "feat: add protected Supabase trip schema"
 
 ---
 
-### Task 3: Google OAuth callback and header control
+### 작업 3: 구글 로그인 복귀 화면과 상단 로그인 버튼
 
 **Files:**
 - Create: `app/auth/callback/page.tsx`
@@ -361,7 +380,7 @@ git commit -m "feat: add optional Google login"
 
 ---
 
-### Task 4: Saved-trip conversion and remote repository
+### 작업 4: 저장 일정 변환과 Supabase 저장 모듈
 
 **Files:**
 - Create: `lib/saved-trip-repository.ts`
@@ -493,7 +512,7 @@ git commit -m "feat: add synced trip repository"
 
 ---
 
-### Task 5: Connect account sync without weakening local fallback
+### 작업 5: 기존 브라우저 저장을 유지하면서 계정 동기화 연결
 
 **Files:**
 - Modify: `app/page.tsx`
@@ -584,7 +603,7 @@ git commit -m "feat: sync saved trips for signed-in users"
 
 ---
 
-### Task 6: Configure Google, verify isolation, and document the release boundary
+### 작업 6: 구글 설정, 사용자 데이터 분리 검증과 기록
 
 **Files:**
 - Modify: `docs/PROJECT_CONTEXT.md`
@@ -680,6 +699,6 @@ git commit -m "docs: record authenticated trip sync"
 
 ---
 
-## Execution Boundary
+## 이번 계획의 완료 범위
 
 This plan ends with working Google login and account-synced saved trips. It deliberately does not create favorite-origin tables, transit APIs, `service_role` admin routes, or `/admin`; those belong to the next independently testable plans.
