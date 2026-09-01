@@ -173,3 +173,14 @@
 - 공개 배포를 2026-08-31 사용자 승인받았다. Sites v72 배포 성공: 커밋 `37e1c3458d041623c2091fbab3b3018b4a0a8e0b`, 공개 화면의 검색 입력 변경 확인.
 - Vercel 주소: https://haru-ashy-rho.vercel.app (GitHub 저장소 homepage 및 실제 화면 확인).
 - GitHub push는 Windows Git Credential Manager 인증 실패로 미완료. Vercel은 아직 이전 버전이다. 재인증 후 `origin`의 main으로 push하고 자동 배포 성공을 확인해야 한다. Sites 저장소로는 수정 커밋 push 완료.
+
+## 2026-09-01 구글 로그인·일정 동기화 작업
+
+- 설계: `docs/superpowers/specs/2026-09-01-origin-auth-transit-admin-design.md`
+- 1단계 실행 계획: `docs/superpowers/plans/2026-09-01-supabase-google-auth-storage.md`
+- 격리 브랜치 `codex/supabase-auth`에 Supabase PKCE 클라이언트, 구글 로그인 UI, `/auth/callback`, 저장 일정 조회·저장·삭제 모듈과 RLS SQL을 구현했다.
+- Supabase 공개 설정은 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`를 사용한다. 실제 값과 `service_role` 키는 Git에 기록하지 않는다.
+- 비로그인 사용자는 기존 `haru-trip-plans` 로컬 저장을 계속 사용한다. 로그인 사용자의 임시 캐시는 사용자 ID별로 분리하고 로그아웃 시 제거해 다음 사용자에게 일정이 노출되지 않게 한다.
+- 로컬 검증: 빌드, TypeScript 검사, Node 테스트 5개 통과. 320/375/768/1280px에서 가로 넘침 없음과 로그인 버튼 높이 44px를 확인했다.
+- 아직 완료되지 않은 외부 설정: Supabase 프로젝트 생성, SQL 적용, Google OAuth 연결, Vercel 공개 환경변수 등록, 서로 다른 구글 계정 2개로 RLS 분리 확인.
+- 이 브랜치는 아직 main 병합·GitHub push·Vercel 배포 전이다.

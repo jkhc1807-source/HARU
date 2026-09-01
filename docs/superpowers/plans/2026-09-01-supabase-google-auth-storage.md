@@ -29,6 +29,19 @@
 
 비밀키는 채팅이나 Git에 올리지 않고 각 서비스의 환경변수 설정 화면에만 저장합니다.
 
+## 현재 진행 상태 — 2026-09-01
+
+- [x] Supabase 브라우저 클라이언트와 안전한 환경변수 이름
+- [x] profiles·saved_trips RLS 마이그레이션 파일
+- [x] 구글 로그인 UI와 OAuth 복귀 화면
+- [x] 계정별 일정 조회·저장·삭제 및 비로그인 로컬 저장 유지
+- [x] 빌드, TypeScript, 테스트 5개, 320/375/768/1280px 로컬 확인
+- [ ] Supabase 프로젝트 생성과 SQL 적용
+- [ ] Google OAuth 설정
+- [ ] Vercel 환경변수 등록
+- [ ] 서로 다른 구글 계정 2개로 RLS 분리 확인
+- [ ] main 병합·배포
+
 ## 전체 작업 원칙
 
 - The existing guest itinerary creation, local persistence, map, drag, share, and responsive behavior must remain available without login.
