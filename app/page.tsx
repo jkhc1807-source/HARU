@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import type { DragEvent, PointerEvent as ReactPointerEvent } from "react";
+import type { DragEvent, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from "react";
 import { ChoiceSelect } from "@/components/atoms/ChoiceSelect";
 import { SiteHeader } from "@/components/organisms/SiteHeader";
 import { AuthControl } from "@/components/organisms/AuthControl";
@@ -220,6 +220,8 @@ export default function Home() {
   const [canRetrySync, setCanRetrySync] = useState(false);
   const [isRemoteTripsReady, setIsRemoteTripsReady] = useState(true);
   const [syncRetryVersion, setSyncRetryVersion] = useState(0);
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
+  const [saveTripName, setSaveTripName] = useState("");
   const mapEl = useRef<HTMLDivElement>(null);
   const timelineEl = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
@@ -233,6 +235,9 @@ export default function Home() {
   const authUserIdRef = useRef<string | null>(null);
   const syncedUserRef = useRef("");
   const syncingUserRef = useRef("");
+  const saveTripButtonRef = useRef<HTMLButtonElement>(null);
+  const saveTripDialogRef = useRef<HTMLDivElement>(null);
+  const saveTripNameInputRef = useRef<HTMLInputElement>(null);
   const regionRequestRef = useRef(0);
   const placeRequestRef = useRef(0);
   const planSpotIds = plan.map(spot => spot.id).join(",");
@@ -658,14 +663,45 @@ export default function Home() {
     setSyncRetryVersion(version => version + 1);
   }
 
-  async function handleSaveTrip() {
+  function handleOpenSaveTrip() {
     if (!plan.length) {
       setNotice("저장할 장소가 아직 없어요");
       return;
     }
-    const suggestedName = `${city.trim() || "새 지역"} 하루`;
-    const name = window.prompt("일정 이름을 입력해주세요", suggestedName)?.trim();
+    setSaveTripName(`${city.trim() || "새 지역"} 하루`);
+    setIsSaveDialogOpen(true);
+    window.requestAnimationFrame(() => saveTripNameInputRef.current?.select());
+  }
+
+  function handleCloseSaveTrip() {
+    setIsSaveDialogOpen(false);
+    window.requestAnimationFrame(() => saveTripButtonRef.current?.focus());
+  }
+
+  function handleSaveDialogKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      handleCloseSaveTrip();
+      return;
+    }
+    if (event.key !== "Tab") return;
+    const focusable = saveTripDialogRef.current?.querySelectorAll<HTMLElement>("input,button") ?? [];
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
+  async function handleSaveTrip() {
+    const name = saveTripName.trim();
     if (!name) return;
+    setIsSaveDialogOpen(false);
     const existingTrip = savedTrips.find(item => item.name === name);
     const trip: SavedTrip = { version: 2, id: existingTrip?.id ?? `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, name, city, startTime, endTime, selected, plan, updatedAt: Date.now() };
     setSavedTrips(current => [trip, ...current.filter(item => item.name !== name)].slice(0, 12));
@@ -1080,7 +1116,7 @@ export default function Home() {
           <span className="auth-notice" role="status" aria-live="polite">{authNotice}</span>
           {canRetrySync && <button className="ghost secondary sync-retry-button" onClick={handleRetrySync}>동기화 다시 시도</button>}
           {!authUser && <span className="sync-hint">로그인하면 저장 일정이 여러 기기에서 동기화돼요</span>}
-          <button className="ghost save-trip-button" onClick={handleSaveTrip}>일정 저장</button>
+          <button ref={saveTripButtonRef} className="ghost save-trip-button" onClick={handleOpenSaveTrip}>일정 저장</button>
           <button className="ghost share-trip-button" onClick={handleShareTrip}>공유</button>
           {savedTrips.length > 0 && <ChoiceSelect className="saved-trip-choice" value={selectedSavedTripId} placeholder="저장한 일정" ariaLabel="저장한 일정 불러오기" options={savedTrips.map(trip => ({ value: trip.id, label: trip.name }))} onChange={handleLoadTrip} />}
           {selectedSavedTripId && <button className="ghost secondary" onClick={handleDeleteSavedTrip}>삭제</button>}
@@ -1219,6 +1255,17 @@ export default function Home() {
           </button>;
         })}</div>
       </section>
+      {isSaveDialogOpen && <div className="save-dialog-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) handleCloseSaveTrip(); }}>
+        <div ref={saveTripDialogRef} className="save-dialog" role="dialog" aria-modal="true" aria-labelledby="save-trip-title" onKeyDown={handleSaveDialogKeyDown}>
+          <p className="eyebrow">SAVE THIS DAY</p>
+          <h2 id="save-trip-title">일정 이름을 입력해주세요</h2>
+          <form onSubmit={event => { event.preventDefault(); void handleSaveTrip(); }}>
+            <label htmlFor="save-trip-name">일정 이름</label>
+            <input ref={saveTripNameInputRef} id="save-trip-name" value={saveTripName} onChange={event => setSaveTripName(event.target.value)} maxLength={80} required />
+            <div className="save-dialog-actions"><button type="button" className="ghost secondary" onClick={handleCloseSaveTrip}>취소</button><button type="submit" disabled={!saveTripName.trim()}>저장</button></div>
+          </form>
+        </div>
+      </div>}
       {isDragging && pointerPosition && draggedSpot && <div className="touch-drag-preview" style={{ left: pointerPosition.x, top: pointerPosition.y }}><span>{draggedSpot.emoji}</span>{draggedSpot.name}</div>}
       <footer>하루여행 · 가볍게 떠나는 하루를 위해</footer>
     </main>

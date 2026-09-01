@@ -65,6 +65,8 @@ test("keeps metadata and safe trip persistence logic in the app", async () => {
   assert.match(page, /version: 2, city, startTime, endTime, selected, plan/);
   assert.match(page, /placeRequestRef/);
   assert.match(page, /regionRequestRef/);
+  assert.doesNotMatch(page, /window\.prompt\("일정 이름을 입력해주세요"/);
+  assert.match(page, /aria-labelledby="save-trip-title"/);
   assert.doesNotMatch(schedule, /function visit\(permutation/);
   assert.match(schedule, /while \(improved\)/);
 });

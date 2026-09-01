@@ -189,3 +189,4 @@
 - Google Auth Platform의 Web OAuth 클라이언트와 Supabase Google Provider를 연결했다. 2026-09-01 공개 HARU에서 사용자가 Google 로그인 성공을 확인했다.
 - 기능 코드는 `7ce2f55`로 main·GitHub·Vercel에 반영됐다.
 - 아직 완료되지 않은 검증: 로그인 상태에서 일정 저장 후 새로고침 복원, 서로 다른 구글 계정 2개로 RLS 데이터 분리 확인.
+- 앱 내 브라우저가 `window.prompt`를 지원하지 않아 일정 저장 클릭이 무반응이던 문제를 사이트 내부 이름 입력 팝업으로 교체했다. 이름 입력 포커스, Escape·바깥 영역 닫기, Tab 포커스 순환과 모바일 하단 배치를 포함한다. 로컬 빌드·TypeScript·테스트 통과, 배포 전이다.
