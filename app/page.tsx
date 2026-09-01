@@ -4,10 +4,13 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { DragEvent, PointerEvent as ReactPointerEvent } from "react";
 import { ChoiceSelect } from "@/components/atoms/ChoiceSelect";
 import { SiteHeader } from "@/components/organisms/SiteHeader";
+import { AuthControl } from "@/components/organisms/AuthControl";
 import { TimeRangePicker } from "@/components/molecules/TimeRangePicker";
+import type { User } from "@supabase/supabase-js";
 import type { SavedTrip, ScheduleItem, Spot, TransitInfo, TripSettings, UndoState } from "@/lib/trip-types";
 import { findDepartureTransit } from "@/lib/transit";
 import { readSharedTrip, readStoredTrip, readStoredTrips } from "@/lib/trip-storage";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 declare global {
   interface Window { kakao: any }
@@ -209,6 +212,9 @@ export default function Home() {
   const [pointerPosition, setPointerPosition] = useState<{ x: number; y: number } | null>(null);
   const [routeOptimizeMessage, setRouteOptimizeMessage] = useState("");
   const [undoState, setUndoState] = useState<UndoState | null>(null);
+  const [authUser, setAuthUser] = useState<User | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
+  const [authNotice, setAuthNotice] = useState("");
   const mapEl = useRef<HTMLDivElement>(null);
   const timelineEl = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
@@ -269,6 +275,26 @@ export default function Home() {
       })
       .catch(() => setNotice("지도 설정을 불러오지 못했어요"));
     return () => { cancelled = true; script?.remove(); };
+  }, []);
+
+  useEffect(() => {
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
+    let cancelled = false;
+    setIsAuthLoading(true);
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (cancelled) return;
+      setAuthUser(data.session?.user ?? null);
+      setAuthNotice(error ? "로그인 상태를 확인하지 못했어요" : "");
+      setIsAuthLoading(false);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!cancelled) {
+        setAuthUser(session?.user ?? null);
+        setIsAuthLoading(false);
+      }
+    });
+    return () => { cancelled = true; subscription.unsubscribe(); };
   }, []);
 
   useEffect(() => {
@@ -526,6 +552,33 @@ export default function Home() {
     updatePlan([], "새 일정 시작");
     setRouteOptimizeMessage("");
     setNotice("일정을 비웠어요. 아래에서 장소를 찾거나 새로운 하루를 만들어보세요");
+  }
+
+  async function handleSignIn() {
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) {
+      setAuthNotice("Supabase 설정 후 Google 로그인을 사용할 수 있어요");
+      return;
+    }
+    setIsAuthLoading(true);
+    setAuthNotice("");
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+    if (error) {
+      setAuthNotice("Google 로그인을 시작하지 못했어요");
+      setIsAuthLoading(false);
+    }
+  }
+
+  async function handleSignOut() {
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
+    setIsAuthLoading(true);
+    const { error } = await supabase.auth.signOut();
+    setAuthNotice(error ? "로그아웃하지 못했어요" : "로그아웃했어요");
+    setIsAuthLoading(false);
   }
 
   function handleSaveTrip() {
@@ -929,6 +982,8 @@ export default function Home() {
   return (
     <main>
       <SiteHeader>
+          <AuthControl user={authUser} isLoading={isAuthLoading} onSignIn={handleSignIn} onSignOut={handleSignOut} />
+          <span className="auth-notice" role="status" aria-live="polite">{authNotice}</span>
           <button className="ghost save-trip-button" onClick={handleSaveTrip}>일정 저장</button>
           <button className="ghost share-trip-button" onClick={handleShareTrip}>공유</button>
           {savedTrips.length > 0 && <ChoiceSelect className="saved-trip-choice" value={selectedSavedTripId} placeholder="저장한 일정" ariaLabel="저장한 일정 불러오기" options={savedTrips.map(trip => ({ value: trip.id, label: trip.name }))} onChange={handleLoadTrip} />}

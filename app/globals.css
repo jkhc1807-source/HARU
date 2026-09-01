@@ -476,6 +476,16 @@ footer{background:#edf1e8;color:#65766a}
  *,*::before,*::after{scroll-behavior:auto;transition:none;animation:none}
 }
 
+/* Optional account controls: the guest planner remains the default. */
+.auth-control{display:flex;align-items:center;gap:8px;min-width:0}
+.auth-user>span{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#53685b;font-size:12px;font-weight:700}
+.auth-login-button{border-color:#cdd8c8;background:#f6f8f2}
+.auth-control button:focus-visible{outline:3px solid #94b081;outline-offset:3px}
+.auth-notice{max-width:190px;color:#6a786f;font-size:11px;line-height:1.35}
+.auth-callback{display:grid;place-items:center;align-content:center;min-height:100dvh;padding:24px;text-align:center;background:var(--cream)}
+.auth-callback h1{margin:0 0 12px;font-size:28px}.auth-callback p{margin:0 0 16px;color:#637568}.auth-callback a{color:var(--green);font-weight:800}
+@media(max-width:800px){.auth-user>span{max-width:110px}.auth-notice{order:10;flex-basis:100%;max-width:none}}
+
 /* Discovery: a distinct search surface, with category cues instead of emoji. */
 .search-section{padding:0 0 28px;border:1px solid #dce3d6;border-radius:16px;background:#fff;overflow:visible}
 .discovery-header{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);align-items:center;gap:32px;padding:32px;background:#e8eedf;border-radius:16px 16px 0 0;border-bottom:1px solid #d5dfc9}
