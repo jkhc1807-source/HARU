@@ -59,8 +59,9 @@
 - [x] Supabase 저장 일정 조회·저장·삭제 코드 구현
 - [x] profiles·saved_trips RLS 마이그레이션 작성
 - [x] 계정 전환 격리·원격 데이터 검증·동기화 재시도 처리
-- [ ] Supabase 프로젝트에 마이그레이션 적용
-- [ ] Google OAuth와 Vercel 환경변수 연결
+- [x] Supabase 프로젝트에 마이그레이션 적용
+- [x] Google OAuth와 Vercel 환경변수 연결
+- [x] 공개 HARU에서 Google 로그인·복귀 확인
 - [ ] 서로 다른 구글 계정 2개로 일정 데이터 분리 검증
 - [ ] 출발지 즐겨찾기 동기화
 - [ ] 관리자 화면과 서버 권한 검사

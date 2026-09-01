@@ -185,5 +185,7 @@
 - 로컬과 서버에 같은 이름의 일정이 있으면 수정 시각이 최신인 일정만 먼저 고른 뒤 서버와 화면에 동일하게 반영해 구버전 덮어쓰기를 막는다.
 - 같은 사용자의 같은 일정 이름은 DB와 화면에서 하나만 유지한다. 다른 사용자가 같은 로컬 일정 ID를 가져도 충돌하지 않도록 DB 기본 키는 `(user_id, id)`를 사용한다.
 - 로컬 검증: 빌드, TypeScript 검사, Node 테스트 7개 통과. 320/375/768/1280px에서 가로 넘침 없음과 로그인 버튼 높이 44px를 확인했다.
-- 아직 완료되지 않은 외부 설정: Supabase 프로젝트 생성, SQL 적용, Google OAuth 연결, Vercel 공개 환경변수 등록, 서로 다른 구글 계정 2개로 RLS 분리 확인.
-- 이 브랜치는 아직 main 병합·GitHub push·Vercel 배포 전이다.
+- Supabase `HARU` 프로젝트를 생성하고 profiles·saved_trips SQL과 RLS 정책을 적용했다. Vercel Production에 공개 URL·publishable key를 Config로 등록하고 재배포했다.
+- Google Auth Platform의 Web OAuth 클라이언트와 Supabase Google Provider를 연결했다. 2026-09-01 공개 HARU에서 사용자가 Google 로그인 성공을 확인했다.
+- 기능 코드는 `7ce2f55`로 main·GitHub·Vercel에 반영됐다.
+- 아직 완료되지 않은 검증: 로그인 상태에서 일정 저장 후 새로고침 복원, 서로 다른 구글 계정 2개로 RLS 데이터 분리 확인.
