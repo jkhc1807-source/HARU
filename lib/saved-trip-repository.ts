@@ -1,5 +1,6 @@
 import type { SavedTrip } from "./trip-types";
 import { getSupabaseBrowserClient } from "./supabase/client";
+import { savedTripsFromRows } from "./trip-sync";
 
 type SavedTripRow = {
   id: string;
@@ -19,20 +20,6 @@ function requireClient() {
   return client;
 }
 
-function fromRow(row: SavedTripRow): SavedTrip {
-  return {
-    version: 2,
-    id: row.id,
-    name: row.name,
-    city: row.city,
-    startTime: row.start_time,
-    endTime: row.end_time,
-    selected: row.preferences,
-    plan: row.plan,
-    updatedAt: Date.parse(row.updated_at),
-  };
-}
-
 export async function listSavedTrips(userId: string) {
   const { data, error } = await requireClient()
     .from("saved_trips")
@@ -41,7 +28,7 @@ export async function listSavedTrips(userId: string) {
     .order("updated_at", { ascending: false })
     .limit(12);
   if (error) throw error;
-  return ((data ?? []) as SavedTripRow[]).map(fromRow);
+  return savedTripsFromRows(data ?? []);
 }
 
 export async function upsertSavedTrip(userId: string, trip: SavedTrip) {
@@ -56,7 +43,7 @@ export async function upsertSavedTrip(userId: string, trip: SavedTrip) {
     plan: trip.plan,
     updated_at: new Date(trip.updatedAt).toISOString(),
   };
-  const { error } = await requireClient().from("saved_trips").upsert(row, { onConflict: "id" });
+  const { error } = await requireClient().from("saved_trips").upsert(row, { onConflict: "user_id,name" });
   if (error) throw error;
 }
 

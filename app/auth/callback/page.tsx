@@ -16,10 +16,12 @@ export default function AuthCallbackPage() {
       setErrorMessage("로그인을 완료하지 못했어요. 홈으로 돌아가 다시 시도해주세요.");
       return;
     }
-    supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
-      if (error) setErrorMessage("로그인을 완료하지 못했어요. 홈으로 돌아가 다시 시도해주세요.");
-      else window.location.replace("/");
-    });
+    supabase.auth.exchangeCodeForSession(code)
+      .then(({ error }) => {
+        if (error) setErrorMessage("로그인을 완료하지 못했어요. 홈으로 돌아가 다시 시도해주세요.");
+        else window.location.replace("/");
+      })
+      .catch(() => setErrorMessage("로그인을 완료하지 못했어요. 홈으로 돌아가 다시 시도해주세요."));
   }, []);
 
   return <main className="auth-callback">

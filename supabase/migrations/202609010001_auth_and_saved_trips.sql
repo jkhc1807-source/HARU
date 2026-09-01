@@ -9,7 +9,7 @@ create table public.profiles (
 );
 
 create table public.saved_trips (
-  id text primary key,
+  id text not null,
   user_id uuid not null references auth.users(id) on delete cascade,
   name text not null check (char_length(name) between 1 and 80),
   city text not null,
@@ -17,7 +17,9 @@ create table public.saved_trips (
   end_time text not null default '',
   preferences jsonb not null default '[]'::jsonb,
   plan jsonb not null default '[]'::jsonb,
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  primary key (user_id, id),
+  unique (user_id, name)
 );
 
 create index saved_trips_user_updated_idx

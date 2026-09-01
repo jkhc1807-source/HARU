@@ -217,6 +217,9 @@ export default function Home() {
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [authNotice, setAuthNotice] = useState("");
+  const [canRetrySync, setCanRetrySync] = useState(false);
+  const [isRemoteTripsReady, setIsRemoteTripsReady] = useState(true);
+  const [syncRetryVersion, setSyncRetryVersion] = useState(0);
   const mapEl = useRef<HTMLDivElement>(null);
   const timelineEl = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
@@ -229,6 +232,7 @@ export default function Home() {
   const savedTripsReadyRef = useRef(false);
   const authUserIdRef = useRef<string | null>(null);
   const syncedUserRef = useRef("");
+  const syncingUserRef = useRef("");
   const regionRequestRef = useRef(0);
   const placeRequestRef = useRef(0);
   const planSpotIds = plan.map(spot => spot.id).join(",");
@@ -288,6 +292,10 @@ export default function Home() {
     setIsAuthLoading(true);
     supabase.auth.getSession().then(({ data, error }) => {
       if (cancelled) return;
+      if (data.session?.user) {
+        setIsRemoteTripsReady(false);
+        setSavedTrips([]);
+      }
       authUserIdRef.current = data.session?.user.id ?? null;
       setAuthUser(data.session?.user ?? null);
       setAuthNotice(error ? "로그인 상태를 확인하지 못했어요" : "");
@@ -296,7 +304,15 @@ export default function Home() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!cancelled) {
         const previousUserId = authUserIdRef.current;
-        authUserIdRef.current = session?.user.id ?? null;
+        const nextUserId = session?.user.id ?? null;
+        if (nextUserId && nextUserId !== previousUserId) {
+          setIsRemoteTripsReady(false);
+          setSavedTrips([]);
+          setSelectedSavedTripId("");
+          syncedUserRef.current = "";
+          syncingUserRef.current = "";
+        }
+        authUserIdRef.current = nextUserId;
         setAuthUser(session?.user ?? null);
         setIsAuthLoading(false);
         if (!session && previousUserId) {
@@ -304,6 +320,9 @@ export default function Home() {
           setSavedTrips(readStoredTrips(localStorage.getItem("haru-trip-plans")));
           setSelectedSavedTripId("");
           syncedUserRef.current = "";
+          syncingUserRef.current = "";
+          setIsRemoteTripsReady(true);
+          setCanRetrySync(false);
         }
       }
     });
@@ -453,14 +472,14 @@ export default function Home() {
   }, [mapReady, planSpotIds]);
 
   useEffect(() => {
-    if (!savedTripsReadyRef.current) return;
+    if (!savedTripsReadyRef.current || (authUser && !isRemoteTripsReady)) return;
     const key = authUser ? `haru-trip-plans:${authUser.id}` : "haru-trip-plans";
     localStorage.setItem(key, JSON.stringify(savedTrips));
-  }, [savedTrips, authUser]);
+  }, [savedTrips, authUser, isRemoteTripsReady]);
 
   useEffect(() => {
-    if (!authUser || syncedUserRef.current === authUser.id) return;
-    syncedUserRef.current = authUser.id;
+    if (!authUser || syncedUserRef.current === authUser.id || syncingUserRef.current === authUser.id) return;
+    syncingUserRef.current = authUser.id;
     let cancelled = false;
     const localTrips = readStoredTrips(localStorage.getItem("haru-trip-plans"));
     listSavedTrips(authUser.id).then(async remoteTrips => {
@@ -474,14 +493,21 @@ export default function Home() {
         setSavedTrips(remoteTrips);
       }
       setSelectedSavedTripId("");
+      syncedUserRef.current = authUser.id;
+      syncingUserRef.current = "";
+      setIsRemoteTripsReady(true);
+      setCanRetrySync(false);
     }).catch(() => {
       if (!cancelled) {
+        syncingUserRef.current = "";
         setSavedTrips(localTrips);
+        setIsRemoteTripsReady(true);
+        setCanRetrySync(true);
         setAuthNotice("계정 일정을 불러오지 못해 이 기기의 일정을 보여드려요.");
       }
     });
     return () => { cancelled = true; };
-  }, [authUser]);
+  }, [authUser, syncRetryVersion]);
 
   useEffect(() => {
     const settingsKey = `${startTime}|${endTime}|${selected.join(",")}`;
@@ -621,6 +647,16 @@ export default function Home() {
     setIsAuthLoading(false);
   }
 
+  function handleRetrySync() {
+    if (!authUser) return;
+    syncedUserRef.current = "";
+    syncingUserRef.current = "";
+    setCanRetrySync(false);
+    setAuthNotice("");
+    setIsRemoteTripsReady(false);
+    setSyncRetryVersion(version => version + 1);
+  }
+
   async function handleSaveTrip() {
     if (!plan.length) {
       setNotice("저장할 장소가 아직 없어요");
@@ -629,7 +665,8 @@ export default function Home() {
     const suggestedName = `${city.trim() || "새 지역"} 하루`;
     const name = window.prompt("일정 이름을 입력해주세요", suggestedName)?.trim();
     if (!name) return;
-    const trip: SavedTrip = { version: 2, id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, name, city, startTime, endTime, selected, plan, updatedAt: Date.now() };
+    const existingTrip = savedTrips.find(item => item.name === name);
+    const trip: SavedTrip = { version: 2, id: existingTrip?.id ?? `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, name, city, startTime, endTime, selected, plan, updatedAt: Date.now() };
     setSavedTrips(current => [trip, ...current.filter(item => item.name !== name)].slice(0, 12));
     setSelectedSavedTripId(trip.id);
     setNotice(`'${name}' 일정을 저장했어요`);
@@ -1040,6 +1077,7 @@ export default function Home() {
       <SiteHeader>
           <AuthControl user={authUser} isLoading={isAuthLoading} onSignIn={handleSignIn} onSignOut={handleSignOut} />
           <span className="auth-notice" role="status" aria-live="polite">{authNotice}</span>
+          {canRetrySync && <button className="ghost secondary sync-retry-button" onClick={handleRetrySync}>동기화 다시 시도</button>}
           {!authUser && <span className="sync-hint">로그인하면 저장 일정이 여러 기기에서 동기화돼요</span>}
           <button className="ghost save-trip-button" onClick={handleSaveTrip}>일정 저장</button>
           <button className="ghost share-trip-button" onClick={handleShareTrip}>공유</button>

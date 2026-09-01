@@ -7,7 +7,7 @@ export function getSupabaseBrowserClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   browserClient = url && key
-    ? createClient(url, key, { auth: { flowType: "pkce", persistSession: true, detectSessionInUrl: true } })
+    ? createClient(url, key, { auth: { flowType: "pkce", persistSession: true, detectSessionInUrl: false } })
     : null;
   return browserClient;
 }

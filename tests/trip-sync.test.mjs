@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { mergeSavedTrips } from "../lib/trip-sync.ts";
+import { mergeSavedTrips, savedTripsFromRows } from "../lib/trip-sync.ts";
 
 const trip = (id, name, updatedAt) => ({
   version: 2,
@@ -27,4 +27,13 @@ test("서로 다른 일정은 최신순 최대 12개로 합친다", () => {
   const merged = mergeSavedTrips(local, remote);
   assert.equal(merged.length, 12);
   assert.equal(merged[0].id, "r7");
+});
+
+test("원격 일정은 유효한 장소 구조만 받아들인다", () => {
+  const validPlan = [{ id: "1", name: "서울숲", category: "산책", address: "서울", x: 127, y: 37, stay: 60, emoji: "🌿" }];
+  const rows = [
+    { id: "ok", user_id: "user", name: "정상", city: "성수동", start_time: "10:00", end_time: "18:00", preferences: ["산책"], plan: validPlan, updated_at: "2026-09-01T00:00:00.000Z" },
+    { id: "bad", user_id: "user", name: "손상", city: "성수동", start_time: "10:00", end_time: "18:00", preferences: [], plan: [{ name: "좌표 없음" }], updated_at: "invalid" },
+  ];
+  assert.deepEqual(savedTripsFromRows(rows).map(item => item.id), ["ok"]);
 });
