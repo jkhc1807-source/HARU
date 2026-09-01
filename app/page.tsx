@@ -6,6 +6,7 @@ import { ChoiceSelect } from "@/components/atoms/ChoiceSelect";
 import { SiteHeader } from "@/components/organisms/SiteHeader";
 import { TimeRangePicker } from "@/components/molecules/TimeRangePicker";
 import type { SavedTrip, ScheduleItem, Spot, TransitInfo, TripSettings, UndoState } from "@/lib/trip-types";
+import { findDepartureTransit } from "@/lib/transit";
 import { readSharedTrip, readStoredTrip, readStoredTrips } from "@/lib/trip-storage";
 
 declare global {
@@ -406,14 +407,8 @@ export default function Home() {
       if (categoryCode) ps.categorySearch(categoryCode, callback, options);
       else ps.keywordSearch(query, callback, options);
     });
-    Promise.all(plan.map(async spot => {
-      const [subways, buses] = await Promise.all([
-        searchNearby(spot, "", "SW8"),
-        searchNearby(spot, "버스정류장"),
-      ]);
-      return [spot.id, { subway: subways[0]?.place_name, bus: buses[0]?.place_name }] as const;
-    })).then(entries => {
-      if (!cancelled) setTransitBySpot(Object.fromEntries(entries));
+    findDepartureTransit(plan, searchNearby).then(transit => {
+      if (!cancelled) setTransitBySpot(transit);
     });
     return () => { cancelled = true; };
   }, [mapReady, planSpotIds]);
