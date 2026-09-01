@@ -34,5 +34,7 @@ function isSavedSpot(value: unknown): value is Spot {
   const spot = value as Partial<Spot>;
   return typeof spot.id === "string" && typeof spot.name === "string" && typeof spot.category === "string"
     && typeof spot.address === "string" && Number.isFinite(spot.x) && Number.isFinite(spot.y)
-    && Number.isFinite(spot.stay) && typeof spot.emoji === "string";
+    && Number.isFinite(spot.stay) && typeof spot.emoji === "string"
+    && (spot.note === undefined || typeof spot.note === "string")
+    && (spot.placeUrl === undefined || typeof spot.placeUrl === "string");
 }

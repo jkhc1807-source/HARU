@@ -487,8 +487,9 @@ export default function Home() {
       const shouldSyncLocal = localTrips.length > 0
         && window.confirm("이 기기에 저장된 일정을 계정에 동기화할까요?");
       if (shouldSyncLocal) {
-        await Promise.all(localTrips.map(trip => upsertSavedTrip(authUser.id, trip)));
-        if (!cancelled) setSavedTrips(mergeSavedTrips(localTrips, remoteTrips));
+        const mergedTrips = mergeSavedTrips(localTrips, remoteTrips);
+        await Promise.all(mergedTrips.map(trip => upsertSavedTrip(authUser.id, trip)));
+        if (!cancelled) setSavedTrips(mergedTrips);
       } else {
         setSavedTrips(remoteTrips);
       }

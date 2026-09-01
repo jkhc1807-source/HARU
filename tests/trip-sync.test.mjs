@@ -37,3 +37,9 @@ test("원격 일정은 유효한 장소 구조만 받아들인다", () => {
   ];
   assert.deepEqual(savedTripsFromRows(rows).map(item => item.id), ["ok"]);
 });
+
+test("원격 일정의 메모와 장소 링크는 문자열만 허용한다", () => {
+  const plan = [{ id: "1", name: "서울숲", category: "산책", address: "서울", x: 127, y: 37, stay: 60, emoji: "🌿", note: {} }];
+  const rows = [{ id: "bad-note", name: "손상", city: "성수동", preferences: [], plan, updated_at: "2026-09-01T00:00:00.000Z" }];
+  assert.deepEqual(savedTripsFromRows(rows), []);
+});
