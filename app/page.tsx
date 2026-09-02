@@ -1112,16 +1112,27 @@ export default function Home() {
   return (
     <main>
       <SiteHeader>
+          <div className="header-main-actions">
+            <button ref={saveTripButtonRef} className="ghost save-trip-button" onClick={handleOpenSaveTrip}>일정 저장</button>
+            {savedTrips.length > 0 && <ChoiceSelect className="saved-trip-choice" value={selectedSavedTripId} placeholder="내 일정" ariaLabel="저장한 일정 불러오기" options={savedTrips.map(trip => ({ value: trip.id, label: trip.name }))} onChange={handleLoadTrip} />}
+            {savedTrips.length === 0 && <button type="button" className="ghost empty-saved-trips" disabled title="저장한 일정이 없어요">내 일정</button>}
+            <details className="header-more-actions">
+              <summary aria-label="더 많은 일정 메뉴 열기"><span aria-hidden="true">•••</span><b>더보기</b></summary>
+              <div className="header-more-menu" onClick={(event) => {
+                if ((event.target as HTMLElement).closest("button")) event.currentTarget.closest("details")?.removeAttribute("open");
+              }}>
+                <button type="button" onClick={handleShareTrip}>공유</button>
+                {undoState && <button type="button" onClick={handleUndo}>↶ 실행 취소</button>}
+                <button type="button" onClick={handleResetPlan}>새 일정 시작</button>
+                {selectedSavedTripId && <button type="button" className="danger" onClick={handleDeleteSavedTrip}>선택 일정 삭제</button>}
+              </div>
+            </details>
+          </div>
           <AuthControl user={authUser} isLoading={isAuthLoading} onSignIn={handleSignIn} onSignOut={handleSignOut} />
-          <span className="auth-notice" role="status" aria-live="polite">{authNotice}</span>
-          {canRetrySync && <button className="ghost secondary sync-retry-button" onClick={handleRetrySync}>동기화 다시 시도</button>}
-          {!authUser && <span className="sync-hint">로그인하면 저장 일정이 여러 기기에서 동기화돼요</span>}
-          <button ref={saveTripButtonRef} className="ghost save-trip-button" onClick={handleOpenSaveTrip}>일정 저장</button>
-          <button className="ghost share-trip-button" onClick={handleShareTrip}>공유</button>
-          {savedTrips.length > 0 && <ChoiceSelect className="saved-trip-choice" value={selectedSavedTripId} placeholder="저장한 일정" ariaLabel="저장한 일정 불러오기" options={savedTrips.map(trip => ({ value: trip.id, label: trip.name }))} onChange={handleLoadTrip} />}
-          {selectedSavedTripId && <button className="ghost secondary" onClick={handleDeleteSavedTrip}>삭제</button>}
-          {undoState && <button className="ghost secondary" onClick={handleUndo}>↶ 실행 취소</button>}
-          <button className="ghost new-trip-button" onClick={handleResetPlan}>새 일정 시작</button>
+          {(authNotice || canRetrySync) && <div className="header-status" role="status" aria-live="polite">
+            {authNotice && <span className="auth-notice">{authNotice}</span>}
+            {canRetrySync && <button className="sync-retry-button" onClick={handleRetrySync}>다시 시도</button>}
+          </div>}
       </SiteHeader>
 
       <section className="hero">

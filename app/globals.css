@@ -536,3 +536,42 @@ footer{background:#edf1e8;color:#65766a}
  .search-section .result b{font-size:17px}.search-section .result small{font-size:11px}
  .search-section .result .result-add-state{font-size:9px}
 }
+
+/* Header actions: keep the daily task visible and move occasional actions out of the way. */
+.topbar-actions{position:relative;display:flex;align-items:center;justify-content:flex-end;gap:10px;min-width:0}
+.header-main-actions{display:flex;align-items:center;gap:8px;min-width:0}
+.topbar-actions .save-trip-button{min-height:42px;padding:10px 16px;border-color:#c5d49a;background:#e5efbd;color:#2f5035}
+.topbar-actions .save-trip-button:hover{background:#dbe9a9}
+.topbar-actions .empty-saved-trips{min-height:42px;padding:9px 13px;color:#8a958c;cursor:default}
+.header-more-actions,.auth-user{position:relative}
+.header-more-actions>summary,.auth-user>summary{display:flex;align-items:center;justify-content:center;min-height:42px;list-style:none;cursor:pointer;border:1px solid #d6ded2;border-radius:8px;background:#fff;color:#425b4b}
+.header-more-actions>summary::-webkit-details-marker,.auth-user>summary::-webkit-details-marker{display:none}
+.header-more-actions>summary{gap:6px;padding:8px 12px}
+.header-more-actions>summary span{font-size:13px;letter-spacing:1px}.header-more-actions>summary b{font-size:11px}
+.header-more-actions>summary:hover,.header-more-actions[open]>summary,.auth-user>summary:hover,.auth-user[open]>summary{background:#f1f4ed}
+.header-more-actions>summary:focus-visible,.auth-user>summary:focus-visible{outline:3px solid #94b081;outline-offset:3px}
+.header-more-menu,.auth-user-menu{position:absolute;z-index:40;top:calc(100% + 8px);right:0;width:190px;padding:7px;border:1px solid #d9e0d5;border-radius:10px;background:#fffefb;box-shadow:0 14px 36px #18342620}
+.header-more-menu button,.auth-user-menu button{display:flex;align-items:center;width:100%;min-height:42px;padding:9px 10px;border:0;border-radius:6px;background:transparent;color:#34503f;font-size:12px;font-weight:650;text-align:left}
+.header-more-menu button:hover,.auth-user-menu button:hover{background:#f0f4e9}
+.header-more-menu .danger{margin-top:4px;border-top:1px solid #e8e4df;border-radius:0 0 6px 6px;color:#a04f43}
+.auth-user>summary{gap:7px;max-width:160px;padding:5px 9px 5px 6px}
+.auth-avatar{display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;border-radius:50%;background:#294f3b;color:#e8f2c8;font-size:12px;font-weight:800}
+.auth-user-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#435a4b;font-size:11px;font-weight:700}
+.auth-user-menu{width:220px}.auth-user-menu>span{display:block;overflow:hidden;padding:8px 10px;border-bottom:1px solid #e6ebe3;color:#748077;font-size:10px;text-overflow:ellipsis;white-space:nowrap}
+.auth-login-button{min-height:42px;padding:9px 13px;white-space:nowrap}
+.header-status{position:absolute;top:calc(100% + 8px);right:0;display:flex;align-items:center;gap:8px;max-width:min(360px,calc(100vw - 32px));padding:8px 10px;border:1px solid #dce4d8;border-radius:8px;background:#fffefb;box-shadow:0 8px 20px #18342612}
+.header-status .auth-notice{max-width:none}.header-status .sync-retry-button{flex:0 0 auto;min-height:32px;padding:5px 8px;border:0;border-radius:6px;background:#e8efdc;color:#3f603d;font-size:11px;font-weight:700}
+@media(max-width:800px){
+ .topbar{align-items:center;flex-wrap:wrap;padding:10px 16px}.topbar .brand{min-width:0}.brand small{display:none}
+ .topbar-actions{display:block;width:100%;padding:0;border:0;border-radius:0;background:none;box-shadow:none}
+ .header-main-actions{display:grid;grid-template-columns:auto minmax(98px,1fr) auto;width:100%;gap:5px;margin-top:8px}.topbar-actions .save-trip-button{width:auto;min-height:40px;padding:8px 10px;font-size:11px}
+ .topbar-actions .saved-trip-choice{width:100%}.topbar-actions .saved-trip-choice .choice-select-trigger{min-height:40px;border-radius:8px;padding-inline:9px;font-size:10px}.topbar-actions .empty-saved-trips{width:100%;min-height:40px;padding:8px;font-size:10px}
+ .header-more-actions>summary{width:40px;min-height:40px;padding:6px}.header-more-actions>summary b{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+ .auth-control{position:absolute;top:-44px;right:0}.auth-login-button{min-height:36px;padding:6px 9px;background:#fffefb;font-size:10px}
+ .auth-user>summary{max-width:42px;min-height:40px;padding:4px}.auth-user-name{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+ .header-status{top:calc(100% + 8px);right:0}
+}
+@media(max-width:420px){
+ .brand-word{font-size:20px}.brand-mark{width:30px;margin-right:4px}
+ .topbar-actions .saved-trip-choice{width:98px}.topbar-actions .save-trip-button{padding-inline:8px}
+}

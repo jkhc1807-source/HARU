@@ -10,10 +10,16 @@ export type AuthControlProps = {
 export function AuthControl({ user, isLoading, onSignIn, onSignOut }: AuthControlProps) {
   if (user) {
     const name = user.user_metadata?.full_name || user.email || "로그인 사용자";
-    return <div className="auth-control auth-user">
-      <span title={user.email}>{name}</span>
-      <button type="button" className="ghost secondary" disabled={isLoading} onClick={onSignOut}>로그아웃</button>
-    </div>;
+    return <details className="auth-control auth-user">
+      <summary aria-label="계정 메뉴 열기">
+        <span className="auth-avatar" aria-hidden="true">{name.slice(0, 1)}</span>
+        <span className="auth-user-name" title={user.email}>{name}</span>
+      </summary>
+      <div className="auth-user-menu">
+        <span title={user.email}>{user.email}</span>
+        <button type="button" disabled={isLoading} onClick={onSignOut}>로그아웃</button>
+      </div>
+    </details>;
   }
 
   return <div className="auth-control">
