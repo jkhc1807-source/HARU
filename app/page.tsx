@@ -13,6 +13,7 @@ import { readSharedTrip, readStoredTrip, readStoredTrips } from "@/lib/trip-stor
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { deleteSavedTrip, listSavedTrips, upsertSavedTrip } from "@/lib/saved-trip-repository";
 import { mergeSavedTrips } from "@/lib/trip-sync";
+import { distance, optimizeRoute, routeDistance } from "@/lib/route-optimizer";
 
 declare global {
   interface Window { kakao: any }
@@ -75,12 +76,6 @@ function toneForSpot(spot: Spot) {
   if (/전시|미술|박물관|문화|공연/.test(text)) return "culture";
   if (/산책|공원|관광|자연|명소/.test(text)) return "walk";
   return "place";
-}
-
-function distance(a: Spot, b: Spot) {
-  const dx = (a.x - b.x) * 88;
-  const dy = (a.y - b.y) * 111;
-  return Math.sqrt(dx * dx + dy * dy);
 }
 
 function travelMinutes(a: Spot, b: Spot) {
@@ -152,34 +147,6 @@ function fillPlanWithCandidates(current: Spot[], candidates: Spot[], startTime: 
 
 function routeTravelMinutes(spots: Spot[]) {
   return spots.slice(0, -1).reduce((sum, spot, index) => sum + travelMinutes(spot, spots[index + 1]), 0);
-}
-
-function optimizeRoute(spots: Spot[]) {
-  if (spots.length < 3) return spots;
-  const remaining = spots.slice(1);
-  const route = [spots[0]];
-  while (remaining.length) {
-    const current = route[route.length - 1];
-    let nearestIndex = 0;
-    for (let index = 1; index < remaining.length; index += 1) {
-      if (distance(current, remaining[index]) < distance(current, remaining[nearestIndex])) nearestIndex = index;
-    }
-    route.push(remaining.splice(nearestIndex, 1)[0]);
-  }
-  let improved = true;
-  while (improved) {
-    improved = false;
-    for (let startIndex = 1; startIndex < route.length - 1; startIndex += 1) {
-      for (let endIndex = startIndex + 1; endIndex < route.length; endIndex += 1) {
-        const candidate = [...route.slice(0, startIndex), ...route.slice(startIndex, endIndex + 1).reverse(), ...route.slice(endIndex + 1)];
-        if (routeTravelMinutes(candidate) < routeTravelMinutes(route)) {
-          route.splice(0, route.length, ...candidate);
-          improved = true;
-        }
-      }
-    }
-  }
-  return route;
 }
 
 export default function Home() {
@@ -986,14 +953,14 @@ export default function Home() {
     }
     const optimized = optimizeRoute(plan);
     const savedMinutes = routeTravelMinutes(plan) - routeTravelMinutes(optimized);
-    if (savedMinutes <= 0 || optimized.map(spot => spot.id).join(",") === plan.map(spot => spot.id).join(",")) {
+    if (routeDistance(optimized) >= routeDistance(plan) || optimized.map(spot => spot.id).join(",") === plan.map(spot => spot.id).join(",")) {
       setNotice("현재 동선이 이미 가장 효율적이에요");
       setRouteOptimizeMessage("이미 효율적인 동선이에요");
       return;
     }
     updatePlan(optimized, "가까운 순서로 정리");
-    setNotice(`동선을 정리해 예상 도보시간을 약 ${savedMinutes}분 줄였어요`);
-    setRouteOptimizeMessage(`${savedMinutes}분 단축 완료`);
+    setNotice(savedMinutes > 0 ? `동선을 정리해 예상 도보시간을 약 ${savedMinutes}분 줄였어요` : "이동 거리가 짧아지도록 동선을 정리했어요");
+    setRouteOptimizeMessage(savedMinutes > 0 ? `${savedMinutes}분 단축 완료` : "짧은 동선으로 정리 완료");
   }
 
   function handleDragStart(event: DragEvent, spot: Spot) {

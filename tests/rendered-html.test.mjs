@@ -55,7 +55,7 @@ test("keeps metadata and safe trip persistence logic in the app", async () => {
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../lib/trip-storage.ts", import.meta.url), "utf8"),
-    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../lib/route-optimizer.ts", import.meta.url), "utf8"),
   ]);
 
   assert.match(layout, /lang="ko"/);
