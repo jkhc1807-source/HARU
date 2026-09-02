@@ -596,7 +596,6 @@ body{background:
 .journey-photo figcaption{padding:25px 42px 25px 82px;border-top-color:rgba(255,255,255,.18);font-size:11px;letter-spacing:.03em}
 .planner-card{position:relative;width:calc(100% - 72px);margin:36px;padding:36px 34px 32px;border:1px solid rgba(255,255,255,.7);border-radius:4px 20px 4px 20px;background:rgba(252,253,247,.97);box-shadow:0 26px 60px rgba(4,25,18,.3)}
 .planner-card::before{color:#6d7d70;font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
-.planner-card::after{content:"";position:absolute;top:0;right:0;width:74px;height:4px;background:var(--clay)}
 .location-heading{margin-top:2px}.location-heading>label{font-size:17px;letter-spacing:-.03em}
 .region-mode{background:#e9ede4}.region-mode label{font-size:11px}
 .location-row{margin-bottom:26px;border-color:#d8ded3;background:#fff}
@@ -608,7 +607,6 @@ body{background:
 .workspace::before{content:"CURATED ROUTE";position:absolute;top:-26px;left:3px;color:#617568;font-size:9px;font-weight:800;letter-spacing:.24em}
 .timeline-panel{padding:22px 28px 10px 8px}
 .section-head{position:relative;padding-bottom:22px;border-bottom-color:#cfd8cc}
-.section-head::after{content:"";position:absolute;right:0;bottom:-1px;width:72px;height:2px;background:var(--clay)}
 .section-head p{color:#758776;letter-spacing:.24em}.section-head h2{font-size:clamp(31px,3vw,43px);font-weight:850;line-height:1.12;letter-spacing:-.055em}
 .summary b{font-family:"SUIT",sans-serif;font-size:16px}.summary span{margin-top:4px}
 .route-optimize{border-color:#bfcbbd;background:#fff;color:#2f5841}
@@ -741,8 +739,6 @@ footer{padding-block:34px;background:var(--forest-deep);color:#c7d4ca}
 .route-optimize:hover>span{transform:rotate(45deg)}
 
 .map-trip-summary{min-height:58px;gap:0;padding:8px 12px 8px 17px;border:1px solid rgba(28,62,47,.15);border-radius:3px 12px 3px 12px;background:#fffdf5;box-shadow:0 10px 26px rgba(17,45,33,.18)}
-.map-trip-summary::before,.map-trip-summary::after{content:"";position:absolute;left:-5px;width:10px;height:10px;border-radius:50%;background:var(--forest-deep)}
-.map-trip-summary::before{top:-5px}.map-trip-summary::after{bottom:-5px}
 .map-trip-summary strong{padding-right:12px;font-family:Georgia,"Times New Roman",serif;font-size:19px;font-style:italic}
 .map-trip-summary span{padding:0 10px;border-left:1px dashed #c6cec2;line-height:26px}.map-trip-summary span+span::before{display:none}
 
@@ -759,3 +755,9 @@ footer{padding-block:34px;background:var(--forest-deep);color:#c7d4ca}
  .map-trip-summary span{font-size:9px}
 }
 @media(prefers-reduced-motion:reduce){.chips button,.preference-icon,.route-optimize>span{transition:none}}
+
+/* Keep long itinerary headings and controls inside the timeline column. */
+.section-head{flex-wrap:wrap}
+.section-head>div:first-child{flex:1 1 260px;min-width:0}
+.section-tools{flex:1 0 100%;width:100%;justify-content:space-between}
+.route-optimize-wrap{flex-shrink:0}
