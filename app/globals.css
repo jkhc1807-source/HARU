@@ -604,6 +604,7 @@ body{background:
 .primary:hover:not(:disabled){background:#cde781;transform:translateY(-2px)}
 
 .workspace{position:relative;width:min(1220px,calc(100% - 64px));gap:0;margin:0 auto;padding:26px;border:1px solid var(--hairline);border-radius:5px 28px 5px 28px;background:rgba(250,250,245,.78);box-shadow:0 24px 70px rgba(25,57,41,.09)}
+.workspace:has(.stop-actions[open]){z-index:10}
 .workspace::before{content:"CURATED ROUTE";position:absolute;top:-26px;left:3px;color:#617568;font-size:9px;font-weight:800;letter-spacing:.24em}
 .timeline-panel{padding:22px 28px 10px 8px}
 .section-head{position:relative;padding-bottom:22px;border-bottom-color:#cfd8cc}
