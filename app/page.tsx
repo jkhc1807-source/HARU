@@ -1177,7 +1177,7 @@ export default function Home() {
             <TimeRangePicker startTime={startTime} endTime={endTime} options={timeOptions} isInvalid={hasInvalidTimeRange} onStartChange={value => { setStartTime(value); setEndTime(""); setPlannerNotice(""); }} onEndChange={value => { setEndTime(value); setPlannerNotice(""); }} />
           </div>
           <label>오늘의 취향</label>
-          <div className="chips">{categories.map(c => <button type="button" key={c} className={selected.includes(c) ? "active" : ""} aria-pressed={selected.includes(c)} onClick={() => handlePreferenceToggle(c)}>{c}</button>)}</div>
+          <div className="chips">{categories.map(c => <button type="button" key={c} className={selected.includes(c) ? "active" : ""} aria-pressed={selected.includes(c)} onClick={() => handlePreferenceToggle(c)}><span className="preference-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d={categoryIconPaths[c]} /></svg></span><span>{c}</span></button>)}</div>
           <button type="button" className="primary" disabled={isGeneratingPlan} onClick={generatePlan}>{isGeneratingPlan ? "장소를 찾고 있어요…" : "나만의 하루 만들기"} <span>{isGeneratingPlan ? "···" : "→"}</span></button>
           <p className="planner-feedback" role="status" aria-live="polite">{plannerNotice}</p>
         </div>
@@ -1185,7 +1185,7 @@ export default function Home() {
 
       <section className="workspace">
         <div className="timeline-panel">
-          <div className="section-head"><div><p>MY DAY</p><h2>{city}에서의 하루</h2></div><div className="section-tools"><div className="summary"><b>{Math.floor(total / 60)}시간 {total % 60}분</b><span>{plan.length}개 장소 · 도보 {totalTravel}분</span></div><div className="route-optimize-wrap"><button type="button" className="route-optimize" onClick={handleOptimizeRoute}>↗ 동선 정리</button><span role="status">{routeOptimizeMessage}</span></div></div></div>
+          <div className="section-head"><div><p>MY DAY</p><h2>{city}에서의 하루</h2></div><div className="section-tools"><div className="summary"><b>{Math.floor(total / 60)}시간 {total % 60}분</b><span>{plan.length}개 장소 · 도보 {totalTravel}분</span></div><div className="route-optimize-wrap"><button type="button" className="route-optimize" onClick={handleOptimizeRoute}><span aria-hidden="true">↗</span>동선 정리</button><span role="status">{routeOptimizeMessage}</span></div></div></div>
           <a className="place-search-shortcut" href="#place-search-input">+ 장소 찾아 추가하기</a>
           {overrunMinutes > 0 && <div className="time-warning" role="status"><div><b>선택한 종료 시간을 {overrunMinutes}분 초과해요</b><span>직접 추가한 장소는 임의로 지우지 않았어요.</span></div><button type="button" onClick={handleFitToTime}>시간에 맞게 줄이기</button></div>}
           <div ref={timelineEl} className={`timeline ${isDragging ? "dragging" : ""}`}>
