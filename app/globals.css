@@ -784,3 +784,27 @@ footer{padding-block:34px;background:var(--forest-deep);color:#c7d4ca}
 .admin-back{margin-top:26px;font-size:12px}
 .admin-back a{color:var(--green);font-weight:800;text-underline-offset:3px}
 @media(max-width:800px){.admin-page{padding:38px 20px}.admin-stats b{font-size:25px}}
+
+/* 2026-09-11: 실제 출발지 선택과 즐겨찾기 */
+.origin-block{margin-bottom:22px}
+.origin-row{display:flex;align-items:stretch;gap:8px;border:1px solid var(--line)}
+.origin-field{position:relative;flex:1;min-width:0}
+.origin-field>input{width:100%;min-height:48px;padding:13px 15px;border:0;font-weight:800;outline:none}
+.origin-field>input:focus-visible{box-shadow:inset 0 0 0 2px rgba(122,158,33,.3)}
+.origin-locate{flex-shrink:0;min-width:84px;min-height:48px;padding:0 14px;border:0;border-left:1px solid var(--line);background:#f4f5f0;color:var(--green);font-size:12px;font-weight:800}
+.origin-locate:hover:enabled{background:#edf9c7}
+.origin-locate:disabled{cursor:wait;opacity:.65}
+.origin-suggestions button b,#origin-suggestions button b{display:block;font-size:12px}
+#origin-suggestions button small{display:block;margin-top:2px;color:#87958f;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#origin-suggestions button{height:auto;padding:9px 11px}
+.origin-favorites{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.origin-favorite{display:inline-flex;align-items:center;border:1px solid #d4dec1;border-radius:999px;background:#f3f6ed;overflow:hidden}
+.origin-favorite>button:first-child{min-height:34px;padding:0 6px 0 13px;border:0;background:none;color:#45610b;font-size:11px;font-weight:800}
+.origin-favorite-remove{min-width:28px;min-height:34px;padding:0 9px 0 3px;border:0;background:none;color:#8a9691;font-size:14px;line-height:1}
+.origin-favorite-remove:hover{color:#b34d36}
+.origin-favorite-add,.origin-clear{min-height:34px;padding:0 13px;border:1px dashed #cfd8d2;border-radius:999px;background:#fff;color:#607168;font-size:11px;font-weight:800}
+.origin-favorite-add:disabled{cursor:not-allowed;opacity:.55}
+.origin-favorite-add:hover:enabled,.origin-clear:hover{border-style:solid;border-color:#b2cf51;color:#45610b}
+.origin-feedback{min-height:18px;margin:8px 0 0;color:#607168;font-size:11px;line-height:1.5}
+.origin-transit{margin:9px 0 0;padding:8px 11px;border:1px solid #d4dec1;border-radius:4px;background:#f3f6ed;color:#45610b;font-size:11px;font-weight:800;line-height:1.5}
+@media(max-width:800px){.origin-row{flex-direction:column}.origin-locate{width:100%;min-height:44px;border-left:0;border-top:1px solid var(--line)}}
