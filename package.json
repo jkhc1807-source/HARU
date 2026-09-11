@@ -6,7 +6,7 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "dev": "vinext dev",
+    "dev": "node scripts/generate-map-config.mjs && vinext dev",
     "build": "node scripts/generate-map-config.mjs && vinext build",
     "start": "vinext start",
     "test": "npm run build && node --test tests/*.test.mjs",
