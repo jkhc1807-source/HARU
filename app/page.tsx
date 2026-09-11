@@ -390,7 +390,7 @@ export default function Home() {
   }, [city, mapReady, showRegionSuggestions, regionMode]);
 
   useEffect(() => {
-    localStorage.setItem("haru-trip-plan", JSON.stringify({ version: 2, city, startTime, endTime, selected, plan } satisfies TripSettings));
+    localStorage.setItem("haru-trip-plan", JSON.stringify({ version: 2, city, startTime, endTime, selected, plan, origin: null } satisfies TripSettings));
     if (!mapReady || !mapRef.current) return;
     mapObjectsRef.current.forEach((object) => object.setMap(null));
     mapObjectsRef.current = [];
@@ -670,7 +670,7 @@ export default function Home() {
     if (!name) return;
     setIsSaveDialogOpen(false);
     const existingTrip = savedTrips.find(item => item.name === name);
-    const trip: SavedTrip = { version: 2, id: existingTrip?.id ?? `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, name, city, startTime, endTime, selected, plan, updatedAt: Date.now() };
+    const trip: SavedTrip = { version: 2, id: existingTrip?.id ?? `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, name, city, startTime, endTime, selected, plan, origin: null, updatedAt: Date.now() };
     setSavedTrips(current => [trip, ...current.filter(item => item.name !== name)].slice(0, 12));
     setSelectedSavedTripId(trip.id);
     setNotice(`'${name}' 일정을 저장했어요`);
