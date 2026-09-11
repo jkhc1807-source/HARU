@@ -1,6 +1,6 @@
 export type DrawOp =
   | { type: "rect"; x: number; y: number; w: number; h: number; fill: string }
-  | { type: "text"; x: number; y: number; text: string; font: string; fill: string; align?: "left" | "right" }
+  | { type: "text"; x: number; y: number; text: string; font: string; fill: string; align?: "left" | "right" | "center" }
   | { type: "circle"; x: number; y: number; r: number; fill: string };
 
 export type TripImageStop = { order: number; name: string; category: string; start: string; end: string };
@@ -53,7 +53,7 @@ export function buildTripImageLayout(input: TripImageInput): TripImageLayout {
     const top = HEADER_HEIGHT + index * ROW_HEIGHT;
     ops.push({ type: "rect", x: PADDING, y: top + 20, w: WIDTH - PADDING * 2, h: ROW_HEIGHT - 12, fill: "#ffffff" });
     ops.push({ type: "circle", x: PADDING + 42, y: top + 62, r: 22, fill: GREEN });
-    ops.push({ type: "text", x: PADDING + 42, y: top + 70, text: String(stop.order), font: "800 20px sans-serif", fill: "#ffffff", align: "right" });
+    ops.push({ type: "text", x: PADDING + 42, y: top + 70, text: String(stop.order), font: "800 20px sans-serif", fill: "#ffffff", align: "center" });
     ops.push({ type: "text", x: PADDING + 84, y: top + 58, text: clip(stop.name, 20), font: "700 26px sans-serif", fill: INK });
     ops.push({ type: "text", x: PADDING + 84, y: top + 88, text: `${stop.category} · ${stop.start}–${stop.end}`, font: "500 17px sans-serif", fill: MUTED });
   });
@@ -82,7 +82,7 @@ export function renderTripImage(canvas: HTMLCanvasElement, layout: TripImageLayo
       context.fill();
     } else {
       context.font = op.font;
-      context.textAlign = op.align === "right" ? "right" : "left";
+      context.textAlign = op.align ?? "left";
       context.fillText(op.text, op.x, op.y);
     }
   }
