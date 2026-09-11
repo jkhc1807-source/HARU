@@ -1,0 +1,111 @@
+# 다음 작업 이어가기
+
+마지막 갱신: 2026-09-11
+
+새 세션을 열면 이 문서부터 읽는다. `AGENTS.md`, `docs/PROJECT_CONTEXT.md`, `docs/ROADMAP.md`가 그 다음이다.
+
+## 새 세션 시작 문구
+
+> `AGENTS.md`와 `docs/NEXT_SESSION.md`를 읽고 하루여행 작업을 이어서 해줘.
+
+## 지금 상태 한 줄
+
+출발지 분리, 일정 이미지 저장, 관리자 화면까지 구현·배포를 마쳤고 운영 환경에서 동작을 확인했다. 남은 일은 검증 2건과 정리 2건이다.
+
+## 환경
+
+| 항목 | 값 |
+| --- | --- |
+| 운영 주소 | https://haru-ashy-rho.vercel.app (Vercel, `main` 자동 배포) |
+| 예전 Sites 주소 | https://haru-trip-planner.njhina48.chatgpt.site (**옛 버전에서 멈춤**, 아래 참고) |
+| Git 원격 | `github` = https://github.com/jkhc1807-source/HARU (**이걸 쓴다**) |
+| 못 쓰는 원격 | `origin` = chatgpt-team.site (인증 불가) |
+| Supabase 프로젝트 ref | `boanglpsvhcqjephlsjr` |
+| 관리자 계정 | `profiles.role = 'admin'` 인 계정 1개 지정 완료 |
+
+### 환경변수
+
+`.env.local` (로컬 전용, Git에 올리지 않는다)
+
+```
+KAKAO_JAVASCRIPT_KEY=
+NEXT_PUBLIC_SUPABASE_URL=https://boanglpsvhcqjephlsjr.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+```
+
+Vercel Production 에는 위 3개에 더해 `SUPABASE_SERVICE_ROLE_KEY` 가 Secret 타입으로 등록되어 있다. 이 값은 서버 전용이며 `NEXT_PUBLIC_` 접두사를 붙이지 않는다. 2026-09-11 배포 번들을 검사해 클라이언트로 새어 나가지 않음을 확인했다.
+
+### 외부 설정 (이미 완료)
+
+- 카카오 디벨로퍼스 Web 플랫폼: `http://localhost:3000`, 운영 주소 2개 등록
+- Supabase 마이그레이션 2건 적용: `202609110001_favorite_origins.sql` → `202609110002_admin_audit_logs.sql`
+- Supabase Google OAuth 활성, 운영 복귀 주소 등록
+
+## 로컬 실행
+
+```bash
+npm install
+npm run dev          # http://localhost:3000 (카카오 도메인이 3000에만 등록되어 있으므로 포트 고정 필요)
+```
+
+3000이 이미 점유되어 있으면 vinext가 조용히 3001, 3002로 옮겨 가고 그러면 지도가 뜨지 않는다. 포트를 잡고 있는 프로세스를 정리한 뒤 다시 띄운다.
+
+### 검증
+
+```bash
+npx tsc --noEmit                     # 타입
+npm test                             # vinext build + 테스트 19개
+npx next build                       # Vercel 배포 경로. 배포 전 반드시 이걸로 확인한다
+```
+
+`npm run build`(vinext)와 `npx next build`(Next.js)는 서로 다른 경로다. Sites는 전자, Vercel은 후자를 쓴다.
+
+`npx eslint .` 는 **이번 작업 이전부터** 24건 실패하고 있었고 지금은 28건이다. 늘어난 4건은 기존 코드에 이미 있던 `react-hooks/set-state-in-effect`와 같은 계열이다. 빌드·테스트와 무관하다.
+
+## 2026-09-11에 한 일
+
+| 기능 | 핵심 파일 |
+| --- | --- |
+| 실제 출발지 분리 (검색·내 위치·즐겨찾기) | `app/page.tsx`, `lib/origin-storage.ts`, `lib/favorite-origin-repository.ts` |
+| 일정 이미지 저장 (Canvas 직접 렌더링) | `lib/trip-image.ts` |
+| 관리자 통계·계정 차단 | `app/admin/page.tsx`, `app/api/admin/**`, `lib/admin-access.ts`, `lib/supabase/admin-server.ts` |
+| 순서 이동 후 포커스·안내 | `app/page.tsx` `handleMoveSpot` |
+
+설계 근거는 `docs/superpowers/specs/2026-09-01-origin-auth-transit-admin-design.md`, 작업 계획은 `docs/superpowers/plans/2026-09-11-origin-image-admin-a11y.md` 에 있다.
+
+### 설계 판단 기록
+
+- **공유 링크에 출발지를 넣지 않는다.** 집·회사 주소가 링크로 새어 나가지 않게 하기 위해서다. 저장 일정에는 포함된다.
+- **관리자 API는 주소와 일정 본문을 조회하지 않는다.** 개수만 센다.
+- **이미지 저장은 800px 이하에서만 공유 시트를 쓴다.** 데스크톱 Chrome도 `navigator.canShare({files})`에 true를 돌려주기 때문에 화면 폭으로 갈라야 저장 버튼이 저장으로 동작한다.
+- **로그아웃·계정 전환 시 이 기기의 즐겨찾기를 비운다.** 한 컴퓨터를 여러 사람이 쓸 때 앞사람의 집 주소가 뒷사람 계정으로 올라가는 것을 막는다. 저장 일정도 같은 방식이다. 계정에 이미 동기화된 즐겨찾기는 다시 로그인하면 돌아온다.
+- **`tsconfig.json`에 `allowImportingTsExtensions: true`** 를 켰다. `lib/trip-sync.ts`가 `origin-storage`를 값으로 import 하는데 Node ESM 로더가 확장자 없는 경로를 풀지 못해 테스트가 깨졌기 때문이다. `isOrigin`을 복제하는 대신 확장자를 명시했다.
+
+## 남은 일
+
+### 검증 (사람이 직접 해야 함)
+
+- [ ] **서로 다른 구글 계정 2개로 데이터 분리 확인** — 계정이 2개 있으므로 바로 가능하다. 시크릿 창을 쓰고, 로그인 직후 뜨는 `이 기기에 저장된 일정을 계정에 동기화할까요?`에 **취소**를 눌러야 결과가 오염되지 않는다.
+- [ ] **로그아웃 시 즐겨찾기 정리 동작 확인** — A로 로그인해 즐겨찾기를 만들고 로그아웃한 뒤, 같은 창에서 B로 로그인했을 때 A의 즐겨찾기가 넘어가지 않아야 한다. 코드와 테스트로만 확인했고 실제 로그인 경로는 미확인이다.
+- [ ] **실기기 터치와 가상 키보드** — 에뮬레이터로 대체 불가.
+
+로그인이 필요한 검증은 자동화 브라우저로 할 수 없다. 구글이 원격 제어되는 브라우저의 OAuth를 차단하기 때문이다(`로그인할 수 없음`). 우회하지 않는다. 사람이 직접 하고 결과를 알려주는 방식으로 진행한다.
+
+### 정리
+
+- [ ] **Sites 주소 처리 결정** — `haru-trip-planner.njhina48.chatgpt.site`는 코덱스 내부 Git(`origin`)으로 배포되는데 그 원격에 접근할 수 없어 옛 버전에 멈춰 있다. 계속 쓸 주소인지 정하고, 쓸 거면 배포 방법을 찾는다. 안 쓰면 문서에서 정리한다.
+- [ ] **ROADMAP 과거 항목 정리** — Phase 3의 `여러 일정 저장`, `공유 링크 생성`, `모바일 공유 시트`는 이미 구현되어 있으나 체크가 안 되어 있다. 실제 동작을 확인한 뒤 표시한다.
+
+### 다음에 만들 만한 것
+
+- **대중교통 경로 조회** (설계문서 3단계). 지금은 출발지 주변 지하철·버스 *이름*만 보여준다. 실제 소요시간·요금·환승은 카카오 REST 대중교통 API가 필요하고, **키 발급과 무료 쿼터 확인이 선행되어야 한다.** 토이 프로젝트 원칙상 유료 전환은 사용자 동의 없이 하지 않는다.
+- 관리자 추천 지역·공지 콘텐츠 관리 (설계문서 4단계 나머지)
+- 영업시간·휴무일 반영
+
+## 알아두면 좋은 함정
+
+- `app/page.tsx`는 1400줄이 넘는다. 수정 전에 관련 상태와 effect를 먼저 읽는다.
+- 파일 줄바꿈이 **CRLF**다. 문자열 치환 스크립트를 쓸 때 `\n`으로 매칭하면 실패한다.
+- 출발지가 설정되면 `transitBySpot`이 `origin` 키로 채워지고, 없으면 첫 장소의 `spot.id` 키로 채워진다. 표시 위치도 각각 출발지 영역과 일정 카드로 다르다.
+- 관리자 API의 공통 인증 헬퍼 `requireAdminUser`는 `app/api/admin/stats/route.ts`에 있고 다른 두 라우트가 거기서 import 한다. Next.js 16과 vinext 모두 이 형태를 허용하는 것을 빌드로 확인했다.
+- `public/map-config.json`은 빌드 때 생성되며 Git에 올리지 않는다. 카카오 키가 들어간다.

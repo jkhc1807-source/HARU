@@ -2,6 +2,7 @@
 
 이 저장소에서 작업을 시작할 때 다음 문서를 먼저 읽는다.
 
+0. `docs/NEXT_SESSION.md` — 이어서 작업할 때 가장 먼저 읽는 인수인계 문서
 1. `docs/PROJECT_CONTEXT.md` — 현재 상태, 기술 구성, 배포 정보, 주의점
 2. `docs/PRODUCT.md` — 제품 목표와 사용자 흐름
 3. `docs/ROADMAP.md` — 완료 항목과 다음 작업

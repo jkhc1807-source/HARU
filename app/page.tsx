@@ -298,12 +298,20 @@ export default function Home() {
           setSelectedSavedTripId("");
           syncedUserRef.current = "";
           syncingUserRef.current = "";
+          if (previousUserId) {
+            localStorage.removeItem("haru-favorite-origins");
+            setFavoriteOrigins([]);
+            favoriteOriginsSyncedUserRef.current = "";
+          }
         }
         authUserIdRef.current = nextUserId;
         setAuthUser(session?.user ?? null);
         setIsAuthLoading(false);
         if (!session && previousUserId) {
           localStorage.removeItem(`haru-trip-plans:${previousUserId}`);
+          localStorage.removeItem("haru-favorite-origins");
+          setFavoriteOrigins([]);
+          favoriteOriginsSyncedUserRef.current = "";
           setSavedTrips(readStoredTrips(localStorage.getItem("haru-trip-plans")));
           setSelectedSavedTripId("");
           syncedUserRef.current = "";
