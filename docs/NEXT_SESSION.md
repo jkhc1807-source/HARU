@@ -41,6 +41,40 @@ Vercel Production 에는 위 3개에 더해 `SUPABASE_SERVICE_ROLE_KEY` 가 Secr
 - Supabase 마이그레이션 2건 적용: `202609110001_favorite_origins.sql` → `202609110002_admin_audit_logs.sql`
 - Supabase Google OAuth 활성, 운영 복귀 주소 등록
 
+## 새 PC에서 처음 시작할 때
+
+클론만으로는 동작하지 않는다. `.env.local` 은 키가 들어 있어 Git에 올리지 않으므로 새 PC에서 직접 만들어야 한다.
+
+1. 클론
+
+   ```bash
+   git clone https://github.com/jkhc1807-source/HARU.git
+   cd HARU
+   npm install
+   ```
+
+2. 프로젝트 루트에 `.env.local` 파일을 만들고 아래 3줄을 채운다.
+
+   ```
+   KAKAO_JAVASCRIPT_KEY=
+   NEXT_PUBLIC_SUPABASE_URL=https://boanglpsvhcqjephlsjr.supabase.co
+   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+   ```
+
+   - `KAKAO_JAVASCRIPT_KEY`: 카카오 디벨로퍼스 → 내 애플리케이션 → 앱 키 → JavaScript 키
+   - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: Supabase → Settings → API Keys → Publishable key (`sb_publishable_...`)
+
+   기존 PC의 `.env.local` 을 그대로 복사해도 된다. 메신저나 이메일로 보내지 않는다.
+
+   `SUPABASE_SERVICE_ROLE_KEY` 는 로컬에 넣지 않는다. Vercel Production 에만 등록되어 있으면 되고, 로컬 `/admin` 은 그 키가 없으면 `관리자 기능이 아직 설정되지 않았어요` 를 보여준다. 그게 정상이다.
+
+3. `npm run dev` 후 http://localhost:3000 접속. 지도에 `카카오맵이 연결됐어요` 가 뜨면 준비 끝이다.
+
+   `카카오 도메인 등록을 확인해주세요` 가 뜨면 포트가 3000이 아니거나 카카오 콘솔에 도메인이 빠진 것이다. 카카오 콘솔 설정은 앱 단위라 PC를 바꿔도 그대로 유효하다.
+
+4. 로컬에서 구글 로그인까지 시험하려면 Supabase → Authentication → URL Configuration → Redirect URLs 에 `http://localhost:3000/**` 가 있어야 한다. `Site URL` 은 운영 주소 그대로 두고 건드리지 않는다.
+
+
 ## 로컬 실행
 
 ```bash
