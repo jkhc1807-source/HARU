@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import type { DragEvent, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from "react";
+import type { CSSProperties, DragEvent, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from "react";
 import { ChoiceSelect } from "@/components/atoms/ChoiceSelect";
 import { SiteHeader } from "@/components/organisms/SiteHeader";
 import { AuthControl } from "@/components/organisms/AuthControl";
@@ -84,6 +84,37 @@ function toneForSpot(spot: Spot) {
 function travelMinutes(a: Spot, b: Spot) {
   return Math.max(5, Math.round((distance(a, b) / 4.5) * 60));
 }
+
+function pointAlongRoute(spots: Spot[], progress: number): { x: number; y: number } | null {
+  if (spots.length === 0) return null;
+  if (spots.length === 1) return { x: spots[0].x, y: spots[0].y };
+  const segmentLengths = spots.slice(0, -1).map((spot, index) => distance(spot, spots[index + 1]));
+  const totalLength = segmentLengths.reduce((sum, length) => sum + length, 0) || 1;
+  const target = Math.min(1, Math.max(0, progress)) * totalLength;
+  let travelled = 0;
+  for (let i = 0; i < segmentLengths.length; i++) {
+    const segmentLength = segmentLengths[i];
+    const isLastSegment = i === segmentLengths.length - 1;
+    if (travelled + segmentLength >= target || isLastSegment) {
+      const localT = segmentLength > 0 ? Math.min(1, Math.max(0, (target - travelled) / segmentLength)) : 1;
+      const from = spots[i];
+      const to = spots[i + 1];
+      return { x: from.x + (to.x - from.x) * localT, y: from.y + (to.y - from.y) * localT };
+    }
+    travelled += segmentLength;
+  }
+  return spots[spots.length - 1];
+}
+
+const WALKER_SVG = `<svg class="route-walker-figure" viewBox="0 0 26 32" width="26" height="32" aria-hidden="true" focusable="false">
+  <ellipse class="rw-shadow" cx="13" cy="29.5" rx="7" ry="1.6"></ellipse>
+  <line class="rw-leg-back" x1="13" y1="20" x2="9" y2="27"></line>
+  <line class="rw-leg-front" x1="13" y1="20" x2="17" y2="27"></line>
+  <line class="rw-arm-back" x1="13" y1="13" x2="9" y2="18"></line>
+  <line class="rw-arm-front" x1="13" y1="13" x2="17" y2="16"></line>
+  <line class="rw-body" x1="13" y1="11" x2="13" y2="20"></line>
+  <circle class="rw-head" cx="13" cy="6.5" r="4.2"></circle>
+</svg>`;
 
 function timeToMinutes(value: string) {
   const [hours, minutes] = value.split(":").map(Number);
@@ -445,17 +476,22 @@ export default function Home() {
   useEffect(() => {
     localStorage.setItem("haru-trip-plan", JSON.stringify({ version: 2, city, startTime, endTime, selected, plan, origin } satisfies TripSettings));
     if (!mapReady || !mapRef.current) return;
+    let cancelled = false;
     mapObjectsRef.current.forEach((object) => object.setMap(null));
     mapObjectsRef.current = [];
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const bounds = new window.kakao.maps.LatLngBounds();
     const path: any[] = [];
+    const markerContents: HTMLElement[] = [];
     plan.forEach((spot, index) => {
       const pos = new window.kakao.maps.LatLng(spot.y, spot.x);
       bounds.extend(pos);
       path.push(pos);
       const content = document.createElement("div");
       content.className = "kakao-number-marker";
+      if (!prefersReducedMotion) content.style.animationDelay = `${index * 45}ms`;
       content.textContent = String(index + 1);
+      markerContents.push(content);
       const marker = new window.kakao.maps.CustomOverlay({ map: mapRef.current, position: pos, content, yAnchor: 1.25 });
       mapObjectsRef.current.push(marker);
 
@@ -469,11 +505,65 @@ export default function Home() {
         mapObjectsRef.current.push(overlay);
       }
     });
+    if (plan.length === 1) markerContents[0]?.classList.add("kakao-number-marker--visited");
     if (path.length > 1) {
-      const polyline = new window.kakao.maps.Polyline({ map: mapRef.current, path, strokeWeight: 5, strokeColor: "#6e8e20", strokeOpacity: 0.9, strokeStyle: "solid" });
-      mapObjectsRef.current.push(polyline);
+      if (prefersReducedMotion) {
+        const polyline = new window.kakao.maps.Polyline({ map: mapRef.current, path, strokeWeight: 5, strokeColor: "#6e8e20", strokeOpacity: 0.9, strokeStyle: "solid" });
+        mapObjectsRef.current.push(polyline);
+        markerContents.forEach((content) => content.classList.add("kakao-number-marker--visited"));
+      } else {
+        const ghostLine = new window.kakao.maps.Polyline({ map: mapRef.current, path, strokeWeight: 3, strokeColor: "#c8db97", strokeOpacity: 0.55, strokeStyle: "shortdash" });
+        const haloLine = new window.kakao.maps.Polyline({ map: mapRef.current, path: [path[0]], strokeWeight: 11, strokeColor: "#6e8e20", strokeOpacity: 0.22, strokeStyle: "solid" });
+        const mainLine = new window.kakao.maps.Polyline({ map: mapRef.current, path: [path[0]], strokeWeight: 5, strokeColor: "#6e8e20", strokeOpacity: 0.95, strokeStyle: "solid" });
+        mapObjectsRef.current.push(ghostLine, haloLine, mainLine);
+
+        const walkerContent = document.createElement("div");
+        walkerContent.className = "route-walker";
+        walkerContent.innerHTML = WALKER_SVG;
+        const walkerFigure = walkerContent.querySelector<HTMLElement>(".route-walker-figure");
+        const walker = new window.kakao.maps.CustomOverlay({ map: mapRef.current, position: path[0], content: walkerContent, yAnchor: 0.92, zIndex: 20 });
+        mapObjectsRef.current.push(walker);
+
+        const segmentLengths = plan.slice(0, -1).map((spot, index) => distance(spot, plan[index + 1]));
+        const totalLength = segmentLengths.reduce((sum, length) => sum + length, 0) || 1;
+        let travelled = 0;
+        const thresholds = [0, ...segmentLengths.map((length) => (travelled += length) / totalLength)];
+        markerContents[0]?.classList.add("kakao-number-marker--visited");
+        const visited = new Set([0]);
+
+        const duration = 4000;
+        const start = performance.now();
+        const drawStep = (now: number) => {
+          if (cancelled) return;
+          const t = Math.min(1, (now - start) / duration);
+          const eased = 1 - Math.pow(1 - t, 3);
+          const count = Math.max(2, Math.round(eased * (path.length - 1)) + 1);
+          const slice = path.slice(0, count);
+          haloLine.setPath(slice);
+          mainLine.setPath(slice);
+          const walkerPos = pointAlongRoute(plan, eased);
+          const aheadPos = pointAlongRoute(plan, Math.min(1, eased + 0.015));
+          if (walkerPos) {
+            walker.setPosition(new window.kakao.maps.LatLng(walkerPos.y, walkerPos.x));
+            if (aheadPos && walkerFigure) {
+              const dx = aheadPos.x - walkerPos.x;
+              if (Math.abs(dx) > 1e-6) walkerFigure.classList.toggle("facing-left", dx < 0);
+            }
+          }
+          thresholds.forEach((threshold, index) => {
+            if (visited.has(index) || eased < threshold) return;
+            visited.add(index);
+            markerContents[index]?.classList.add("kakao-number-marker--visited", "kakao-number-marker--pulse");
+            window.setTimeout(() => markerContents[index]?.classList.remove("kakao-number-marker--pulse"), 520);
+          });
+          if (t < 1) requestAnimationFrame(drawStep);
+          else walkerContent.classList.add("route-walker-arrived");
+        };
+        requestAnimationFrame(drawStep);
+      }
     }
     if (plan.length) mapRef.current.setBounds(bounds);
+    return () => { cancelled = true; };
   }, [city, startTime, endTime, selected, plan, origin, mapReady]);
 
   useEffect(() => {
@@ -1439,7 +1529,7 @@ export default function Home() {
             </div>}
             {schedule.map(({ spot, start, end, travelToNext }, i) => <Fragment key={spot.id}>
               <div className={`drop-zone ${activeDropIndex === i ? "active" : ""}`} data-drop-index={i} onDragOver={event => event.preventDefault()} onDragEnter={() => setActiveDropIndex(i)} onDrop={() => handleDropAt(i)}><span>{i === 0 ? "맨 앞에 놓기" : "여기에 놓기"}</span></div>
-              <article id={`stop-${spot.id}`} className={`stop tone-${toneForSpot(spot)} ${i === schedule.length - 1 ? "last" : ""}`} data-stop-index={i} onPointerDown={event => { if (event.pointerType !== "touch" && !(event.target as HTMLElement).closest("a, button, select")) handlePointerDragStart(event, spot); }} aria-label={`${spot.name} 일정 순서 이동`}>
+              <article id={`stop-${spot.id}`} className={`stop tone-${toneForSpot(spot)} ${i === schedule.length - 1 ? "last" : ""}`} data-stop-index={i} style={{ "--stop-i": i } as CSSProperties} onPointerDown={event => { if (event.pointerType !== "touch" && !(event.target as HTMLElement).closest("a, button, select")) handlePointerDragStart(event, spot); }} aria-label={`${spot.name} 일정 순서 이동`}>
                 <div className="stop-card compact-stop">
                   <span className="drag-handle" aria-hidden="true" onPointerDown={event => { event.stopPropagation(); handlePointerDragStart(event, spot); }}>⋮⋮</span>
                   <div className="stop-content">

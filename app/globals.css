@@ -705,6 +705,37 @@ footer{padding-block:34px;background:var(--forest-deep);color:#c7d4ca}
 .route-optimize:hover{border-color:#91a98f;background:#f1f6e9;transform:translateY(-2px)}
 .route-optimize:active{transform:scale(.97)}
 
+.timeline .stop{animation:stop-enter .4s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--stop-i,0) * 45ms)}
+@keyframes stop-enter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.kakao-number-marker{animation:marker-pop .3s cubic-bezier(.2,.8,.2,1) both;cursor:default;transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s,background-color .25s}
+@keyframes marker-pop{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:scale(1)}}
+.kakao-number-marker:hover,.kakao-number-marker:focus-visible{transform:scale(1.16);box-shadow:0 6px 18px rgba(0,0,0,.4);z-index:5;outline:none}
+.kakao-number-marker--visited{background:#6e8e20;box-shadow:0 3px 10px rgba(0,0,0,.32),0 0 0 3px rgba(110,142,32,.22)}
+.kakao-number-marker--pulse{animation:marker-pulse .52s cubic-bezier(.3,.7,.4,1) both}
+@keyframes marker-pulse{0%{box-shadow:0 0 0 0 rgba(110,142,32,.55)}70%{box-shadow:0 0 0 16px rgba(110,142,32,0)}100%{box-shadow:0 0 0 0 rgba(110,142,32,0)}}
+
+.route-walker{position:relative;line-height:1;padding:4px;border-radius:50%;background:radial-gradient(circle,rgba(255,253,240,.92) 0%,rgba(255,253,240,.55) 48%,rgba(255,253,240,0) 74%);filter:drop-shadow(0 2px 4px rgba(20,40,30,.45));animation:walker-bob .3s ease-in-out infinite alternate}
+@keyframes walker-bob{to{transform:translateY(-3px)}}
+.route-walker.route-walker-arrived{animation:walker-jump .48s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes walker-jump{0%{transform:translateY(0) scale(1,1)}25%{transform:translateY(2px) scale(1.15,.85)}55%{transform:translateY(-15px) scale(.9,1.12)}80%{transform:translateY(0) scale(1.06,.94)}100%{transform:translateY(0) scale(1,1)}}
+.route-walker-figure{display:block;transition:transform .12s ease-out}
+.route-walker-figure.facing-left{transform:scaleX(-1)}
+.route-walker-figure .rw-shadow{fill:rgba(20,40,30,.28)}
+.route-walker-figure .rw-head{fill:#1f4d3d;stroke:#fff;stroke-width:1.4}
+.route-walker-figure .rw-body,.route-walker-figure .rw-leg-back,.route-walker-figure .rw-leg-front,.route-walker-figure .rw-arm-back,.route-walker-figure .rw-arm-front{stroke:#1f4d3d;stroke-width:2.6;stroke-linecap:round}
+.route-walker-figure .rw-leg-back,.route-walker-figure .rw-leg-front,.route-walker-figure .rw-arm-back,.route-walker-figure .rw-arm-front{transform-box:fill-box;transform-origin:top center}
+.route-walker-figure .rw-leg-back{animation:rw-leg-back-swing .34s ease-in-out infinite}
+.route-walker-figure .rw-leg-front{animation:rw-leg-front-swing .34s ease-in-out infinite}
+.route-walker-figure .rw-arm-back{animation:rw-arm-back-swing .34s ease-in-out infinite}
+.route-walker-figure .rw-arm-front{animation:rw-arm-front-swing .34s ease-in-out infinite}
+@keyframes rw-leg-back-swing{0%,100%{transform:rotate(24deg)}50%{transform:rotate(-24deg)}}
+@keyframes rw-leg-front-swing{0%,100%{transform:rotate(-24deg)}50%{transform:rotate(24deg)}}
+@keyframes rw-arm-back-swing{0%,100%{transform:rotate(-18deg)}50%{transform:rotate(18deg)}}
+@keyframes rw-arm-front-swing{0%,100%{transform:rotate(18deg)}50%{transform:rotate(-18deg)}}
+.route-walker-arrived .rw-leg-back,.route-walker-arrived .rw-leg-front,.route-walker-arrived .rw-arm-back,.route-walker-arrived .rw-arm-front{animation:none}
+.route-walker-arrived .rw-arm-back{transform:rotate(-150deg)}
+.route-walker-arrived .rw-arm-front{transform:rotate(150deg)}
+
 @media(max-width:800px){
  .header-more-actions>summary::after{left:50%;transform:translate(-50%,-50%) rotate(-70deg) scale(.7)}
  .header-more-actions[open]>summary::after{transform:translate(-50%,-50%) rotate(0) scale(1)}
@@ -713,7 +744,7 @@ footer{padding-block:34px;background:var(--forest-deep);color:#c7d4ca}
 }
 @media(prefers-reduced-motion:reduce){
  .primary::before{display:none}
- .header-more-menu,.auth-user-menu,.result.added .result-add-state>span,.map-status .connected,.timeline.dragging>.drop-zone,.route-optimize-wrap>span:not(:empty),.header-status{animation:none}
+ .header-more-menu,.auth-user-menu,.result.added .result-add-state>span,.map-status .connected,.timeline.dragging>.drop-zone,.route-optimize-wrap>span:not(:empty),.header-status,.timeline .stop,.kakao-number-marker,.kakao-number-marker--pulse,.route-walker{animation:none}
  .primary>span,.header-more-actions>summary span,.header-more-actions>summary::after,.timeline .compact-stop,.compact-stop .stop-number,.compact-stop .drag-handle,.search-section .result,.result-add-state>span,.route-optimize{transition:none}
 }
 
