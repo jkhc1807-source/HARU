@@ -1,4 +1,5 @@
 import type { SavedTrip, Spot } from "./trip-types";
+import { isOrigin } from "./origin-storage.ts";
 
 export function mergeSavedTrips(local: SavedTrip[], remote: SavedTrip[]) {
   const newestByName = new Map<string, SavedTrip>();
@@ -24,6 +25,7 @@ export function savedTripsFromRows(rows: unknown[]) {
       endTime: typeof value.end_time === "string" ? value.end_time : "",
       selected: Array.isArray(value.preferences) && value.preferences.every(item => typeof item === "string") ? value.preferences : [],
       plan: value.plan,
+      origin: isOrigin(value.origin) ? value.origin : null,
       updatedAt,
     } as SavedTrip];
   });

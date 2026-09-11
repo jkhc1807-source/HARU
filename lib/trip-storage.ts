@@ -1,4 +1,5 @@
 import type { SavedTrip, Spot } from "./trip-types";
+import { isOrigin } from "./origin-storage.ts";
 
 function isStoredSpot(value: unknown): value is Spot {
   if (!value || typeof value !== "object") return false;
@@ -43,7 +44,7 @@ export function readStoredTrips(value: string | null): SavedTrip[] {
         && Number.isFinite(trip.updatedAt) && Array.isArray(trip.plan) && trip.plan.every(isStoredSpot);
     }).map(item => {
       const trip = item as Partial<SavedTrip>;
-      return { ...trip, version: 2, startTime: typeof trip.startTime === "string" ? trip.startTime : "", endTime: typeof trip.endTime === "string" ? trip.endTime : "", selected: Array.isArray(trip.selected) ? trip.selected : [] } as SavedTrip;
+      return { ...trip, version: 2, startTime: typeof trip.startTime === "string" ? trip.startTime : "", endTime: typeof trip.endTime === "string" ? trip.endTime : "", selected: Array.isArray(trip.selected) ? trip.selected : [], origin: isOrigin(trip.origin) ? trip.origin : null } as SavedTrip;
     });
   } catch {
     return [];

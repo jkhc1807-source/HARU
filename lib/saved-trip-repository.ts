@@ -11,6 +11,7 @@ type SavedTripRow = {
   end_time: string;
   preferences: string[];
   plan: SavedTrip["plan"];
+  origin: SavedTrip["origin"];
   updated_at: string;
 };
 
@@ -23,7 +24,7 @@ function requireClient() {
 export async function listSavedTrips(userId: string) {
   const { data, error } = await requireClient()
     .from("saved_trips")
-    .select("id,user_id,name,city,start_time,end_time,preferences,plan,updated_at")
+    .select("id,user_id,name,city,start_time,end_time,preferences,plan,origin,updated_at")
     .eq("user_id", userId)
     .order("updated_at", { ascending: false })
     .limit(12);
@@ -41,6 +42,7 @@ export async function upsertSavedTrip(userId: string, trip: SavedTrip) {
     end_time: trip.endTime,
     preferences: trip.selected,
     plan: trip.plan,
+    origin: trip.origin,
     updated_at: new Date(trip.updatedAt).toISOString(),
   };
   const { error } = await requireClient().from("saved_trips").upsert(row, { onConflict: "user_id,name" });

@@ -7,13 +7,16 @@ import { SiteHeader } from "@/components/organisms/SiteHeader";
 import { AuthControl } from "@/components/organisms/AuthControl";
 import { TimeRangePicker } from "@/components/molecules/TimeRangePicker";
 import type { User } from "@supabase/supabase-js";
-import type { SavedTrip, ScheduleItem, Spot, TransitInfo, TripSettings, UndoState } from "@/lib/trip-types";
+import type { FavoriteOrigin, Origin, SavedTrip, ScheduleItem, Spot, TransitInfo, TripSettings, UndoState } from "@/lib/trip-types";
 import { findDepartureTransit } from "@/lib/transit";
 import { readSharedTrip, readStoredTrip, readStoredTrips } from "@/lib/trip-storage";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { deleteSavedTrip, listSavedTrips, upsertSavedTrip } from "@/lib/saved-trip-repository";
 import { mergeSavedTrips } from "@/lib/trip-sync";
+import { mergeFavoriteOrigins, readStoredFavoriteOrigins, readStoredOrigin } from "@/lib/origin-storage";
+import { deleteFavoriteOrigin, listFavoriteOrigins, upsertFavoriteOrigin } from "@/lib/favorite-origin-repository";
 import { distance, optimizeRoute, routeDistance } from "@/lib/route-optimizer";
+import { buildTripImageLayout, renderTripImage } from "@/lib/trip-image";
 
 declare global {
   interface Window { kakao: any }
@@ -151,6 +154,14 @@ function routeTravelMinutes(spots: Spot[]) {
 
 export default function Home() {
   const [city, setCity] = useState("성수동");
+  const [origin, setOrigin] = useState<Origin | null>(null);
+  const [originQuery, setOriginQuery] = useState("");
+  const [originSuggestions, setOriginSuggestions] = useState<Origin[]>([]);
+  const [isOriginSearching, setIsOriginSearching] = useState(false);
+  const [showOriginSuggestions, setShowOriginSuggestions] = useState(false);
+  const [originNotice, setOriginNotice] = useState("");
+  const [favoriteOrigins, setFavoriteOrigins] = useState<FavoriteOrigin[]>([]);
+  const [isSavingFavorite, setIsSavingFavorite] = useState(false);
   const [query, setQuery] = useState("");
   const [regionMode, setRegionMode] = useState<keyof typeof regionModeLabels>("administrative");
   const [selected, setSelected] = useState<string[]>(() => preferenceConfigs.filter(preference => preference.defaultSelected).map(preference => preference.label));
@@ -206,6 +217,8 @@ export default function Home() {
   const saveTripDialogRef = useRef<HTMLDivElement>(null);
   const saveTripNameInputRef = useRef<HTMLInputElement>(null);
   const regionRequestRef = useRef(0);
+  const originRequestRef = useRef(0);
+  const favoriteOriginsSyncedUserRef = useRef("");
   const placeRequestRef = useRef(0);
   const planSpotIds = plan.map(spot => spot.id).join(",");
 
@@ -213,6 +226,8 @@ export default function Home() {
     const storedTrip = readStoredTrip(localStorage.getItem("haru-trip-plan"));
     const sharedTrip = readSharedTrip(window.location.hash);
     setSavedTrips(readStoredTrips(localStorage.getItem("haru-trip-plans")));
+    setOrigin(readStoredOrigin(localStorage.getItem("haru-origin")));
+    setFavoriteOrigins(readStoredFavoriteOrigins(localStorage.getItem("haru-favorite-origins")));
     savedTripsReadyRef.current = true;
     if (sharedTrip) {
       setCity(sharedTrip.city);
@@ -390,7 +405,37 @@ export default function Home() {
   }, [city, mapReady, showRegionSuggestions, regionMode]);
 
   useEffect(() => {
-    localStorage.setItem("haru-trip-plan", JSON.stringify({ version: 2, city, startTime, endTime, selected, plan } satisfies TripSettings));
+    const keyword = originQuery.trim();
+    if (!mapReady || keyword.length < 2 || !showOriginSuggestions) {
+      originRequestRef.current += 1;
+      setOriginSuggestions([]);
+      setIsOriginSearching(false);
+      return;
+    }
+    const requestId = ++originRequestRef.current;
+    setIsOriginSearching(true);
+    const timer = window.setTimeout(() => {
+      const ps = new window.kakao.maps.services.Places();
+      ps.keywordSearch(keyword, (data: any[], status: string) => {
+        if (requestId !== originRequestRef.current) return;
+        setIsOriginSearching(false);
+        if (status !== window.kakao.maps.services.Status.OK) {
+          setOriginSuggestions([]);
+          return;
+        }
+        setOriginSuggestions(data.slice(0, 5).map((place: any): Origin => ({
+          placeName: place.place_name,
+          address: place.road_address_name || place.address_name || "",
+          x: Number(place.x),
+          y: Number(place.y),
+        })));
+      });
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [originQuery, mapReady, showOriginSuggestions]);
+
+  useEffect(() => {
+    localStorage.setItem("haru-trip-plan", JSON.stringify({ version: 2, city, startTime, endTime, selected, plan, origin } satisfies TripSettings));
     if (!mapReady || !mapRef.current) return;
     mapObjectsRef.current.forEach((object) => object.setMap(null));
     mapObjectsRef.current = [];
@@ -421,27 +466,39 @@ export default function Home() {
       mapObjectsRef.current.push(polyline);
     }
     if (plan.length) mapRef.current.setBounds(bounds);
-  }, [city, startTime, endTime, selected, plan, mapReady]);
+  }, [city, startTime, endTime, selected, plan, origin, mapReady]);
 
   useEffect(() => {
-    if (!mapReady || !window.kakao?.maps?.services || !plan.length) {
+    if (origin) localStorage.setItem("haru-origin", JSON.stringify(origin));
+    else localStorage.removeItem("haru-origin");
+  }, [origin]);
+
+  useEffect(() => {
+    localStorage.setItem("haru-favorite-origins", JSON.stringify(favoriteOrigins));
+  }, [favoriteOrigins]);
+
+  useEffect(() => {
+    const departure = origin
+      ? { id: "origin", x: origin.x, y: origin.y }
+      : plan[0] ? { id: plan[0].id, x: plan[0].x, y: plan[0].y } : null;
+    if (!mapReady || !window.kakao?.maps?.services || !departure) {
       setTransitBySpot({});
       return;
     }
     let cancelled = false;
-    const searchNearby = (spot: Spot, query: string, categoryCode?: string) => new Promise<any[]>((resolve) => {
+    const searchNearby = (point: { x: number; y: number }, query: string, categoryCode?: string) => new Promise<any[]>((resolve) => {
       const ps = new window.kakao.maps.services.Places();
-      const location = new window.kakao.maps.LatLng(spot.y, spot.x);
+      const location = new window.kakao.maps.LatLng(point.y, point.x);
       const options = { location, radius: 1200, sort: window.kakao.maps.services.SortBy.DISTANCE };
       const callback = (data: any[], status: string) => resolve(status === window.kakao.maps.services.Status.OK ? data : []);
       if (categoryCode) ps.categorySearch(categoryCode, callback, options);
       else ps.keywordSearch(query, callback, options);
     });
-    findDepartureTransit(plan, searchNearby).then(transit => {
+    findDepartureTransit(departure, searchNearby).then(transit => {
       if (!cancelled) setTransitBySpot(transit);
     });
     return () => { cancelled = true; };
-  }, [mapReady, planSpotIds]);
+  }, [mapReady, planSpotIds, origin]);
 
   useEffect(() => {
     if (!savedTripsReadyRef.current || (authUser && !isRemoteTripsReady)) return;
@@ -481,6 +538,32 @@ export default function Home() {
     });
     return () => { cancelled = true; };
   }, [authUser, syncRetryVersion]);
+
+  useEffect(() => {
+    if (!authUser) {
+      favoriteOriginsSyncedUserRef.current = "";
+      return;
+    }
+    if (favoriteOriginsSyncedUserRef.current === authUser.id) return;
+    favoriteOriginsSyncedUserRef.current = authUser.id;
+    let cancelled = false;
+    const localFavorites = readStoredFavoriteOrigins(localStorage.getItem("haru-favorite-origins"));
+    listFavoriteOrigins(authUser.id).then(async remoteFavorites => {
+      if (cancelled) return;
+      const merged = mergeFavoriteOrigins(localFavorites, remoteFavorites);
+      setFavoriteOrigins(merged);
+      const remoteById = new Map(remoteFavorites.map(item => [item.id, item.updatedAt]));
+      await Promise.all(merged
+        .filter(item => remoteById.get(item.id) !== item.updatedAt)
+        .map(item => upsertFavoriteOrigin(authUser.id, item)));
+    }).catch(() => {
+      if (!cancelled) {
+        favoriteOriginsSyncedUserRef.current = "";
+        setOriginNotice("즐겨찾기를 계정과 동기화하지 못했어요");
+      }
+    });
+    return () => { cancelled = true; };
+  }, [authUser]);
 
   useEffect(() => {
     const settingsKey = `${startTime}|${endTime}|${selected.join(",")}`;
@@ -583,6 +666,93 @@ export default function Home() {
     );
   }
 
+  function handleSelectOrigin(nextOrigin: Origin) {
+    setOrigin(nextOrigin);
+    setOriginQuery(nextOrigin.placeName);
+    setShowOriginSuggestions(false);
+    setOriginNotice(`출발지를 ${nextOrigin.placeName}으로 정했어요`);
+  }
+
+  function handleClearOrigin() {
+    setOrigin(null);
+    setOriginQuery("");
+    setOriginNotice("출발지를 지웠어요");
+  }
+
+  function handleUseCurrentLocationAsOrigin() {
+    if (!mapReady || !window.kakao?.maps?.services) {
+      setOriginNotice("카카오맵 연결이 끝난 뒤 다시 눌러주세요");
+      return;
+    }
+    if (!navigator.geolocation) {
+      setOriginNotice("이 브라우저에서는 위치 기능을 사용할 수 없어요");
+      return;
+    }
+    setIsLocating(true);
+    setOriginNotice("현재 위치를 찾고 있어요…");
+    navigator.geolocation.getCurrentPosition(({ coords }) => {
+      const { latitude, longitude } = coords;
+      const isInsideKorea = latitude >= 32 && latitude <= 40 && longitude >= 123 && longitude <= 133;
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !isInsideKorea) {
+        setIsLocating(false);
+        setOriginNotice("브라우저 위치가 한국 밖으로 잡혀 출발지로 쓰지 않았어요. 기기의 위치 설정을 확인해주세요");
+        return;
+      }
+      new window.kakao.maps.services.Geocoder().coord2Address(longitude, latitude, (result: any[], status: string) => {
+        setIsLocating(false);
+        const address = status === window.kakao.maps.services.Status.OK
+          ? result[0]?.road_address?.address_name || result[0]?.address?.address_name || ""
+          : "";
+        handleSelectOrigin({ placeName: "내 위치", address, x: longitude, y: latitude });
+      });
+    }, (error) => {
+      setIsLocating(false);
+      if (error.code === error.PERMISSION_DENIED) setOriginNotice("위치 권한을 허용하거나, 주소·역 이름으로 출발지를 검색해주세요");
+      else if (error.code === error.TIMEOUT) setOriginNotice("위치 확인 시간이 초과됐어요. 다시 시도해주세요");
+      else setOriginNotice("현재 위치를 확인하지 못했어요. 주소·역 이름으로 검색해주세요");
+    }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
+  }
+
+  async function handleSaveFavoriteOrigin() {
+    if (!origin) {
+      setOriginNotice("먼저 출발지를 정해주세요");
+      return;
+    }
+    const label = window.prompt("즐겨찾기 이름을 정해주세요", origin.placeName === "내 위치" ? "집" : origin.placeName)?.trim();
+    if (!label) return;
+    const existing = favoriteOrigins.find(item => item.label === label);
+    const favorite: FavoriteOrigin = {
+      ...origin,
+      id: existing?.id ?? `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      label: label.slice(0, 40),
+      updatedAt: Date.now(),
+    };
+    setFavoriteOrigins(current => [favorite, ...current.filter(item => item.label !== favorite.label)].slice(0, 12));
+    setOriginNotice(`'${favorite.label}' 즐겨찾기를 저장했어요`);
+    if (!authUser) return;
+    setIsSavingFavorite(true);
+    try {
+      await upsertFavoriteOrigin(authUser.id, favorite);
+    } catch {
+      setOriginNotice("이 기기에는 저장했지만 계정 동기화는 실패했어요");
+    } finally {
+      setIsSavingFavorite(false);
+    }
+  }
+
+  async function handleDeleteFavoriteOrigin(favorite: FavoriteOrigin) {
+    const previous = favoriteOrigins;
+    setFavoriteOrigins(current => current.filter(item => item.id !== favorite.id));
+    setOriginNotice(`'${favorite.label}' 즐겨찾기를 지웠어요`);
+    if (!authUser) return;
+    try {
+      await deleteFavoriteOrigin(authUser.id, favorite.id);
+    } catch {
+      setFavoriteOrigins(previous);
+      setOriginNotice("계정에서 즐겨찾기를 지우지 못했어요. 다시 시도해주세요");
+    }
+  }
+
   function handleResetPlan() {
     if (!plan.length) {
       setNotice("이미 비어 있는 일정이에요");
@@ -670,7 +840,7 @@ export default function Home() {
     if (!name) return;
     setIsSaveDialogOpen(false);
     const existingTrip = savedTrips.find(item => item.name === name);
-    const trip: SavedTrip = { version: 2, id: existingTrip?.id ?? `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, name, city, startTime, endTime, selected, plan, updatedAt: Date.now() };
+    const trip: SavedTrip = { version: 2, id: existingTrip?.id ?? `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, name, city, startTime, endTime, selected, plan, origin, updatedAt: Date.now() };
     setSavedTrips(current => [trip, ...current.filter(item => item.name !== name)].slice(0, 12));
     setSelectedSavedTripId(trip.id);
     setNotice(`'${name}' 일정을 저장했어요`);
@@ -717,11 +887,59 @@ export default function Home() {
     }
   }
 
+  async function handleSaveTripImage() {
+    if (!plan.length) {
+      setNotice("이미지로 저장할 장소가 아직 없어요");
+      return;
+    }
+    const layout = buildTripImageLayout({
+      city: city.trim() || "하루",
+      startTime: startTime || schedule[0]?.start || "09:30",
+      endTime: endTime || plannedEndTime,
+      totalMinutes: total,
+      walkMinutes: totalTravel,
+      stops: schedule.map((item, index) => ({ order: index + 1, name: item.spot.name, category: item.spot.category, start: item.start, end: item.end })),
+    });
+    const canvas = document.createElement("canvas");
+    try {
+      renderTripImage(canvas, layout);
+    } catch {
+      setNotice("이 브라우저에서는 이미지를 만들 수 없어요");
+      return;
+    }
+    const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, "image/png"));
+    if (!blob) {
+      setNotice("이미지를 만들지 못했어요. 다시 시도해주세요");
+      return;
+    }
+    const fileName = `haru-${(city.trim() || "trip").replace(/\s+/g, "-")}.png`;
+    const file = new File([blob], fileName, { type: "image/png" });
+    const prefersShareSheet = window.matchMedia("(max-width: 800px)").matches;
+    if (prefersShareSheet && navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: "하루여행 일정" });
+        setNotice("일정 이미지를 공유했어요");
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+      }
+    }
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    link.click();
+    URL.revokeObjectURL(url);
+    setNotice("일정 이미지를 저장했어요");
+  }
+
   function handleLoadTrip(id: string) {
     setSelectedSavedTripId(id);
     const trip = savedTrips.find(item => item.id === id);
     if (!trip) return;
     setCity(trip.city);
+    setOrigin(trip.origin ?? null);
+    setOriginQuery(trip.origin?.placeName ?? "");
     setStartTime(trip.startTime);
     setEndTime(trip.endTime);
     if (trip.selected.length) setSelected(trip.selected);
@@ -925,7 +1143,10 @@ export default function Home() {
     const [movingSpot] = nextPlan.splice(index, 1);
     nextPlan.splice(nextIndex, 0, movingSpot);
     updatePlan(nextPlan, `${movingSpot.name} 순서 변경`);
-    setNotice(`${movingSpot.name}을 ${direction < 0 ? "앞" : "뒤"}으로 옮겼어요`);
+    setNotice(`${movingSpot.name}을 ${nextIndex + 1}번째로 옮겼어요`);
+    window.requestAnimationFrame(() => {
+      document.getElementById(`stop-${movingSpot.id}`)?.querySelector<HTMLElement>(".stop-actions > summary")?.focus();
+    });
   }
 
   function handleSetStart(index: number) {
@@ -1089,6 +1310,7 @@ export default function Home() {
                 if ((event.target as HTMLElement).closest("button")) event.currentTarget.closest("details")?.removeAttribute("open");
               }}>
                 <button type="button" onClick={handleShareTrip}>공유</button>
+                <button type="button" onClick={handleSaveTripImage}>이미지 저장</button>
                 {undoState && <button type="button" onClick={handleUndo}>↶ 실행 취소</button>}
                 <button type="button" onClick={handleResetPlan}>새 일정 시작</button>
                 {selectedSavedTripId && <button type="button" className="danger" onClick={handleDeleteSavedTrip}>선택 일정 삭제</button>}
@@ -1113,7 +1335,54 @@ export default function Home() {
           </figure>
         </div>
         <div className="planner-card">
-          <div className="location-heading"><label>어디로 갈까요?</label><div className="region-mode" role="radiogroup" aria-label="검색 대상"><label><input type="radio" name="region-mode" value="administrative" checked={regionMode === "administrative"} onChange={() => { setRegionMode("administrative"); setRegionSuggestions([]); setShowRegionSuggestions(true); }} />{regionModeLabels.administrative}</label><label><input type="radio" name="region-mode" value="subway" checked={regionMode === "subway"} onChange={() => { setRegionMode("subway"); setRegionSuggestions([]); setShowRegionSuggestions(true); }} />{regionModeLabels.subway}</label></div></div>
+          <label htmlFor="origin-input">어디서 출발하나요?</label>
+          <div className="origin-block">
+            <div className="origin-row">
+              <div className="origin-field">
+                <input
+                  id="origin-input"
+                  value={originQuery}
+                  onChange={event => { setOriginQuery(event.target.value); setShowOriginSuggestions(true); }}
+                  onFocus={() => setShowOriginSuggestions(true)}
+                  onBlur={() => window.setTimeout(() => setShowOriginSuggestions(false), 120)}
+                  aria-expanded={showOriginSuggestions && (isOriginSearching || originSuggestions.length > 0)}
+                  aria-controls="origin-suggestions"
+                  aria-autocomplete="list"
+                  role="combobox"
+                  autoComplete="off"
+                  placeholder="주소, 건물, 지하철역 검색"
+                />
+                {showOriginSuggestions && (isOriginSearching || originSuggestions.length > 0) && <div className="region-suggestions" id="origin-suggestions" role="listbox">
+                  {isOriginSearching && <span>출발지를 찾고 있어요…</span>}
+                  {!isOriginSearching && originSuggestions.map(suggestion => <button
+                    type="button"
+                    role="option"
+                    aria-selected={origin?.placeName === suggestion.placeName && origin?.x === suggestion.x}
+                    key={`${suggestion.placeName}-${suggestion.x}-${suggestion.y}`}
+                    onMouseDown={event => event.preventDefault()}
+                    onClick={() => handleSelectOrigin(suggestion)}
+                  ><b>{suggestion.placeName}</b><small>{suggestion.address}</small></button>)}
+                </div>}
+              </div>
+              <button type="button" className="origin-locate" disabled={isLocating} onClick={handleUseCurrentLocationAsOrigin}>{isLocating ? "찾는 중…" : "내 위치"}</button>
+            </div>
+            <div className="origin-favorites">
+              {favoriteOrigins.map(favorite => <span className="origin-favorite" key={favorite.id}>
+                <button type="button" onClick={() => handleSelectOrigin(favorite)}>{favorite.label}</button>
+                <button type="button" className="origin-favorite-remove" aria-label={`${favorite.label} 즐겨찾기 삭제`} onClick={() => handleDeleteFavoriteOrigin(favorite)}>×</button>
+              </span>)}
+              <button type="button" className="origin-favorite-add" disabled={!origin || isSavingFavorite} onClick={handleSaveFavoriteOrigin}>+ 현재 출발지 저장</button>
+              {origin && <button type="button" className="origin-clear" onClick={handleClearOrigin}>출발지 지우기</button>}
+            </div>
+            {origin && (transitBySpot.origin?.subway || transitBySpot.origin?.bus) && <p className="origin-transit">
+              가까운 교통편 · {transitBySpot.origin.subway && `지하철 ${transitBySpot.origin.subway}`}{transitBySpot.origin.subway && transitBySpot.origin.bus ? " · " : ""}{transitBySpot.origin.bus && `버스 ${transitBySpot.origin.bus}`}
+            </p>}
+            <p className="origin-feedback" role="status" aria-live="polite">
+              {originNotice || (origin ? `${origin.placeName}에서 출발해요` : "출발지를 정하면 가까운 교통편을 알려드려요")}
+              {!authUser && favoriteOrigins.length > 0 && " · 로그인하면 즐겨찾기를 다른 기기와 함께 쓸 수 있어요"}
+            </p>
+          </div>
+          <div className="location-heading"><label>어디에서 하루를 보낼까요?</label><div className="region-mode" role="radiogroup" aria-label="검색 대상"><label><input type="radio" name="region-mode" value="administrative" checked={regionMode === "administrative"} onChange={() => { setRegionMode("administrative"); setRegionSuggestions([]); setShowRegionSuggestions(true); }} />{regionModeLabels.administrative}</label><label><input type="radio" name="region-mode" value="subway" checked={regionMode === "subway"} onChange={() => { setRegionMode("subway"); setRegionSuggestions([]); setShowRegionSuggestions(true); }} />{regionModeLabels.subway}</label></div></div>
           <div className="location-row">
             <div className="region-field">
               <input
@@ -1162,7 +1431,7 @@ export default function Home() {
             </div>}
             {schedule.map(({ spot, start, end, travelToNext }, i) => <Fragment key={spot.id}>
               <div className={`drop-zone ${activeDropIndex === i ? "active" : ""}`} data-drop-index={i} onDragOver={event => event.preventDefault()} onDragEnter={() => setActiveDropIndex(i)} onDrop={() => handleDropAt(i)}><span>{i === 0 ? "맨 앞에 놓기" : "여기에 놓기"}</span></div>
-              <article className={`stop tone-${toneForSpot(spot)} ${i === schedule.length - 1 ? "last" : ""}`} data-stop-index={i} onPointerDown={event => { if (event.pointerType !== "touch" && !(event.target as HTMLElement).closest("a, button, select")) handlePointerDragStart(event, spot); }} aria-label={`${spot.name} 일정 순서 이동`}>
+              <article id={`stop-${spot.id}`} className={`stop tone-${toneForSpot(spot)} ${i === schedule.length - 1 ? "last" : ""}`} data-stop-index={i} onPointerDown={event => { if (event.pointerType !== "touch" && !(event.target as HTMLElement).closest("a, button, select")) handlePointerDragStart(event, spot); }} aria-label={`${spot.name} 일정 순서 이동`}>
                 <div className="stop-card compact-stop">
                   <span className="drag-handle" aria-hidden="true" onPointerDown={event => { event.stopPropagation(); handlePointerDragStart(event, spot); }}>⋮⋮</span>
                   <div className="stop-content">

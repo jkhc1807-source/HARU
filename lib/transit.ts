@@ -1,10 +1,10 @@
-import type { Spot, TransitInfo } from "./trip-types";
+import type { TransitInfo } from "./trip-types";
 
+export type TransitPoint = { id: string; x: number; y: number };
 type NearbyPlace = { place_name?: string };
-type SearchNearby = (spot: Spot, query: string, categoryCode?: string) => Promise<NearbyPlace[]>;
+type SearchNearby = (point: TransitPoint, query: string, categoryCode?: string) => Promise<NearbyPlace[]>;
 
-export async function findDepartureTransit(plan: Spot[], searchNearby: SearchNearby): Promise<Record<string, TransitInfo>> {
-  const departure = plan[0];
+export async function findDepartureTransit(departure: TransitPoint | null, searchNearby: SearchNearby): Promise<Record<string, TransitInfo>> {
   if (!departure) return {};
   const [subways, buses] = await Promise.all([
     searchNearby(departure, "", "SW8"),
