@@ -721,8 +721,8 @@ footer{padding-block:34px;background:var(--forest-deep);color:#c7d4ca}
 .route-walker-figure{display:block;transition:transform .12s ease-out}
 .route-walker-figure.facing-left{transform:scaleX(-1)}
 .route-walker-figure .rw-shadow{fill:rgba(20,40,30,.28)}
-.route-walker-figure .rw-head{fill:#1f4d3d;stroke:#fff;stroke-width:1.4}
-.route-walker-figure .rw-body,.route-walker-figure .rw-leg-back,.route-walker-figure .rw-leg-front,.route-walker-figure .rw-arm-back,.route-walker-figure .rw-arm-front{stroke:#1f4d3d;stroke-width:2.6;stroke-linecap:round}
+.route-walker-figure .rw-head{fill:#e8a33f;stroke:#7a4a12;stroke-width:1.4}
+.route-walker-figure .rw-body,.route-walker-figure .rw-leg-back,.route-walker-figure .rw-leg-front,.route-walker-figure .rw-arm-back,.route-walker-figure .rw-arm-front{stroke:#c9750e;stroke-width:2.8;stroke-linecap:round}
 .route-walker-figure .rw-leg-back,.route-walker-figure .rw-leg-front,.route-walker-figure .rw-arm-back,.route-walker-figure .rw-arm-front{transform-box:fill-box;transform-origin:top center}
 .route-walker-figure .rw-leg-back{animation:rw-leg-back-swing .34s ease-in-out infinite}
 .route-walker-figure .rw-leg-front{animation:rw-leg-front-swing .34s ease-in-out infinite}
