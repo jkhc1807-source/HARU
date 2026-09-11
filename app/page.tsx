@@ -925,7 +925,10 @@ export default function Home() {
     const [movingSpot] = nextPlan.splice(index, 1);
     nextPlan.splice(nextIndex, 0, movingSpot);
     updatePlan(nextPlan, `${movingSpot.name} 순서 변경`);
-    setNotice(`${movingSpot.name}을 ${direction < 0 ? "앞" : "뒤"}으로 옮겼어요`);
+    setNotice(`${movingSpot.name}을 ${nextIndex + 1}번째로 옮겼어요`);
+    window.requestAnimationFrame(() => {
+      document.getElementById(`stop-${movingSpot.id}`)?.querySelector<HTMLElement>(".stop-actions > summary")?.focus();
+    });
   }
 
   function handleSetStart(index: number) {
@@ -1162,7 +1165,7 @@ export default function Home() {
             </div>}
             {schedule.map(({ spot, start, end, travelToNext }, i) => <Fragment key={spot.id}>
               <div className={`drop-zone ${activeDropIndex === i ? "active" : ""}`} data-drop-index={i} onDragOver={event => event.preventDefault()} onDragEnter={() => setActiveDropIndex(i)} onDrop={() => handleDropAt(i)}><span>{i === 0 ? "맨 앞에 놓기" : "여기에 놓기"}</span></div>
-              <article className={`stop tone-${toneForSpot(spot)} ${i === schedule.length - 1 ? "last" : ""}`} data-stop-index={i} onPointerDown={event => { if (event.pointerType !== "touch" && !(event.target as HTMLElement).closest("a, button, select")) handlePointerDragStart(event, spot); }} aria-label={`${spot.name} 일정 순서 이동`}>
+              <article id={`stop-${spot.id}`} className={`stop tone-${toneForSpot(spot)} ${i === schedule.length - 1 ? "last" : ""}`} data-stop-index={i} onPointerDown={event => { if (event.pointerType !== "touch" && !(event.target as HTMLElement).closest("a, button, select")) handlePointerDragStart(event, spot); }} aria-label={`${spot.name} 일정 순서 이동`}>
                 <div className="stop-card compact-stop">
                   <span className="drag-handle" aria-hidden="true" onPointerDown={event => { event.stopPropagation(); handlePointerDragStart(event, spot); }}>⋮⋮</span>
                   <div className="stop-content">
