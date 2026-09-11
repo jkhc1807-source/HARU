@@ -16,6 +16,7 @@ import { mergeSavedTrips } from "@/lib/trip-sync";
 import { mergeFavoriteOrigins, readStoredFavoriteOrigins, readStoredOrigin } from "@/lib/origin-storage";
 import { deleteFavoriteOrigin, listFavoriteOrigins, upsertFavoriteOrigin } from "@/lib/favorite-origin-repository";
 import { distance, optimizeRoute, routeDistance } from "@/lib/route-optimizer";
+import { buildTripImageLayout, renderTripImage } from "@/lib/trip-image";
 
 declare global {
   interface Window { kakao: any }
@@ -886,6 +887,52 @@ export default function Home() {
     }
   }
 
+  async function handleSaveTripImage() {
+    if (!plan.length) {
+      setNotice("이미지로 저장할 장소가 아직 없어요");
+      return;
+    }
+    const layout = buildTripImageLayout({
+      city: city.trim() || "하루",
+      startTime: startTime || schedule[0]?.start || "09:30",
+      endTime: endTime || plannedEndTime,
+      totalMinutes: total,
+      walkMinutes: totalTravel,
+      stops: schedule.map((item, index) => ({ order: index + 1, name: item.spot.name, category: item.spot.category, start: item.start, end: item.end })),
+    });
+    const canvas = document.createElement("canvas");
+    try {
+      renderTripImage(canvas, layout);
+    } catch {
+      setNotice("이 브라우저에서는 이미지를 만들 수 없어요");
+      return;
+    }
+    const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, "image/png"));
+    if (!blob) {
+      setNotice("이미지를 만들지 못했어요. 다시 시도해주세요");
+      return;
+    }
+    const fileName = `haru-${(city.trim() || "trip").replace(/\s+/g, "-")}.png`;
+    const file = new File([blob], fileName, { type: "image/png" });
+    const prefersShareSheet = window.matchMedia("(max-width: 800px)").matches;
+    if (prefersShareSheet && navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: "하루여행 일정" });
+        setNotice("일정 이미지를 공유했어요");
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+      }
+    }
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    link.click();
+    URL.revokeObjectURL(url);
+    setNotice("일정 이미지를 저장했어요");
+  }
+
   function handleLoadTrip(id: string) {
     setSelectedSavedTripId(id);
     const trip = savedTrips.find(item => item.id === id);
@@ -1263,6 +1310,7 @@ export default function Home() {
                 if ((event.target as HTMLElement).closest("button")) event.currentTarget.closest("details")?.removeAttribute("open");
               }}>
                 <button type="button" onClick={handleShareTrip}>공유</button>
+                <button type="button" onClick={handleSaveTripImage}>이미지 저장</button>
                 {undoState && <button type="button" onClick={handleUndo}>↶ 실행 취소</button>}
                 <button type="button" onClick={handleResetPlan}>새 일정 시작</button>
                 {selectedSavedTripId && <button type="button" className="danger" onClick={handleDeleteSavedTrip}>선택 일정 삭제</button>}
