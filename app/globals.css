@@ -838,3 +838,16 @@ footer{padding-block:34px;background:var(--ink);color:var(--paper)}
 .origin-feedback{min-height:18px;margin:8px 0 0;color:var(--ink-faint);font-size:11px;line-height:1.5}
 .origin-transit{margin:9px 0 0;padding:8px 11px;border:1px solid var(--line);border-radius:4px;background:var(--paper);color:var(--ok);font-size:11px;font-weight:800;line-height:1.5}
 @media(max-width:800px){.origin-row{flex-direction:column}.origin-locate{width:100%;min-height:44px;border-left:0;border-top:1px solid var(--line)}}
+
+/* 2026-09-14: 밝은 배경 위 라임 글자를 먹색으로. 라임은 면으로만 쓴다 */
+.search-section .result .result-drag-handle { color: var(--ink-faint); }
+.compact-stop .drag-handle { color: var(--ink-faint); }
+
+/* 2026-09-14: 상태색 바로잡기. Task 3 리뷰에서 경고 토큰 부재로 잘못 배정된 곳들 */
+.map-status span { background: var(--warn); }            /* 미연결 */
+.map-status span.connected { background: var(--ok); }    /* 연결됨 */
+
+.time-warning { border-color: var(--warn); color: var(--warn); }
+.time-warning b { color: var(--warn); }
+
+.admin-error { border-color: var(--danger); color: var(--danger); }
