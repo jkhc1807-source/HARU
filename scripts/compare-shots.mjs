@@ -16,9 +16,14 @@ if (!beforePath || !afterPath) {
 }
 
 async function raw(path) {
-  const img = sharp(path).ensureAlpha();
-  const { data, info } = await img.raw().toBuffer({ resolveWithObject: true });
-  return { data, w: info.width, h: info.height, ch: info.channels };
+  try {
+    const img = sharp(path).ensureAlpha();
+    const { data, info } = await img.raw().toBuffer({ resolveWithObject: true });
+    return { data, w: info.width, h: info.height, ch: info.channels };
+  } catch (err) {
+    console.error(`이미지를 읽지 못했다: ${path} — ${err.message}`);
+    process.exit(2);
+  }
 }
 
 const a = await raw(beforePath);

@@ -5,24 +5,41 @@ export const AUDIT_SCRIPT = `() => {
     const m = c.match(/rgba?\\(([^)]+)\\)/);
     if (!m) return null;
     const p = m[1].split(",").map(Number);
-    return p[3] === 0 ? null : [p[0], p[1], p[2]];
+    const a = p[3] === undefined ? 1 : p[3];
+    return a === 0 ? null : [p[0], p[1], p[2], a];
   };
+  const gradColorOf = (bgImage) => {
+    if (!bgImage || bgImage === "none") return null;
+    const m = bgImage.match(/rgba?\\(([^)]+)\\)/);
+    if (!m) return null;
+    const p = m[1].split(",").map(Number);
+    return [p[0], p[1], p[2]];
+  };
+  const composite = (fg, a, bg) => fg.map((v, i) => Math.round(v * a + bg[i] * (1 - a)));
   const lum = (rgb) => {
     const s = rgb.map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
     return 0.2126 * s[0] + 0.7152 * s[1] + 0.0722 * s[2];
   };
   const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
   const bgOf = (el) => {
-    let n = el;
-    while (n && n !== document.documentElement) {
-      const c = parse(getComputedStyle(n).backgroundColor);
-      if (c) return c;
-      n = n.parentElement;
-    }
-    return [255, 255, 255];
+    if (!el) return [255, 255, 255];
+    const cs = getComputedStyle(el);
+    const c = parse(cs.backgroundColor);
+    if (c && c[3] >= 1) return c.slice(0, 3);
+    const grad = (!c || c[3] < 1) ? gradColorOf(cs.backgroundImage) : null;
+    if (grad) return c ? composite(c.slice(0, 3), c[3], grad) : grad;
+    if (c) return composite(c.slice(0, 3), c[3], bgOf(el.parentElement));
+    return bgOf(el.parentElement);
   };
 
-  const visible = [...document.querySelectorAll("body *")].filter(e => e.offsetParent !== null);
+  const isVisible = (e) => {
+    const cs = getComputedStyle(e);
+    if (cs.display === "none" || cs.visibility === "hidden" || cs.opacity === "0") return false;
+    const r = e.getBoundingClientRect();
+    return r.width > 0 && r.height > 0;
+  };
+
+  const visible = [...document.querySelectorAll("body *")].filter(isVisible);
 
   const tinyText = visible
     .filter(e => e.textContent?.trim() && !e.children.length)
@@ -44,7 +61,7 @@ export const AUDIT_SCRIPT = `() => {
       const size = parseFloat(cs.fontSize);
       const bold = parseInt(cs.fontWeight, 10) >= 700;
       const large = size >= 24 || (size >= 18.66 && bold);
-      const r = ratio(fg, bgOf(e));
+      const r = ratio(fg.slice(0, 3), bgOf(e));
       return { t: e.textContent.trim().slice(0, 24), ratio: +r.toFixed(2), need: large ? 3 : 4.5 };
     })
     .filter(x => x && x.ratio < x.need);
