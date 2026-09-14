@@ -1,0 +1,41 @@
+/* 하루여행 디자인 토큰
+   1단계: 기존 색값을 역할별로 모았다. 색 계열은 아직 초록이다.
+   2단계에서 색 11줄만 먹·애시드 팔레트로 교체한다. */
+:root {
+  /* 색 (11) */
+  --ink:        #213e35;
+  --ink-soft:   #4a5b52;
+  --ink-faint:  #6d7a72;
+  --paper:      #f6f7f2;
+  --surface:    #ffffff;
+  --line:       #dce3db;
+  --line-bold:  #213e35;
+  --acid:       #c8db97;
+  --acid-deep:  #a9c176;
+  --danger:     #b34d36;
+  --ok:         #45610b;
+
+  /* 타이포 (6) */
+  --t-hero:  clamp(42px, 9vw, 68px);
+  --t-h2:    clamp(24px, 4vw, 34px);
+  --t-h3:    17px;
+  --t-body:  14px;
+  --t-small: 13px;
+  --t-micro: 12px;
+
+  /* 간격 (6) */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 20px;
+  --s5: 32px;
+  --s6: 56px;
+
+  /* 형태 (6) */
+  --bd:             1.5px solid var(--line);
+  --bd-bold:        2px solid var(--line-bold);
+  --shadow-hard:    6px 6px 0 var(--ink);
+  --radius:         0;
+  --radius-control: 4px;
+  --tap:            44px;
+}
