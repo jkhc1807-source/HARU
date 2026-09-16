@@ -183,6 +183,33 @@ function routeTravelMinutes(spots: Spot[]) {
   return spots.slice(0, -1).reduce((sum, spot, index) => sum + travelMinutes(spot, spots[index + 1]), 0);
 }
 
+function useCountUp(target: number, durationMs = 700) {
+  const [value, setValue] = useState(target);
+  const fromRef = useRef(target);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setValue(target);
+      fromRef.current = target;
+      return;
+    }
+    const from = fromRef.current;
+    if (from === target) return;
+    const start = performance.now();
+    let raf = 0;
+    const step = (now: number) => {
+      const t = Math.min(1, (now - start) / durationMs);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setValue(Math.round(from + (target - from) * eased));
+      if (t < 1) raf = requestAnimationFrame(step);
+      else fromRef.current = target;
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [target, durationMs]);
+  return value;
+}
+
 export default function Home() {
   const [city, setCity] = useState("성수동");
   const [origin, setOrigin] = useState<Origin | null>(null);
@@ -508,13 +535,13 @@ export default function Home() {
     if (plan.length === 1) markerContents[0]?.classList.add("kakao-number-marker--visited");
     if (path.length > 1) {
       if (prefersReducedMotion) {
-        const polyline = new window.kakao.maps.Polyline({ map: mapRef.current, path, strokeWeight: 5, strokeColor: "#6e8e20", strokeOpacity: 0.9, strokeStyle: "solid" });
+        const polyline = new window.kakao.maps.Polyline({ map: mapRef.current, path, strokeWeight: 5, strokeColor: "#14150F", strokeOpacity: 0.9, strokeStyle: "solid" });
         mapObjectsRef.current.push(polyline);
         markerContents.forEach((content) => content.classList.add("kakao-number-marker--visited"));
       } else {
-        const ghostLine = new window.kakao.maps.Polyline({ map: mapRef.current, path, strokeWeight: 3, strokeColor: "#c8db97", strokeOpacity: 0.55, strokeStyle: "shortdash" });
-        const haloLine = new window.kakao.maps.Polyline({ map: mapRef.current, path: [path[0]], strokeWeight: 11, strokeColor: "#6e8e20", strokeOpacity: 0.22, strokeStyle: "solid" });
-        const mainLine = new window.kakao.maps.Polyline({ map: mapRef.current, path: [path[0]], strokeWeight: 5, strokeColor: "#6e8e20", strokeOpacity: 0.95, strokeStyle: "solid" });
+        const ghostLine = new window.kakao.maps.Polyline({ map: mapRef.current, path, strokeWeight: 3, strokeColor: "#14150F", strokeOpacity: 0.55, strokeStyle: "shortdash" });
+        const haloLine = new window.kakao.maps.Polyline({ map: mapRef.current, path: [path[0]], strokeWeight: 11, strokeColor: "#14150F", strokeOpacity: 0.22, strokeStyle: "solid" });
+        const mainLine = new window.kakao.maps.Polyline({ map: mapRef.current, path: [path[0]], strokeWeight: 5, strokeColor: "#14150F", strokeOpacity: 0.95, strokeStyle: "solid" });
         mapObjectsRef.current.push(ghostLine, haloLine, mainLine);
 
         const walkerContent = document.createElement("div");
@@ -690,6 +717,8 @@ export default function Home() {
   }, [plan, startTime]);
 
   const total = useMemo(() => plan.reduce((sum, spot) => sum + spot.stay, 0) + schedule.reduce((sum, item) => sum + item.travelToNext, 0), [plan, schedule]);
+  const shownTotal = useCountUp(total);
+  const shownCount = useCountUp(plan.length);
   const totalTravel = useMemo(() => schedule.reduce((sum, item) => sum + item.travelToNext, 0), [schedule]);
   const hasSelectedTimeRange = Boolean(startTime && endTime);
   const timeBudget = hasSelectedTimeRange ? Math.max(0, timeToMinutes(endTime) - timeToMinutes(startTime)) : 0;
@@ -1425,7 +1454,7 @@ export default function Home() {
       <section className="hero">
         <div className="hero-copy">
           <p className="eyebrow">HARU / A DAY WELL SPENT</p>
-          <h1>오늘 어디로<br/><em>떠나볼까요?</em></h1>
+          <h1>오늘 어디로<br/><em className={plan.length ? "wiped" : ""}>떠나볼까요?</em></h1>
           <p>좋아하는 곳을 따라, 나다운 하루.<br/>취향과 시간을 고르면 여행의 순서가 완성돼요.</p>
           <figure className="journey-route" aria-hidden="true">
             <svg viewBox="0 0 320 200" width="320" height="200" role="presentation" focusable="false">
@@ -1526,7 +1555,7 @@ export default function Home() {
 
       <section className="workspace">
         <div className="timeline-panel">
-          <div className="section-head"><div><p>MY DAY</p><h2>{city}에서의 하루</h2></div><div className="section-tools"><div className="summary"><b>{Math.floor(total / 60)}시간 {total % 60}분</b><span>{plan.length}개 장소 · 도보 {totalTravel}분</span></div><div className="route-optimize-wrap"><button type="button" className="route-optimize" onClick={handleOptimizeRoute}><span aria-hidden="true">↗</span>동선 정리</button><span role="status">{routeOptimizeMessage}</span></div></div></div>
+          <div className="section-head"><div><p>MY DAY</p><h2>{city}에서의 하루</h2></div><div className="section-tools"><div className="summary"><b>{Math.floor(shownTotal / 60)}시간 {shownTotal % 60}분</b><span>{shownCount}개 장소 · 도보 {totalTravel}분</span></div><div className="route-optimize-wrap"><button type="button" className="route-optimize" onClick={handleOptimizeRoute}><span aria-hidden="true">↗</span>동선 정리</button><span role="status">{routeOptimizeMessage}</span></div></div></div>
           <a className="place-search-shortcut" href="#place-search-input">+ 장소 찾아 추가하기</a>
           {overrunMinutes > 0 && <div className="time-warning" role="status"><div><b>선택한 종료 시간을 {overrunMinutes}분 초과해요</b><span>직접 추가한 장소는 임의로 지우지 않았어요.</span></div><button type="button" onClick={handleFitToTime}>시간에 맞게 줄이기</button></div>}
           <div ref={timelineEl} className={`timeline ${isDragging ? "dragging" : ""}`}>

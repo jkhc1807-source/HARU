@@ -1105,3 +1105,71 @@ select {
   .journey-route { margin-top: var(--s3); }
   .journey-route svg { max-width: 200px; }
 }
+
+/* 2026-09-14: 물리적 모션 */
+
+/* 1. 하드 섀도 눌림 — 누르면 2px 밀리며 그림자가 접힌다 */
+.primary,
+.ghost,
+.chips button,
+.route-optimize,
+.origin-locate,
+.search-section form button {
+  transition: transform .08s ease, box-shadow .08s ease;
+}
+.primary:active:enabled,
+.ghost:active:enabled,
+.chips button:active,
+.route-optimize:active,
+.origin-locate:active:enabled,
+.search-section form button:active:enabled {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+.planner-card:active { box-shadow: var(--shadow-hard); }
+
+/* 2. 라임 와이프 — 일정 생성 완료 시 헤드라인 하이라이트가 쓸려 들어온다 */
+.hero h1 em {
+  position: relative;
+  color: var(--ink);
+  font-style: normal;
+}
+.hero h1 em:before {
+  content: "";
+  position: absolute;
+  inset: 0 -6px;
+  z-index: -1;
+  background: var(--acid);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform .5s cubic-bezier(.2,.8,.2,1);
+}
+.hero h1 em.wiped:before { transform: scaleX(1); }
+
+@media(prefers-reduced-motion:reduce){
+  .primary,.ghost,.chips button,.route-optimize,.origin-locate,
+  .search-section form button { transition: none }
+  .primary:active:enabled,.ghost:active:enabled,.chips button:active,
+  .route-optimize:active,.origin-locate:active:enabled,
+  .search-section form button:active:enabled { transform: none }
+  .hero h1 em:before { transition: none; transform: scaleX(1) }
+}
+
+/* 2026-09-14: 지도 요소를 먹색으로 */
+.route-walker { color: var(--ink); }
+.route-walker .rw-shadow { fill: rgba(20, 21, 15, .18); }
+.kakao-number-marker {
+  background: var(--ink);
+  border-color: var(--surface);
+  color: var(--surface);
+}
+.kakao-number-marker--visited {
+  background: var(--acid);
+  color: var(--ink);
+}
+.travel-label {
+  border: 1.5px solid var(--ink);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--t-micro);
+}
