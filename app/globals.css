@@ -851,3 +851,107 @@ footer{padding-block:34px;background:var(--ink);color:var(--paper)}
 .time-warning b { color: var(--warn); }
 
 .admin-error { border-color: var(--danger); color: var(--danger); }
+
+/* 2026-09-14: 먹·애시드 컴포넌트 규칙 */
+
+/* 카드·패널 — 각지고, 굵은 테두리, 하드 섀도 */
+.planner-card,
+.admin-stats li,
+.admin-table-wrap,
+.result,
+.stop-card,
+.time-warning {
+  border: var(--bd-bold);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-hard);
+}
+
+/* 기본 버튼 — 먹 배경에 라임 글씨 */
+.primary,
+.search-section form button {
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--ink);
+  color: var(--acid);
+  font-weight: 900;
+}
+.primary:hover:enabled,
+.search-section form button:hover:enabled { background: #000; }
+
+/* 보조 버튼 */
+.ghost,
+.route-optimize,
+.origin-locate,
+.origin-favorite-add,
+.origin-clear,
+.admin-table td button {
+  border: var(--bd-bold);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 800;
+}
+
+/* 칩 — 테두리만, 선택 시 먹 채움 */
+.chips button {
+  border: var(--bd-bold);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--ink);
+}
+.chips .active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--acid);
+}
+.chips .active .preference-icon { color: var(--acid); }
+
+/* 방문 번호 — 배지 없이 큰 숫자 */
+.stop-number {
+  display: inline-block;
+  min-width: auto;
+  height: auto;
+  padding: 0;
+  margin-right: var(--s2);
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--ink);
+  font-size: 36px;
+  font-weight: 900;
+  line-height: .85;
+  letter-spacing: -2px;
+}
+
+/* 섹션 구분은 배경색이 아니라 굵은 선 */
+.section-head { border-bottom: var(--bd-bold); }
+.search-section { background: var(--paper); border-top: var(--bd-bold); }
+
+/* 지도는 액자에 넣는다 */
+.map-panel, .map { border-radius: var(--radius); }
+.map-panel { border: var(--bd-bold); }
+
+/* 요약 숫자를 크게 */
+.summary b { font-size: var(--t-h2); letter-spacing: -1.2px; font-variant-numeric: tabular-nums; }
+.summary span { font-size: var(--t-micro); }
+
+/* 2026-09-14: 고특이도 잔여 규칙이 카드 언어를 덮는 곳 바로잡기 */
+.tone-cafe .stop-card,
+.tone-food .stop-card,
+.tone-culture .stop-card,
+.tone-walk .stop-card,
+.search-section .result {
+  border: var(--bd-bold);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-hard);
+}
+
+/* 호버에서 하드 섀도가 부드러운 블러로 바뀌지 않게. 눌림 모션은 Task 10 */
+.stop-card:hover,
+.result:not(.added):hover,
+.search-section .result:not(.added):hover {
+  transform: none;
+  box-shadow: var(--shadow-hard);
+}
