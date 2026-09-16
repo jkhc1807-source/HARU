@@ -1,5 +1,7 @@
 // 네 폭에서 페이지를 열고 scripts/audit-ui.mjs 의 감사 스크립트를 주입한다.
 // 사용법: node scripts/audit-run.mjs [url] [--shot <디렉토리>]
+// playwright 는 배포 의존성에 넣지 않는다. 감사할 때만 직접 설치한다.
+//   npm i -D playwright && npx playwright install chromium
 import { chromium } from "playwright";
 import { mkdir } from "node:fs/promises";
 import { AUDIT_SCRIPT } from "./audit-ui.mjs";
