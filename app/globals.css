@@ -1173,3 +1173,17 @@ select {
   color: var(--ink);
   font-size: var(--t-micro);
 }
+
+/* 2026-09-14: 페이지 바닥은 종이색 단색으로.
+   574줄 body 배경에 옛 팔레트의 연두 얼룩 rgba(199,218,161,.24) 이 남아 있어
+   /admin 안내 문구가 그 위에서 대비 3.43 으로 떨어졌다 */
+body { background: var(--paper); color: var(--ink); }
+
+/* 관리자·콜백 화면의 돌아가기 링크도 44px 터치 타깃으로 */
+.admin-back a,
+.auth-callback a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+}
+.admin-note { color: var(--ink-soft); }
