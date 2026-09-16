@@ -56,3 +56,14 @@ test("긴 장소 이름은 잘려서 카드 밖으로 넘치지 않는다", asyn
   assert.ok(drawnName.length < longName.length);
   assert.ok(drawnName.endsWith("…"));
 });
+
+test("이미지 팔레트는 먹·애시드 토큰을 따른다", async () => {
+  const { buildTripImageLayout } = await import("../lib/trip-image.ts");
+  const layout = buildTripImageLayout(input);
+  const fills = new Set(layout.ops.map(op => op.fill.toUpperCase()));
+
+  assert.ok(fills.has("#14150F"), "먹색이 쓰여야 한다");
+  assert.ok(fills.has("#D6FF3D"), "형광 라임이 쓰여야 한다");
+  assert.ok(!fills.has("#285747"), "옛 초록이 남아 있으면 안 된다");
+  assert.ok(!fills.has("#C8DB97"), "옛 라임이 남아 있으면 안 된다");
+});

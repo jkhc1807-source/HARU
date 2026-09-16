@@ -20,11 +20,12 @@ const PADDING = 56;
 const HEADER_HEIGHT = 210;
 const ROW_HEIGHT = 96;
 const FOOTER_HEIGHT = 92;
-const INK = "#213e35";
-const GREEN = "#285747";
-const LIME = "#c8db97";
-const CREAM = "#f6f7f2";
-const MUTED = "#7d948b";
+// app/tokens.css 와 같은 값을 유지한다. 색을 바꾸면 양쪽을 함께 고친다.
+const INK = "#14150F";
+const GREEN = "#14150F";   // 헤더 배경도 먹으로 통일
+const LIME = "#D6FF3D";
+const CREAM = "#F1F0EA";
+const MUTED = "#6D6E67";
 
 function clip(text: string, maxChars: number) {
   return text.length <= maxChars ? text : `${text.slice(0, maxChars - 1)}…`;
@@ -42,7 +43,7 @@ export function buildTripImageLayout(input: TripImageInput): TripImageLayout {
     { type: "rect", x: 0, y: 0, w: WIDTH, h: HEADER_HEIGHT, fill: GREEN },
     { type: "text", x: PADDING, y: 74, text: "HARU / A DAY WELL SPENT", font: "700 18px sans-serif", fill: LIME },
     { type: "text", x: PADDING, y: 132, text: clip(`${input.city}에서의 하루`, 22), font: "700 46px sans-serif", fill: "#ffffff" },
-    { type: "text", x: PADDING, y: 176, text: `${input.startTime}–${input.endTime} · ${formatDuration(input.totalMinutes)} · 도보 ${input.walkMinutes}분`, font: "500 20px sans-serif", fill: "#cbd7d2" },
+    { type: "text", x: PADDING, y: 176, text: `${input.startTime}–${input.endTime} · ${formatDuration(input.totalMinutes)} · 도보 ${input.walkMinutes}분`, font: "500 20px sans-serif", fill: "#B9B8B0" },
   ];
 
   if (!input.stops.length) {
