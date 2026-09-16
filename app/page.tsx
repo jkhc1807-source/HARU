@@ -1427,9 +1427,16 @@ export default function Home() {
           <p className="eyebrow">HARU / A DAY WELL SPENT</p>
           <h1>오늘 어디로<br/><em>떠나볼까요?</em></h1>
           <p>좋아하는 곳을 따라, 나다운 하루.<br/>취향과 시간을 고르면 여행의 순서가 완성돼요.</p>
-          <figure className="journey-photo">
-            <img src="/haru-forest.jpg" width="1200" height="800" alt="햇살이 나무 사이로 스며드는 숲속 산책길" fetchPriority="high" />
-            <figcaption><span>조금 천천히, 조금 가까이.</span><a href="https://unsplash.com/photos/F7HGqkkMYAU" target="_blank" rel="noopener noreferrer">Photo · Charles Black / Unsplash ↗</a></figcaption>
+          <figure className="journey-route" aria-hidden="true">
+            <svg viewBox="0 0 320 200" width="320" height="200" role="presentation" focusable="false">
+              <path d="M40 46 H210" strokeDasharray="7 7" />
+              <path d="M210 46 V150" strokeDasharray="7 7" />
+              <path d="M210 150 H90" strokeDasharray="7 7" />
+              <g className="jr-node"><circle cx="40" cy="46" r="15" /><text x="40" y="52">1</text></g>
+              <g className="jr-node"><circle cx="210" cy="46" r="15" /><text x="210" y="52">2</text></g>
+              <g className="jr-node"><circle cx="210" cy="150" r="15" /><text x="210" y="156">3</text></g>
+              <g className="jr-node"><circle cx="90" cy="150" r="15" /><text x="90" y="156">4</text></g>
+            </svg>
           </figure>
         </div>
         <div className="planner-card">

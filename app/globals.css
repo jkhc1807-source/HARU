@@ -382,11 +382,6 @@ body{background:var(--paper);font-weight:400}
 .hero h1{font-size:clamp(50px,5.8vw,84px);font-weight:800;letter-spacing:-4px;line-height:1.12;margin:0 0 26px;text-shadow:0 2px 24px var(--ink)}
 .hero h1 em{color:var(--acid);font-weight:800}
 .hero-copy>p{color:var(--paper);font-size:14px;line-height:1.8}
-.journey-photo{position:absolute;z-index:-1;inset:0;margin:0;height:auto;border-radius:18px 0 0 18px;overflow:hidden;background:var(--ink)}
-.journey-photo::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(9,31,22,.78),rgba(9,31,22,.18)),linear-gradient(0deg,var(--ink),transparent 45%)}
-.journey-photo img{width:100%;height:100%;object-fit:cover;object-position:center}
-.journey-photo figcaption{position:absolute;z-index:1;inset:auto 0 0;padding:24px 44px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;color:var(--paper);font-size:12px;border-top:1px solid var(--line)}
-.journey-photo a{color:var(--paper);font-size:9px;text-underline-offset:3px}
 .planner-card{width:calc(100% - 64px);margin:32px;padding:30px;border:1px solid var(--line);border-radius:12px;background:var(--paper);box-shadow:0 16px 40px var(--ink)}
 .planner-card::before{content:"나만의 하루를 계획하세요";margin-bottom:24px;color:var(--ink-faint);font-size:12px;letter-spacing:0;font-weight:500}
 .planner-card label{font-weight:600}
@@ -446,7 +441,7 @@ body{background:var(--paper);font-weight:400}
 .result small{font-size:12px;color:var(--ink-faint)}.result b{font-weight:600}
 footer{background:var(--paper);color:var(--ink-faint)}
 @media(max-width:1100px){
- .hero{width:calc(100% - 40px);gap:0;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.hero-copy{padding-inline:28px}.hero h1{font-size:54px;letter-spacing:-3px}.planner-card{width:calc(100% - 40px);margin:20px;padding:24px}.journey-photo figcaption{padding-inline:28px}.workspace{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:20px}
+ .hero{width:calc(100% - 40px);gap:0;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.hero-copy{padding-inline:28px}.hero h1{font-size:54px;letter-spacing:-3px}.planner-card{width:calc(100% - 40px);margin:20px;padding:24px}.workspace{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:20px}
  .section-head{flex-wrap:wrap}.section-tools{width:100%;justify-content:space-between}.summary{text-align:left}
  .map-panel{position:sticky;top:24px;height:520px;margin:24px 0 0}
  .map-trip-summary{top:70px;left:16px;right:auto}
@@ -462,8 +457,6 @@ footer{background:var(--paper);color:var(--ink-faint)}
  .hero .eyebrow{font-size:9px;margin-bottom:20px}
  .hero h1{font-size:clamp(43px,8vw,62px);line-height:1.12;letter-spacing:-2.4px;margin-bottom:18px}
  .hero-copy>p:not(.eyebrow){font-size:12px;line-height:1.7;margin:0}
- .journey-photo{height:auto;margin:0;border-radius:12px 12px 0 0}
- .journey-photo figcaption{padding:14px 26px;font-size:11px;gap:6px}.journey-photo a{font-size:8px}
  .planner-card{width:calc(100% - 32px);margin:0 16px 16px;padding:22px;border-radius:8px}.planner-card::before{margin-bottom:18px}
  .workspace{width:calc(100% - 40px);grid-template-columns:1fr;gap:0;margin-top:0}
  .timeline-panel{padding:12px 0 0}.section-head h2{font-size:26px}
@@ -480,7 +473,7 @@ footer{background:var(--paper);color:var(--ink-faint)}
 }
 @media(max-width:380px){
  .hero-copy{padding-inline:22px;min-height:340px}
- .hero h1{font-size:42px}.journey-photo figcaption{padding-inline:22px}.journey-photo figcaption span{font-size:10px}
+ .hero h1{font-size:42px}
  .planner-card{padding:18px 14px}.location-heading{flex-wrap:wrap}.chips{gap:6px}.chips button{padding-inline:12px}
  .map-trip-summary{font-size:10px;gap:5px}.stop-number{width:23px;height:23px;flex-basis:23px;font-size:12px}
 }
@@ -590,9 +583,6 @@ body{background:
 .hero h1{max-width:690px;margin-left:38px;font-size:clamp(60px,6vw,90px);line-height:.98;letter-spacing:-.065em}
 .hero h1 em{color:var(--acid);text-shadow:0 10px 40px rgba(0,0,0,.16)}
 .hero-copy>p:not(.eyebrow){margin-left:40px;color:rgba(255,255,255,.82);font-size:14px;line-height:1.85}
-.journey-photo::after{background:linear-gradient(90deg,rgba(4,28,20,.8) 0%,rgba(4,28,20,.28) 65%,rgba(4,28,20,.08)),linear-gradient(0deg,rgba(8,34,25,.74),transparent 55%)}
-.journey-photo img{transform:scale(1.015);filter:saturate(.9) contrast(1.04)}
-.journey-photo figcaption{padding:25px 42px 25px 82px;border-top-color:rgba(255,255,255,.18);font-size:11px;letter-spacing:.03em}
 .planner-card{position:relative;width:calc(100% - 72px);margin:36px;padding:36px 34px 32px;border:1px solid rgba(255,255,255,.7);border-radius:4px 20px 4px 20px;background:rgba(252,253,247,.97);box-shadow:0 26px 60px rgba(4,25,18,.3)}
 .planner-card::before{color:var(--ink-faint);font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
 .location-heading{margin-top:2px}.location-heading>label{font-size:17px;letter-spacing:-.03em}
@@ -649,7 +639,7 @@ footer{padding-block:34px;background:var(--ink);color:var(--paper)}
 @media(max-width:800px){
  .topbar{width:100%}.hero{min-height:0;margin-top:12px;margin-bottom:52px;border-radius:4px 18px 4px 18px;box-shadow:0 18px 45px rgba(12,42,31,.15)}
  .hero::before{top:20px;left:17px;font-size:7px}.hero-copy{min-height:420px;padding:52px 28px 82px 42px}.hero .eyebrow,.hero h1,.hero-copy>p:not(.eyebrow){margin-left:0}.hero h1{font-size:clamp(46px,14vw,66px)}
- .journey-photo figcaption{padding:17px 22px 17px 42px}.planner-card{width:calc(100% - 28px);margin:0 14px 14px;padding:24px 20px;border-radius:3px 14px 3px 14px}
+ .planner-card{width:calc(100% - 28px);margin:0 14px 14px;padding:24px 20px;border-radius:3px 14px 3px 14px}
  .workspace{width:calc(100% - 24px);padding:14px 12px 12px;border-radius:4px 18px 4px 18px}.workspace::before{top:-23px}.timeline-panel{padding:14px 2px 8px}
  .section-head h2{font-size:30px}.timeline .compact-stop{min-height:112px;padding:20px 46px 14px 76px}.compact-stop .stop-number{left:36px;top:20px;font-size:31px}.compact-stop h3{font-size:18px}.between-stops{margin-left:48px}
  .map-panel{height:390px;margin-top:22px;border-width:7px;border-radius:3px 14px 3px 14px}.map-panel::before{display:none}.map-status{right:12px;bottom:12px;left:12px;max-width:none}
@@ -658,7 +648,7 @@ footer{padding-block:34px;background:var(--ink);color:var(--paper)}
  footer{padding-block:28px}
 }
 @media(max-width:380px){
- .hero-copy{min-height:390px;padding:48px 22px 74px 34px}.hero h1{font-size:44px}.hero-copy>p:not(.eyebrow){font-size:11px}.journey-photo figcaption{padding-left:34px}
+ .hero-copy{min-height:390px;padding:48px 22px 74px 34px}.hero h1{font-size:44px}.hero-copy>p:not(.eyebrow){font-size:11px}
  .workspace{width:calc(100% - 16px);padding-inline:8px}.section-head h2{font-size:27px}.timeline .compact-stop{padding-left:68px}.compact-stop .stop-number{left:31px}
  .search-section{width:calc(100% - 16px)}.search-section .result{grid-template-columns:40px minmax(0,1fr) auto;padding-inline:11px}
 }
@@ -955,3 +945,29 @@ footer{padding-block:34px;background:var(--ink);color:var(--paper)}
   transform: none;
   box-shadow: var(--shadow-hard);
 }
+
+/* 2026-09-14: 히어로 동선 그래픽 */
+.journey-route { margin: var(--s5) 0 0; display: flex; justify-content: center; }
+.journey-route svg { width: 100%; max-width: 320px; height: auto; }
+.journey-route path { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-linecap: round; }
+.journey-route .jr-node circle { fill: var(--acid); stroke: var(--ink); stroke-width: 2.5; }
+.journey-route .jr-node text {
+  fill: var(--ink); font-size: 15px; font-weight: 900;
+  text-anchor: middle; font-family: inherit;
+}
+@media(max-width:800px){ .journey-route { margin-top: var(--s4); } .journey-route svg { max-width: 260px; } }
+
+/* 2026-09-14: 히어로를 밝게. 사진 배경이 사라졌고 동선 그래픽이 먹색이라 먹 배경에서는 보이지 않는다 */
+.hero {
+  border: var(--bd-bold);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: none;
+}
+.hero::before { color: var(--ink-faint); }
+.hero .eyebrow { color: var(--ink-soft); }
+.hero h1 { text-shadow: none; }
+.hero h1 em { color: var(--ink); text-shadow: none; }
+.hero-copy > p:not(.eyebrow),
+.hero-copy > p:last-child { color: var(--ink-soft); }
