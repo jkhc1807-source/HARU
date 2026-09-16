@@ -1187,3 +1187,14 @@ body { background: var(--paper); color: var(--ink); }
   min-height: var(--tap);
 }
 .admin-note { color: var(--ink-soft); }
+
+/* 2026-09-14: 큰 패널도 각지게. 작업 영역과 장소 더하기 영역만 옛 28px/5px 비대칭 모서리와
+   부드러운 그림자로 남아 있어 나머지 화면과 언어가 어긋났다 */
+.workspace,
+.search-section {
+  border: var(--bd-bold);
+  border-radius: var(--radius);
+  background: var(--paper);
+  box-shadow: none;
+}
+.discovery-header { border-radius: var(--radius); }
