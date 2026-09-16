@@ -971,3 +971,21 @@ footer{padding-block:34px;background:var(--ink);color:var(--paper)}
 .hero h1 em { color: var(--ink); text-shadow: none; }
 .hero-copy > p:not(.eyebrow),
 .hero-copy > p:last-child { color: var(--ink-soft); }
+
+/* 2026-09-14: 로고 */
+.brand-mark:before {
+  background: var(--acid);
+  box-shadow: 0 0 0 2px var(--ink);
+}
+.brand-mark:after {
+  border-right: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+}
+.brand-mark i {
+  background: var(--ink);
+  border-color: var(--surface);
+  box-shadow: 0 0 0 1px var(--ink);
+}
+.brand { font-weight: 900; letter-spacing: -1.2px; }
+.brand-word b { background: var(--acid); color: var(--ink); padding: 0 3px; }
+.brand small { font-size: var(--t-micro); color: var(--ink-faint); }

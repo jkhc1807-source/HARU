@@ -1518,7 +1518,7 @@ export default function Home() {
             <TimeRangePicker startTime={startTime} endTime={endTime} options={timeOptions} isInvalid={hasInvalidTimeRange} onStartChange={value => { setStartTime(value); setEndTime(""); setPlannerNotice(""); }} onEndChange={value => { setEndTime(value); setPlannerNotice(""); }} />
           </div>
           <label>오늘의 취향</label>
-          <div className="chips">{categories.map(c => <button type="button" key={c} className={selected.includes(c) ? "active" : ""} aria-pressed={selected.includes(c)} onClick={() => handlePreferenceToggle(c)}><span className="preference-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d={categoryIconPaths[c]} /></svg></span><span>{c}</span></button>)}</div>
+          <div className="chips">{categories.map(c => <button type="button" key={c} className={selected.includes(c) ? "active" : ""} aria-pressed={selected.includes(c)} onClick={() => handlePreferenceToggle(c)}><span className="preference-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d={categoryIconPaths[c]} /></svg></span><span>{c}</span></button>)}</div>
           <button type="button" className="primary" disabled={isGeneratingPlan} onClick={generatePlan}>{isGeneratingPlan ? "장소를 찾고 있어요…" : "나만의 하루 만들기"} <span>{isGeneratingPlan ? "···" : "→"}</span></button>
           <p className="planner-feedback" role="status" aria-live="polite">{plannerNotice}</p>
         </div>
@@ -1601,7 +1601,7 @@ export default function Home() {
           const categoryType = preferenceConfigs.find(preference => preference.matches.test(s.category))?.label || "기타";
           return <button className={`result ${isAdded ? "added" : ""}`} data-category={categoryType} disabled={isAdded} key={s.id} onPointerDown={event => { if (event.pointerType !== "touch") handlePointerDragStart(event, s); }} onClick={() => { if (!suppressResultClickRef.current) addSpot(s); }}>
             <span className="result-drag-handle" aria-hidden="true" onPointerDown={event => { event.stopPropagation(); handlePointerDragStart(event, s); }}>⋮⋮</span>
-            <span className="place-category-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d={categoryIconPaths[categoryType] || "M12 22s8-8 8-13A8 8 0 0 0 4 9c0 5 8 13 8 13ZM12 6a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"}/></svg></span>
+            <span className="place-category-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d={categoryIconPaths[categoryType] || "M12 22s8-8 8-13A8 8 0 0 0 4 9c0 5 8 13 8 13ZM12 6a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"}/></svg></span>
             <span className="result-content"><span className="result-category">{s.category}</span><b>{s.name}</b><small>{s.address}</small></span>
             <span className="result-add-state"><span aria-hidden="true">{isAdded ? "✓" : "+"}</span>{isAdded ? "추가됨" : "일정에 추가"}</span>
           </button>;
