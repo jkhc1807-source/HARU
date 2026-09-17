@@ -1198,3 +1198,16 @@ body { background: var(--paper); color: var(--ink); }
   box-shadow: none;
 }
 .discovery-header { border-radius: var(--radius); }
+
+/* 2026-09-17: 지도 워커 인물을 먹색으로. 옛 주황 워커가 토큰화 과정에서 --danger 로 넘어와
+   프로덕션 지도 위에 빨간 인물로 남아 있었다. 머리는 라임 면 + 먹 테두리 */
+.route-walker-figure .rw-body,
+.route-walker-figure .rw-leg-back,
+.route-walker-figure .rw-leg-front,
+.route-walker-figure .rw-arm-back,
+.route-walker-figure .rw-arm-front { stroke: var(--ink); }
+.route-walker-figure .rw-head { fill: var(--acid); stroke: var(--ink); }
+
+/* 실제 지도 위에 남아 있던 12px 미만 글씨 */
+.kakao-number-marker { font-size: var(--t-micro); }
+.route-legend { font-size: var(--t-micro); }
