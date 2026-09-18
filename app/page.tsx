@@ -510,6 +510,7 @@ export default function Home() {
     const bounds = new window.kakao.maps.LatLngBounds();
     const path: any[] = [];
     const markerContents: HTMLElement[] = [];
+    const labelContents: HTMLElement[] = [];
     plan.forEach((spot, index) => {
       const pos = new window.kakao.maps.LatLng(spot.y, spot.x);
       bounds.extend(pos);
@@ -529,6 +530,7 @@ export default function Home() {
         label.className = "travel-label";
         label.textContent = `도보 약 ${travelMinutes(spot, next)}분`;
         const overlay = new window.kakao.maps.CustomOverlay({ map: mapRef.current, position: midpoint, content: label, yAnchor: 0.5, zIndex: 10 });
+        labelContents.push(label);
         mapObjectsRef.current.push(overlay);
       }
     });
@@ -594,7 +596,30 @@ export default function Home() {
       }
     }
     if (plan.length) mapRef.current.setBounds(bounds);
-    return () => { cancelled = true; };
+
+    // 좁은 화면에서는 라벨이 마커나 다른 라벨과 겹친다. 마커가 우선이고,
+    // 앞 구간 라벨이 뒤 구간보다 우선이다. 확대하면 자리가 생겨 다시 보인다.
+    const mapInstance = mapRef.current;
+    const hideOverlappingLabels = () => {
+      if (cancelled) return;
+      const taken = markerContents.map((marker) => marker.getBoundingClientRect());
+      labelContents.forEach((label) => {
+        label.style.visibility = "";
+        const box = label.getBoundingClientRect();
+        if (!box.width) return;
+        const overlaps = taken.some((other) =>
+          box.left < other.right && box.right > other.left && box.top < other.bottom && box.bottom > other.top);
+        if (overlaps) label.style.visibility = "hidden";
+        else taken.push(box);
+      });
+    };
+    const labelFrame = requestAnimationFrame(hideOverlappingLabels);
+    window.kakao.maps.event.addListener(mapInstance, "idle", hideOverlappingLabels);
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(labelFrame);
+      window.kakao.maps.event.removeListener(mapInstance, "idle", hideOverlappingLabels);
+    };
   }, [city, startTime, endTime, selected, plan, origin, mapReady]);
 
   useEffect(() => {
