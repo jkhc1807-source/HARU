@@ -1587,3 +1587,24 @@ footer :is(a, button):focus-visible { outline-color: var(--acid); }
 /* 2026-09-18: 검색 버튼만 포커스 링이 라임(흰 배경 위 대비 1.15)이었다.
    이 버튼은 어두운 헤더 안에 있지만 흰 입력 폼 위에 놓여 먹색이어야 보인다 */
 .search-section form button:focus-visible { outline-color: var(--ink); }
+
+/* 2026-09-18: 지도를 축소해 마커가 뭉치면 남은 마커에 몇 개가 더 있는지 붙인다.
+   겹친 채로 두면 장소가 하나뿐인 것처럼 보였다 */
+.kakao-number-marker { position: relative; }
+.kakao-number-marker[data-cluster]::after {
+  content: "+" attr(data-cluster);
+  position: absolute;
+  top: -9px;
+  right: -12px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 4px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--acid);
+  color: var(--ink);
+  font-size: var(--t-micro);
+  font-weight: 900;
+  line-height: 16px;
+  text-align: center;
+}

@@ -59,6 +59,14 @@ const stayOptions = [30, 45, 60, 75, 90, 120, 150, 180];
 const preferenceEmoji: Record<string, string> = Object.fromEntries(preferenceConfigs.map(preference => [preference.label, preference.emoji]));
 preferenceEmoji[subwayCategory] = "\uD83D\uDE87";
 
+// 카카오의 category_name 은 "가정,생활 > 서점 > 영풍문고" 처럼 마지막 조각이 브랜드명일 때가 있다.
+// 뒤에서부터 우리가 아는 종류를 먼저 찾고, 없으면 마지막 조각을 쓴다.
+function categoryFromPath(path?: string) {
+  const parts = (path || "").split(" > ").map(part => part.trim()).filter(Boolean);
+  const known = [...parts].reverse().find(part => preferenceConfigs.some(preference => preference.matches.test(part)));
+  return known || parts[parts.length - 1] || "";
+}
+
 function emojiForPlace(place: any) {
   const category = `${place.category_group_name || ""} ${place.category_name || ""}`;
   if (place.category_group_code === "CE7") return preferenceEmoji.카페;
@@ -606,16 +614,33 @@ export default function Home() {
     // 좁은 화면에서는 라벨이 마커나 다른 라벨과 겹친다. 마커가 우선이고,
     // 앞 구간 라벨이 뒤 구간보다 우선이다. 확대하면 자리가 생겨 다시 보인다.
     const mapInstance = mapRef.current;
+    const overlaps = (a: DOMRect, b: DOMRect) =>
+      a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
     const hideOverlappingLabels = () => {
       if (cancelled) return;
-      const taken = markerContents.map((marker) => marker.getBoundingClientRect());
+      // 축소하면 마커가 한 점으로 뭉쳐 장소가 하나뿐인 것처럼 보였다.
+      // 겹치는 마커는 숨기고 남은 마커에 몇 개가 더 있는지 붙인다.
+      const kept: { marker: HTMLElement; rect: DOMRect; hidden: number }[] = [];
+      markerContents.forEach((marker) => {
+        marker.style.visibility = "";
+        delete marker.dataset.cluster;
+        const rect = marker.getBoundingClientRect();
+        if (!rect.width) return;
+        const host = kept.find((other) => overlaps(rect, other.rect));
+        if (host) {
+          host.hidden += 1;
+          host.marker.dataset.cluster = String(host.hidden);
+          marker.style.visibility = "hidden";
+          return;
+        }
+        kept.push({ marker, rect, hidden: 0 });
+      });
+      const taken = kept.map((entry) => entry.rect);
       labelContents.forEach((label) => {
         label.style.visibility = "";
         const box = label.getBoundingClientRect();
         if (!box.width) return;
-        const overlaps = taken.some((other) =>
-          box.left < other.right && box.right > other.left && box.top < other.bottom && box.bottom > other.top);
-        if (overlaps) label.style.visibility = "hidden";
+        if (taken.some((other) => overlaps(box, other))) label.style.visibility = "hidden";
         else taken.push(box);
       });
     };
@@ -1216,7 +1241,7 @@ export default function Home() {
           return;
         }
         const found = data.slice(0, 6).map((p: any): Spot => ({
-          id: p.id, name: p.place_name, category: p.category_group_name || "장소", address: p.road_address_name || p.address_name,
+          id: p.id, name: p.place_name, category: p.category_group_name || categoryFromPath(p.category_name) || "장소", address: p.road_address_name || p.address_name,
           x: Number(p.x), y: Number(p.y), stay: 60, emoji: emojiForPlace(p),
           placeUrl: p.place_url,
         }));
@@ -1238,7 +1263,7 @@ export default function Home() {
         resolve(data.slice(0, 8).map((p: any): Spot => ({
           id: p.id,
           name: p.place_name,
-          category: p.category_group_name || p.category_name?.split(" > ").pop() || "장소",
+          category: p.category_group_name || categoryFromPath(p.category_name) || "장소",
           address: p.road_address_name || p.address_name,
           x: Number(p.x),
           y: Number(p.y),
