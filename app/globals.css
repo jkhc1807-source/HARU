@@ -1331,3 +1331,33 @@ body { background: var(--paper); color: var(--ink); }
 @media(prefers-reduced-motion:reduce){
   .timeline .stop:hover .compact-stop { transform: none; }
 }
+
+/* 2026-09-18: 지도 위 오버레이도 각지게. 타일을 종이톤으로 낮추고 나니
+   둥근 알약 배지들과 옛 초록 스탬프만 남아 혼자 다른 언어였다 */
+.map-panel::before {
+  border-radius: var(--radius);
+  background: var(--ink);
+  font-size: var(--t-micro);
+}
+.map-trip-summary {
+  border: var(--bd-bold);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: none;
+}
+.location-control button {
+  border: var(--bd);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.location-control > span:not(:empty) {
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.route-legend {
+  border: var(--bd);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: none;
+}
+.travel-label { border-radius: var(--radius); }
