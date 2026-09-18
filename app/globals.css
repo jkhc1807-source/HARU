@@ -1353,3 +1353,104 @@ body { background: var(--paper); color: var(--ink); }
   box-shadow: none;
 }
 .travel-label { border-radius: var(--radius); }
+
+/* 2026-09-18: 전체 재점검. Task 6 컴포넌트 규칙 목록에 없던 곳들이 옛 언어로 남아 있었다 */
+
+/* 1. 떠 있는 패널은 모두 같은 규칙으로 — 각지게, 굵은 테두리, 하드 섀도.
+   지금까지 전부 둥근 모서리 + 흐린 그림자였다 */
+.header-more-menu,
+.auth-user-menu,
+.stop-actions-panel,
+.choice-select-menu,
+.region-suggestions,
+.origin-suggestions,
+#origin-suggestions,
+.save-dialog {
+  border: var(--bd-bold);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-hard);
+}
+.header-more-menu .danger { border-radius: var(--radius); border-top: var(--bd); }
+
+/* 2. 일정 저장 다이얼로그 — 저장 버튼이 옛 초록(--ok), 버튼은 알약, 상자는 24px 모서리였다 */
+.save-dialog-backdrop { background: rgba(20, 21, 15, .5); }
+.save-dialog .eyebrow { color: var(--ink-soft); }
+.save-dialog input { border: var(--bd); border-radius: var(--radius); }
+.save-dialog input:focus { border-color: var(--ink); box-shadow: none; }
+.save-dialog-actions button { border-radius: var(--radius-control); }
+.save-dialog-actions button[type="submit"] {
+  border: 0;
+  background: var(--ink);
+  color: var(--acid);
+}
+.save-dialog-actions button:not([type="submit"]) {
+  border: var(--bd-bold);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+/* 3. 장소 카테고리 아이콘 — 카페·맛집이 --danger 빨강이었고 모양은 물방울이었다 */
+.search-section .place-category-icon,
+.search-section [data-category] .place-category-icon {
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+/* 4. 일정에 추가 버튼 모양 */
+.result-add-state > span { border-radius: var(--radius-control); box-shadow: none; }
+
+/* 5. 헤더 — 라임 채움 버튼만 테두리가 없어 옆 버튼들보다 물렁해 보였다 */
+.topbar-actions .save-trip-button { border: var(--bd-bold); }
+
+/* 6. 포커스 표시를 먹색으로 통일. 옛 팔레트의 초록 링이 곳곳에 남아 있었다.
+   어두운 섹션에서는 먹색이 보이지 않으므로 라임으로 */
+:root :is(button, summary, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+.discovery-header :is(button, a, input):focus-visible,
+footer :is(a, button):focus-visible { outline-color: var(--acid); }
+:root .planner-card :is(input, select, .choice-select-trigger):focus-visible,
+:root .location-row input:focus-visible,
+:root .search-section form input:focus-visible { outline-offset: -2px; }
+
+/* 7. 장식으로 쓰인 초록(--ok)을 먹색으로. --ok 는 연결·성공 표시에만 남긴다 */
+.result i,
+.result.added i,
+.route-optimize-wrap > span,
+.origin-favorite > button:first-child,
+.stop-card .travel-meta,
+.spot-note[open] summary,
+.timeline.dragging .drop-zone span,
+.timeline.dragging .empty-drop-zone b { color: var(--ink); }
+.choice-select-menu button:hover,
+.choice-select-menu button:focus-visible { color: var(--ink); }
+.choice-select-menu button.selected { background: var(--ink); color: var(--acid); }
+.time-warning button {
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--ink);
+  color: var(--acid);
+}
+
+/* 8. 빈 상태·드롭 존 */
+.empty-drop-zone { border-radius: var(--radius); }
+.empty-drop-zone.active { box-shadow: 0 0 0 3px var(--ink); }
+
+/* 9. 메모 편집 구분선이 옛 초록 rgba 였다 */
+.spot-editor-fields { border-top: var(--bd); }
+
+/* 2026-09-18: 마지막 남은 둥근 컨트롤들 */
+.header-more-actions > summary,
+.auth-user > summary {
+  border: var(--bd-bold);
+  border-radius: var(--radius-control);
+}
+.stop-actions > summary { border-radius: var(--radius-control); }
+.spot-actions-footer .confirm-spot-edit {
+  border-radius: var(--radius-control);
+  color: var(--acid);
+}
