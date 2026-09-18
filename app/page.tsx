@@ -519,7 +519,7 @@ export default function Home() {
       if (!prefersReducedMotion) content.style.animationDelay = `${index * 45}ms`;
       content.textContent = String(index + 1);
       markerContents.push(content);
-      const marker = new window.kakao.maps.CustomOverlay({ map: mapRef.current, position: pos, content, yAnchor: 1.25 });
+      const marker = new window.kakao.maps.CustomOverlay({ map: mapRef.current, position: pos, content, yAnchor: 1.25, zIndex: 15 });
       mapObjectsRef.current.push(marker);
 
       if (index < plan.length - 1) {
@@ -528,7 +528,7 @@ export default function Home() {
         const label = document.createElement("div");
         label.className = "travel-label";
         label.textContent = `도보 약 ${travelMinutes(spot, next)}분`;
-        const overlay = new window.kakao.maps.CustomOverlay({ map: mapRef.current, position: midpoint, content: label, yAnchor: 0.5 });
+        const overlay = new window.kakao.maps.CustomOverlay({ map: mapRef.current, position: midpoint, content: label, yAnchor: 0.5, zIndex: 10 });
         mapObjectsRef.current.push(overlay);
       }
     });
@@ -538,6 +538,10 @@ export default function Home() {
         const polyline = new window.kakao.maps.Polyline({ map: mapRef.current, path, strokeWeight: 5, strokeColor: "#14150F", strokeOpacity: 0.9, strokeStyle: "solid" });
         mapObjectsRef.current.push(polyline);
         markerContents.forEach((content) => content.classList.add("kakao-number-marker--visited"));
+        const restingWalker = document.createElement("div");
+        restingWalker.className = "route-walker route-walker-arrived";
+        restingWalker.innerHTML = WALKER_SVG;
+        mapObjectsRef.current.push(new window.kakao.maps.CustomOverlay({ map: mapRef.current, position: path[path.length - 1], content: restingWalker, yAnchor: 0.92, zIndex: 30 }));
       } else {
         const ghostLine = new window.kakao.maps.Polyline({ map: mapRef.current, path, strokeWeight: 3, strokeColor: "#14150F", strokeOpacity: 0.55, strokeStyle: "shortdash" });
         const haloLine = new window.kakao.maps.Polyline({ map: mapRef.current, path: [path[0]], strokeWeight: 11, strokeColor: "#14150F", strokeOpacity: 0.22, strokeStyle: "solid" });
@@ -548,7 +552,7 @@ export default function Home() {
         walkerContent.className = "route-walker";
         walkerContent.innerHTML = WALKER_SVG;
         const walkerFigure = walkerContent.querySelector<HTMLElement>(".route-walker-figure");
-        const walker = new window.kakao.maps.CustomOverlay({ map: mapRef.current, position: path[0], content: walkerContent, yAnchor: 0.92, zIndex: 20 });
+        const walker = new window.kakao.maps.CustomOverlay({ map: mapRef.current, position: path[0], content: walkerContent, yAnchor: 0.92, zIndex: 30 });
         mapObjectsRef.current.push(walker);
 
         const segmentLengths = plan.slice(0, -1).map((spot, index) => distance(spot, plan[index + 1]));
