@@ -1217,6 +1217,8 @@ export default function Home() {
 
   function searchPlaces(e: React.FormEvent) {
     e.preventDefault();
+    // 버튼은 요청 중 disabled 지만 Enter 는 막히지 않아 같은 요청이 여러 번 나갔다
+    if (isPlaceSearching) return;
     const keyword = query.trim();
     if (!keyword) {
       setSearchNotice("찾고 싶은 장소나 종류를 입력해주세요");
@@ -1441,8 +1443,11 @@ export default function Home() {
     const nextPlan = plan.filter(item => item.id !== draggedSpot.id);
     const adjustedIndex = previousIndex >= 0 && previousIndex < index ? index - 1 : index;
     nextPlan.splice(Math.max(0, Math.min(adjustedIndex, nextPlan.length)), 0, draggedSpot);
-    updatePlan(nextPlan, `${draggedSpot.name} 순서 변경`);
-    setSearchNotice(`${draggedSpot.name}의 일정 위치를 변경했어요`);
+    const isNewSpot = previousIndex < 0;
+    updatePlan(nextPlan, `${draggedSpot.name} ${isNewSpot ? "추가" : "순서 변경"}`);
+    setSearchNotice(isNewSpot
+      ? `${draggedSpot.name}을(를) 일정에 추가했어요`
+      : `${draggedSpot.name}의 일정 위치를 변경했어요`);
     setDraggedSpot(null);
     setIsDragging(false);
     setActiveDropIndex(null);
@@ -1505,8 +1510,11 @@ export default function Home() {
         const nextPlan = plan.filter(item => item.id !== spot.id);
         const adjustedIndex = previousIndex >= 0 && previousIndex < dropIndex ? dropIndex - 1 : dropIndex;
         nextPlan.splice(Math.max(0, Math.min(adjustedIndex, nextPlan.length)), 0, spot);
-        updatePlan(nextPlan, `${spot.name} 순서 변경`);
-        setSearchNotice(`${spot.name}의 일정 위치를 변경했어요`);
+        const isNewSpot = previousIndex < 0;
+        updatePlan(nextPlan, `${spot.name} ${isNewSpot ? "추가" : "순서 변경"}`);
+        setSearchNotice(isNewSpot
+          ? `${spot.name}을(를) 일정에 추가했어요`
+          : `${spot.name}의 일정 위치를 변경했어요`);
       }
       handleDragEnd();
       window.setTimeout(() => { suppressResultClickRef.current = false; }, 0);
@@ -1634,7 +1642,7 @@ export default function Home() {
               {!authUser && favoriteOrigins.length > 0 && " · 로그인하면 즐겨찾기를 다른 기기와 함께 쓸 수 있어요"}
             </p>
           </div>
-          <div className="location-heading"><label>어디에서 하루를 보낼까요?</label><div className="region-mode" role="radiogroup" aria-label="검색 대상"><label><input type="radio" name="region-mode" value="administrative" checked={regionMode === "administrative"} onChange={() => { setRegionMode("administrative"); setRegionSuggestions([]); setShowRegionSuggestions(true); }} />{regionModeLabels.administrative}</label><label><input type="radio" name="region-mode" value="subway" checked={regionMode === "subway"} onChange={() => { setRegionMode("subway"); setRegionSuggestions([]); setShowRegionSuggestions(true); }} />{regionModeLabels.subway}</label></div></div>
+          <div className="location-heading"><label>어디에서 하루를 보낼까요?</label><div className="region-mode" role="radiogroup" aria-label="검색 대상"><label><input type="radio" name="region-mode" value="administrative" checked={regionMode === "administrative"} onChange={() => { setRegionMode("administrative"); setCity(""); setRegionSuggestions([]); setShowRegionSuggestions(true); }} />{regionModeLabels.administrative}</label><label><input type="radio" name="region-mode" value="subway" checked={regionMode === "subway"} onChange={() => { setRegionMode("subway"); setCity(""); setRegionSuggestions([]); setShowRegionSuggestions(true); }} />{regionModeLabels.subway}</label></div></div>
           <div className="location-row">
             <div className="region-field">
               <input
@@ -1742,7 +1750,7 @@ export default function Home() {
           <form onSubmit={searchPlaces}><input id="place-search-input" aria-label="일정에 추가할 장소 검색" value={query} onChange={e => setQuery(e.target.value)} placeholder="카페, 전시관, 맛집을 검색해보세요"/><button disabled={isPlaceSearching}>{isPlaceSearching ? "검색 중…" : "검색"}</button></form>
         </div>
         <p className="search-feedback" role="status">{searchNotice}</p>
-        <p className="drag-guide"><span className="desktop-guide">장소 카드를 잡으면 일정 영역으로 자동 이동해요. 원하는 사이에 놓거나, 눌러서 마지막에 추가하세요.</span><span className="mobile-guide">장소를 눌러 추가하세요. 일정의 손잡이를 끌거나 ⋯ 메뉴의 위로·아래로 이동으로 순서를 바꿀 수 있어요.</span></p>
+        <p className="drag-guide"><span className="desktop-guide">장소 카드를 잡으면 일정 영역으로 자동 이동해요. 원하는 사이에 놓거나, 눌러서 마지막에 추가하세요.</span><span className="mobile-guide">장소를 눌러 추가하세요. 순서는 일정 카드의 ⋯ 메뉴에서 위로·아래로 이동으로 바꿀 수 있어요.</span></p>
         <div className="results">{spots.map(s => {
           const isAdded = plan.some(item => item.id === s.id);
           const categoryType = preferenceConfigs.find(preference => preference.matches.test(s.category))?.label || "기타";
