@@ -1211,3 +1211,75 @@ body { background: var(--paper); color: var(--ink); }
 /* 실제 지도 위에 남아 있던 12px 미만 글씨 */
 .kakao-number-marker { font-size: var(--t-micro); }
 .route-legend { font-size: var(--t-micro); }
+
+/* 2026-09-18: 입력 요소도 먹·애시드 언어로. 스펙의 --radius:0 대상은 "카드·패널·입력" 인데
+   Task 6 컴포넌트 규칙 목록에서 입력만 빠져 옛 둥근 모서리로 남아 있었다.
+   필드는 조용한 선, 액션 버튼만 굵은 먹 테두리로 위계를 둔다 */
+
+/* 출발지 — 입력과 내 위치를 테두리 하나로 묶은 단위로 되돌린다.
+   Task 6 이 안쪽 버튼에만 굵은 테두리를 줘서 입력과 따로 놀았다 */
+.origin-row {
+  border: var(--bd);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.origin-locate {
+  border: 0;
+  border-left: var(--bd);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+}
+@media(max-width:800px){
+  .origin-locate { border-left: 0; border-top: var(--bd); }
+}
+
+/* 나머지 필드와 패널도 각지게 */
+.location-row,
+.region-field > input,
+.origin-transit,
+.origin-favorite,
+.time-range,
+.time-range .choice-select-trigger,
+.choice-select-trigger,
+.choice-select-menu,
+.region-suggestions,
+.origin-suggestions,
+#origin-suggestions { border-radius: var(--radius); }
+
+.origin-favorite { border: var(--bd); background: var(--surface); }
+.origin-transit { border: var(--bd); }
+.location-row { border: var(--bd); }
+.time-range { border: var(--bd); }
+
+/* 포커스 표시를 먹 테두리로 통일한다. 옛 초록 링이 남아 있었고,
+   라임은 흰 배경 위 대비 1.15 라 포커스 표시로 쓸 수 없다 */
+.planner-card input:focus-visible,
+.planner-card select:focus-visible,
+.planner-card .choice-select-trigger:focus-visible,
+.time-select-field select:focus-visible,
+.search-section form input:focus-visible,
+.location-row input:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+/* 2026-09-18: 이어서 — 지역 모드 토글을 취향 칩과 같은 언어로, 포커스 표시는 필드 안쪽으로 */
+.region-mode {
+  border: var(--bd);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: none;
+}
+.region-mode label { border-radius: var(--radius); color: var(--ink-soft); }
+.region-mode label:has(input:checked) { background: var(--ink); color: var(--acid); box-shadow: none; }
+.region-mode label:has(input:focus-visible) { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* 테두리로 묶인 필드 안의 입력은 포커스 표시를 안쪽에 그린다.
+   바깥에 그리면 묶음 테두리를 덮어 입력만 따로 떠 보인다 */
+.planner-card input:focus-visible,
+.planner-card select:focus-visible,
+.time-select-field select:focus-visible,
+.location-row input:focus-visible,
+.search-section form input:focus-visible { outline-offset: -2px; }
