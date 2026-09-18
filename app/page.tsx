@@ -250,6 +250,8 @@ export default function Home() {
   const [pointerPosition, setPointerPosition] = useState<{ x: number; y: number } | null>(null);
   const [routeOptimizeMessage, setRouteOptimizeMessage] = useState("");
   const [undoState, setUndoState] = useState<UndoState | null>(null);
+  const [toast, setToast] = useState("");
+  const toastSeenRef = useRef(false);
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [authNotice, setAuthNotice] = useState("");
@@ -487,6 +489,9 @@ export default function Home() {
         setIsOriginSearching(false);
         if (status !== window.kakao.maps.services.Status.OK) {
           setOriginSuggestions([]);
+          if (status !== window.kakao.maps.services.Status.ZERO_RESULT) {
+            setOriginNotice("검색 중 문제가 생겼어요. 잠시 후 다시 시도해주세요");
+          }
           return;
         }
         setOriginSuggestions(data.slice(0, 5).map((place: any): Origin => ({
@@ -630,6 +635,16 @@ export default function Home() {
   useEffect(() => {
     localStorage.setItem("haru-favorite-origins", JSON.stringify(favoriteOrigins));
   }, [favoriteOrigins]);
+
+  // 헤더 액션의 결과 문구는 지도 옆에만 떠서 버튼에서 멀었다. 화면 위에 잠깐 띄운다.
+  // 최초 1건(지도 연결 안내)은 사용자가 일으킨 동작이 아니므로 띄우지 않는다.
+  useEffect(() => {
+    if (!notice) return;
+    if (!toastSeenRef.current) { toastSeenRef.current = true; return; }
+    setToast(notice);
+    const timer = window.setTimeout(() => setToast(""), 4000);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
 
   useEffect(() => {
     const departure = origin
@@ -1109,6 +1124,7 @@ export default function Home() {
   async function handleDeleteSavedTrip() {
     if (!selectedSavedTripId) return;
     const trip = savedTrips.find(item => item.id === selectedSavedTripId);
+    if (!window.confirm(trip ? `'${trip.name}' 저장 일정을 삭제할까요? 되돌릴 수 없어요.` : "저장 일정을 삭제할까요? 되돌릴 수 없어요.")) return;
     const previousTrips = savedTrips;
     setSavedTrips(current => current.filter(item => item.id !== selectedSavedTripId));
     setSelectedSavedTripId("");
@@ -1153,7 +1169,10 @@ export default function Home() {
         if (requestId !== placeRequestRef.current) return;
         setIsPlaceSearching(false);
         if (status !== window.kakao.maps.services.Status.OK) {
-          setSearchNotice("검색 결과가 없어요. 다른 검색어를 입력해보세요");
+          setSpots([]);
+          setSearchNotice(status === window.kakao.maps.services.Status.ZERO_RESULT
+            ? "검색 결과가 없어요. 다른 검색어를 입력해보세요"
+            : "검색 중 문제가 생겼어요. 잠시 후 다시 시도해주세요");
           return;
         }
         const found = data.slice(0, 6).map((p: any): Spot => ({
@@ -1258,6 +1277,7 @@ export default function Home() {
       const message = `${city.trim()}의 실제 장소 ${refreshedSpots.length}곳에서 ${ordered.length}곳의 동선을 만들었어요`;
       setPlannerNotice(message);
       setNotice(message);
+      window.requestAnimationFrame(() => timelineEl.current?.scrollIntoView({ behavior: "auto", block: "start" }));
     } finally {
       setIsGeneratingPlan(false);
     }
@@ -1480,6 +1500,7 @@ export default function Home() {
           </div>}
       </SiteHeader>
 
+      {toast && <div className="toast" role="status" aria-live="polite">{toast}</div>}
       <section className="hero">
         <div className="hero-copy">
           <p className="eyebrow">HARU / A DAY WELL SPENT</p>
