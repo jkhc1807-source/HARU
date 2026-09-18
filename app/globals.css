@@ -1283,3 +1283,51 @@ body { background: var(--paper); color: var(--ink); }
 .time-select-field select:focus-visible,
 .location-row input:focus-visible,
 .search-section form input:focus-visible { outline-offset: -2px; }
+
+/* 2026-09-18: 카드 숫자·호버·지도 타일을 전체 언어에 맞춘다 */
+
+/* 방문 번호와 지도 요약 숫자만 세리프 이탤릭(Georgia)이라 혼자 다른 시대의 글자였다 */
+.compact-stop .stop-number,
+.map-trip-summary strong {
+  font-family: inherit;
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: -.04em;
+  color: var(--ink);
+}
+
+/* 카드 호버 — 옛 팔레트의 연녹색 틴트가 깔리고 하드 섀도가 사라졌다.
+   하드 섀도 언어에 맞게 카드가 그림자에서 떠오르는 방식으로 바꾼다 */
+.timeline .compact-stop:hover {
+  border-color: var(--ink);
+  background: var(--surface);
+  transform: translate(-2px, -2px);
+  box-shadow: 8px 8px 0 var(--ink);
+}
+@media(prefers-reduced-motion:reduce){
+  .timeline .compact-stop:hover { transform: none; }
+}
+
+/* 리뷰 링크 밑줄이 형광 라임이라 흰 배경에서 얼룩처럼 보인다 */
+.compact-stop .kakao-review-link {
+  color: var(--ink);
+  text-decoration-color: var(--ink);
+}
+
+/* 지도 타일만 종이톤으로 낮춘다. 카카오 기본 지도색(초록 공원·파란 물·컬러 아이콘)이
+   화면 전체 무드와 어긋나고, 먹색 경로선과 라임 마커도 묻힌다.
+   타일 레이어만 골라내므로 우리 오버레이(마커·라벨·워커·경로선)는 영향받지 않는다.
+   ponytail: 카카오 내부 DOM 구조에 의존한다. 구조가 바뀌면 필터가 조용히 빠질 뿐 깨지지는 않는다 */
+.map.live > div > div > div:has(> img) {
+  filter: grayscale(1) sepia(.18) contrast(.9) brightness(1.06);
+}
+
+/* 2026-09-18: 카드 호버의 실제 주인은 .timeline .stop:hover .compact-stop (특이도 0,4,0) 이다.
+   앞 블록의 .timeline .compact-stop:hover 로는 덮이지 않아 옛 부드러운 그림자가 남았다 */
+.timeline .stop:hover .compact-stop {
+  transform: translate(-2px, -2px);
+  box-shadow: 8px 8px 0 var(--ink);
+}
+@media(prefers-reduced-motion:reduce){
+  .timeline .stop:hover .compact-stop { transform: none; }
+}
