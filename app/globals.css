@@ -1526,3 +1526,9 @@ footer :is(a, button):focus-visible { outline-color: var(--acid); }
     border-bottom: var(--bd-bold);
   }
 }
+
+/* 2026-09-18: 고정 바 아래로 지나가는 이동시간 라벨이 굵은 선 바로 위에서 잘려
+   선과 겹쳐 보였다. 선 아래로 종이색을 8px 더 깔아 글자가 선에 닿지 않고 나타나게 한다 */
+@media(max-width:800px){
+  .section-tools { box-shadow: 0 8px 0 var(--paper); }
+}
