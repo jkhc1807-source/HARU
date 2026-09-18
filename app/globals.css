@@ -1454,3 +1454,7 @@ footer :is(a, button):focus-visible { outline-color: var(--acid); }
   border-radius: var(--radius-control);
   color: var(--acid);
 }
+
+/* 2026-09-18: 열린 카드 메뉴가 아래쪽 이동시간 라벨에 가려졌다.
+   둘 다 같은 article.stop 안이고 라벨이 DOM 상 뒤라 먼저 위에 그려진다 */
+.stop-actions[open] { z-index: 2; }
