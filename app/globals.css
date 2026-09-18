@@ -1562,3 +1562,28 @@ footer :is(a, button):focus-visible { outline-color: var(--acid); }
   .toast { animation: toast-in .18s ease-out both; }
   @keyframes toast-in { from { opacity: 0; transform: translate(-50%, -8px); } to { opacity: 1; transform: translate(-50%, 0); } }
 }
+
+/* 2026-09-18: 토스트 안에 되돌리기 버튼을 둔다. 실행 취소가 헤더 더보기 메뉴 안에만 있어
+   삭제·이동 직후에는 되돌릴 방법이 화면에 보이지 않았다 */
+.toast {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s3);
+}
+.toast button {
+  flex-shrink: 0;
+  min-height: 36px;
+  padding: 0 var(--s3);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--ink);
+  color: var(--acid);
+  font-size: var(--t-micro);
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+/* 2026-09-18: 검색 버튼만 포커스 링이 라임(흰 배경 위 대비 1.15)이었다.
+   이 버튼은 어두운 헤더 안에 있지만 흰 입력 폼 위에 놓여 먹색이어야 보인다 */
+.search-section form button:focus-visible { outline-color: var(--ink); }
