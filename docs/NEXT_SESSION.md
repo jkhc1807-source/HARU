@@ -1,6 +1,6 @@
 # 다음 작업 이어가기
 
-마지막 갱신: 2026-09-14
+마지막 갱신: 2026-09-18
 
 새 세션을 열면 이 문서부터 읽는다. `AGENTS.md`, `docs/PROJECT_CONTEXT.md`, `docs/ROADMAP.md`가 그 다음이다.
 
@@ -10,7 +10,7 @@
 
 ## 지금 상태 한 줄
 
-먹·애시드 디자인 개편을 `redesign/ink-acid` 브랜치에서 마쳤다. 로컬 검증(타입·테스트 20개·빌드·네 폭 UI 감사)은 통과했고 아직 `main` 에 병합하지 않았다. 남은 일은 사용자의 외관 확인과 실기기 점검이다.
+먹·애시드 디자인 개편을 `main`에 병합해 운영(https://haru-ashy-rho.vercel.app)까지 배포했다. 배포 후 프로덕션·실기기 점검으로 나온 어색한 부분(입력·패널·메뉴·다이얼로그·지도 오버레이·옛 초록 장식색)까지 고쳐 반영했다. 남은 일은 사용자의 실기기 최종 확인과 기존 검증 항목들이다.
 
 ## 환경
 
@@ -144,3 +144,5 @@ npx next build                       # Vercel 배포 경로. 배포 전 반드�
 - 출발지가 설정되면 `transitBySpot`이 `origin` 키로 채워지고, 없으면 첫 장소의 `spot.id` 키로 채워진다. 표시 위치도 각각 출발지 영역과 일정 카드로 다르다.
 - 관리자 API의 공통 인증 헬퍼 `requireAdminUser`는 `app/api/admin/stats/route.ts`에 있고 다른 두 라우트가 거기서 import 한다. Next.js 16과 vinext 모두 이 형태를 허용하는 것을 빌드로 확인했다.
 - `public/map-config.json`은 빌드 때 생성되며 Git에 올리지 않는다. 카카오 키가 들어간다.
+- 로컬 `.env.local`의 `KAKAO_JAVASCRIPT_KEY`가 비면 `npm run dev`와 `npm run build`가 즉시 실패한다. 키 없이 빌드만 확인할 때는 `KAKAO_JAVASCRIPT_KEY=<20자 이상 아무 문자열> npm run build`처럼 환경변수로 넘긴다. 단 이 경우 지도는 렌더링되지 않으므로 지도 확인은 운영 배포본으로 한다.
+- Vercel은 `pnpm-lock.yaml`로 `frozen-lockfile` 설치를 한다. `npm i`로 의존성을 추가하면 pnpm 락파일이 갱신되지 않아 배포가 설치 단계에서 실패한다. UI 감사 도구(`scripts/audit-run.mjs`)가 쓰는 playwright를 의존성에 넣지 않고 필요할 때만 설치하는 이유다(`npm i -D playwright && npx playwright install chromium`).
