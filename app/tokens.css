@@ -1,10 +1,10 @@
 /* 하루여행 디자인 토큰
-   색을 바꾸려면 아래 11줄만 고치면 된다. */
+   색을 바꾸려면 아래 색 13줄만 고치면 된다. */
 :root {
-  /* 색 (11) — 먹 & 애시드 */
+  /* 색 (13) — 먹 & 애시드 */
   --ink:        #14150F;  /* 제목·본문·강조 테두리 */
   --ink-soft:   #4A4B44;  /* 보조 텍스트 */
-  --ink-faint:  #6D6E67;  /* 캡션·비활성. --paper 위 대비 4.51 */
+  --ink-faint:  #5A5B54;  /* 캡션·비활성. --paper 위 대비 6.00 (4.51 은 기준을 겨우 넘어 읽기 힘들었다) */
   --paper:      #F1F0EA;  /* 페이지 배경 */
   --surface:    #FFFFFF;  /* 카드 */
   --line:       #D9D8D0;  /* 기본 테두리 */
@@ -14,6 +14,7 @@
   --danger:     #C43B22;  /* 오류. 대비 4.60 */
   --ok:         #2D7B4D;  /* 성공. 대비 4.54 */
   --warn:       #9A5B08;  /* 경고. --paper 위 4.75, --surface 위 5.42 */
+  --line-control: #82817A;  /* 입력 필드 테두리. 비텍스트 3:1 기준 (--paper 위 3.42) */
 
   /* 타이포 (6) */
   --t-hero:  clamp(42px, 9vw, 68px);
@@ -32,7 +33,7 @@
   --s6: 56px;
 
   /* 형태 (6) */
-  --bd:             1.5px solid var(--line);
+  --bd:             1.5px solid var(--line-control);
   --bd-bold:        2px solid var(--line-bold);
   --shadow-hard:    6px 6px 0 var(--ink);
   --radius:         0;

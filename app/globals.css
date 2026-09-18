@@ -1458,3 +1458,29 @@ footer :is(a, button):focus-visible { outline-color: var(--acid); }
 /* 2026-09-18: 열린 카드 메뉴가 아래쪽 이동시간 라벨에 가려졌다.
    둘 다 같은 article.stop 안이고 라벨이 DOM 상 뒤라 먼저 위에 그려진다 */
 .stop-actions[open] { z-index: 2; }
+
+/* 2026-09-18: 얇은 선에 쓰인 라임을 먹색으로. 흰 배경 위 라임은 대비 1.15 라
+   점선과 테두리가 사실상 보이지 않았다. 라임은 면으로만 쓴다는 규칙을
+   옛 CSS 의 선들이 어기고 있었다. 히어로 동선 그래픽도 먹색 점선이다 */
+.between-stops {
+  border-left: 2px dashed var(--ink);
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+.stop:not(.last):after { border-left: 2px dashed var(--ink); }
+.timeline.dragging .drop-zone { border: 2px dashed var(--ink); }
+.missing-preferences { border: 1.5px dashed var(--ink); border-radius: var(--radius); }
+.touch-drag-preview { border: var(--bd-bold); border-radius: var(--radius-control); }
+
+/* 호버 테두리도 먹색으로 */
+.location-control button:hover,
+.time-select-field select:hover:not(:disabled),
+.choice-select-trigger:hover:not(:disabled) { border-color: var(--ink); }
+
+/* 2026-09-18: 대비 점검 잔여분. 테두리가 요소를 알아볼 유일한 단서인 두 곳만 올린다.
+   메모 입력은 필드이고, 추가된 장소 카드는 테두리가 카드 경계다.
+   순수 장식 구분선(로고 옆 선, 지도 배지 점선, 추가 버튼 앞 점선)은 그대로 둔다 */
+.spot-note textarea,
+.spot-editor-fields textarea { border: var(--bd); }
+.result.added,
+.search-section .result.added { border: var(--bd); }
