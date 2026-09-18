@@ -14,7 +14,7 @@
   --danger:     #C43B22;  /* 오류. 대비 4.60 */
   --ok:         #2D7B4D;  /* 성공. 대비 4.54 */
   --warn:       #9A5B08;  /* 경고. --paper 위 4.75, --surface 위 5.42 */
-  --line-control: #82817A;  /* 입력 필드 테두리. 비텍스트 3:1 기준 (--paper 위 3.42) */
+  --line-control: #949389;  /* 입력 필드 테두리. --surface 위 3.09(기준 충족), --paper 위 2.70 */
 
   /* 타이포 (6) */
   --t-hero:  clamp(42px, 9vw, 68px);
