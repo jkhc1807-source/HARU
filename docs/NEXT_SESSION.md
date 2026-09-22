@@ -1,6 +1,6 @@
 # 다음 작업 이어가기
 
-마지막 갱신: 2026-09-22
+마지막 갱신: 2026-09-23
 
 새 세션을 열면 이 문서부터 읽는다. `AGENTS.md`, `docs/PROJECT_CONTEXT.md`, `docs/ROADMAP.md`가 그 다음이다.
 
@@ -10,7 +10,7 @@
 
 ## 지금 상태 한 줄
 
-먹·애시드 디자인 개편, UX 전수 점검에 이어 로그인한 뒤의 화면까지 점검해 `main` 에 배포했다. 로그인 시 기기에 저장한 일정이 영구히 사라지던 데이터 손실을 포함해 10건을 고쳤고, 운영 배포본에서 15개 항목으로 확인했다. 아직 보지 않은 화면은 `/admin` 관리자 화면이고, 성능·사파리·스크린리더도 남아 있다.
+먹·애시드 디자인 개편, UX 전수 점검, 로그인 화면 점검에 이어 사파리·접근성·관리자 화면·성능까지 확인해 `main` 에 배포했다. 로그인 시 일정이 사라지던 데이터 손실을 고쳤고, 폰트 로딩을 바꿔 LCP 를 3.61초에서 2.35초로 내렸다. 남은 일은 실기기 아이폰 확인뿐이고, 그건 사람이 해야 한다.
 
 ## 환경
 
@@ -154,3 +154,6 @@ npx next build                       # Vercel 배포 경로. 배포 전 반드�
 - 알림 채널이 셋이다. `notice`(토스트 + 지도 옆 `.map-status`), `authNotice`(헤더 팝오버, 닫는 방법 없음), `originNotice`(출발지 영역). 실패 문구를 어디에 띄울지 정할 때 이미 떠 있는 성공 토스트와 모순되지 않는지 본다.
 - `notice` 의 초기값은 빈 문자열이 아니라 `"샘플 일정으로 체험 중이에요"` 다. "첫 알림은 건너뛴다" 식의 장치는 이 초기값을 먼저 소비하므로, 특정 알림에 토스트를 띄우지 않으려면 `toastSilentRef` 를 쓴다.
 - 로그인 상태를 검사할 때는 실제 구글 로그인을 자동화하지 말고 Supabase 응답을 가로챈다. 세션을 `sb-<프로젝트 ref>-auth-token` 으로 localStorage 에 심고 `**/rest/v1/**` 을 `page.route` 로 가로채면 된다. 개발 서버는 StrictMode 로 effect 가 두 번 돌아 결과가 달라지니 최종 확인은 운영 배포본으로 한다.
+- 전송량을 잴 때 `content-length` 헤더는 압축 응답에 없어 0 으로 잡힌다. `performance.getEntriesByType("resource")` 의 `encodedBodySize` 로 재야 한다. URL 로 종류를 나눌 때도 조심한다 — `cdn.jsdelivr.net` 은 정규식 `/\.js/` 에 걸려 폰트가 JS 로 집계된다.
+- playwright 는 `package.json` 에 없지만 `node_modules` 에 남아 있어, 스크립트에서 절대경로(`file:///…/node_modules/playwright/index.js`)로 import 하면 쓸 수 있다. 사파리 확인용 WebKit 은 `npx playwright install webkit` 으로 따로 받는다.
+- 폰트는 `app/globals.css` 맨 위에서 9종을 직접 선언한다(`font-display:swap`). 원격 `SUIT.css` 를 `@import` 하던 방식으로 되돌리면 느린 회선에서 글자가 3초간 안 보이는 상태가 그대로 돌아온다.
