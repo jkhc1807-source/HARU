@@ -261,6 +261,7 @@ export default function Home() {
   const [toast, setToast] = useState<{ text: string; undo: boolean } | null>(null);
   const toastSeenRef = useRef(false);
   const toastUndoRef = useRef(false);
+  const toastSilentRef = useRef(false);
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [authNotice, setAuthNotice] = useState("");
@@ -278,7 +279,7 @@ export default function Home() {
   const planningSettingsRef = useRef(`${startTime}|${endTime}|${selected.join(",")}`);
   const pointerDragRef = useRef<{ pointerId: number; spot: Spot } | null>(null);
   const suppressResultClickRef = useRef(false);
-  const savedTripsReadyRef = useRef(false);
+  const [savedTripsReady, setSavedTripsReady] = useState(false);
   const authUserIdRef = useRef<string | null>(null);
   const syncedUserRef = useRef("");
   const syncingUserRef = useRef("");
@@ -297,7 +298,7 @@ export default function Home() {
     setSavedTrips(readStoredTrips(localStorage.getItem("haru-trip-plans")));
     setOrigin(readStoredOrigin(localStorage.getItem("haru-origin")));
     setFavoriteOrigins(readStoredFavoriteOrigins(localStorage.getItem("haru-favorite-origins")));
-    savedTripsReadyRef.current = true;
+    setSavedTripsReady(true);
     if (sharedTrip) {
       setCity(sharedTrip.city);
       setStartTime(sharedTrip.startTime);
@@ -332,6 +333,7 @@ export default function Home() {
             center: new window.kakao.maps.LatLng(37.5444, 127.0447), level: 5,
           });
           setMapReady(true);
+          toastSilentRef.current = true;
           setNotice("카카오맵이 연결됐어요");
         });
         script.onerror = () => setNotice("카카오 도메인 등록을 확인해주세요");
@@ -667,6 +669,7 @@ export default function Home() {
   useEffect(() => {
     if (!notice) return;
     if (!toastSeenRef.current) { toastSeenRef.current = true; return; }
+    if (toastSilentRef.current) { toastSilentRef.current = false; return; }
     const undo = toastUndoRef.current;
     toastUndoRef.current = false;
     setToast({ text: notice, undo });
@@ -719,10 +722,10 @@ export default function Home() {
   }, [mapReady, planSpotIds, origin]);
 
   useEffect(() => {
-    if (!savedTripsReadyRef.current || (authUser && !isRemoteTripsReady)) return;
+    if (!savedTripsReady || (authUser && !isRemoteTripsReady)) return;
     const key = authUser ? `haru-trip-plans:${authUser.id}` : "haru-trip-plans";
     localStorage.setItem(key, JSON.stringify(savedTrips));
-  }, [savedTrips, authUser, isRemoteTripsReady]);
+  }, [savedTrips, authUser, isRemoteTripsReady, savedTripsReady]);
 
   useEffect(() => {
     if (!authUser || syncedUserRef.current === authUser.id || syncingUserRef.current === authUser.id) return;
@@ -1017,7 +1020,12 @@ export default function Home() {
     if (!supabase) return;
     setIsAuthLoading(true);
     const { error } = await supabase.auth.signOut();
-    setAuthNotice(error ? "로그아웃하지 못했어요" : "로그아웃했어요");
+    if (error) setAuthNotice("로그아웃하지 못했어요");
+    else {
+      setAuthNotice("");
+      setNotice("로그아웃했어요");
+      window.requestAnimationFrame(() => document.querySelector<HTMLButtonElement>(".auth-login-button")?.focus());
+    }
     setIsAuthLoading(false);
   }
 
@@ -1036,7 +1044,8 @@ export default function Home() {
       setNotice("저장할 장소가 아직 없어요");
       return;
     }
-    setSaveTripName(`${city.trim() || "새 지역"} 하루`);
+    const current = savedTrips.find(item => item.id === selectedSavedTripId);
+    setSaveTripName(current?.name ?? `${city.trim() || "새 지역"} 하루`);
     setIsSaveDialogOpen(true);
     window.requestAnimationFrame(() => saveTripNameInputRef.current?.select());
   }
@@ -1079,7 +1088,7 @@ export default function Home() {
       try {
         await upsertSavedTrip(authUser.id, trip);
       } catch {
-        setAuthNotice("이 기기에는 저장했지만 계정 동기화는 실패했어요.");
+        setNotice("이 기기에는 저장했지만 계정 동기화는 실패했어요");
       }
     }
   }
@@ -1194,7 +1203,7 @@ export default function Home() {
         await deleteSavedTrip(authUser.id, selectedSavedTripId);
       } catch {
         setSavedTrips(previousTrips);
-        setAuthNotice("계정에서 삭제하지 못했어요. 다시 시도해주세요.");
+        setNotice("계정에서 삭제하지 못해 일정을 되돌렸어요");
       }
     }
   }

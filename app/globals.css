@@ -1608,3 +1608,18 @@ footer :is(a, button):focus-visible { outline-color: var(--acid); }
   line-height: 16px;
   text-align: center;
 }
+
+/* 2026-09-22: 모바일에서는 헤더가 2줄이라 위쪽 토스트가 로고를 덮었다 → 아래로 */
+@media (max-width: 800px) {
+  .toast { top: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + var(--s3)); }
+}
+
+/* 2026-09-22: 로그인 콜백 화면의 돌아가기 링크가 굵은 글자일 뿐이라 누를 수 있어 보이지 않았다 */
+.auth-callback a {
+  padding: 0 var(--s4);
+  border: var(--bd-bold);
+  border-radius: var(--radius);
+  background: var(--acid);
+  box-shadow: var(--shadow-hard);
+  text-decoration: none;
+}
