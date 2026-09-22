@@ -18,7 +18,7 @@ export default function AdminPage() {
     if (!supabase) throw new Error("Supabase 설정이 필요해요");
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
-    if (!token) throw new Error("Google로 먼저 로그인해주세요");
+    if (!token) throw new Error("홈으로 돌아가 Google로 로그인한 뒤 다시 들어와주세요");
     const response = await fetch(path, {
       ...init,
       headers: { ...init?.headers, authorization: `Bearer ${token}`, "content-type": "application/json" },

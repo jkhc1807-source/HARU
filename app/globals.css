@@ -1,6 +1,17 @@
-@import url("https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css");
 @import "tailwindcss";
 @import "./tokens.css";
+
+/* SUIT 를 직접 선언한다. 원격 SUIT.css 는 font-display 가 없어 폰트가 도착할 때까지
+   글자를 아예 그리지 않았다(느린 4G 에서 약 3초). 9종을 다 적어두지만 브라우저는 쓰는 굵기만 내려받는다. */
+@font-face { font-family:"SUIT"; font-weight:100; font-display:swap; src:url("https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT-Thin.woff2") format("woff2"); }
+@font-face { font-family:"SUIT"; font-weight:200; font-display:swap; src:url("https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT-ExtraLight.woff2") format("woff2"); }
+@font-face { font-family:"SUIT"; font-weight:300; font-display:swap; src:url("https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT-Light.woff2") format("woff2"); }
+@font-face { font-family:"SUIT"; font-weight:400; font-display:swap; src:url("https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT-Regular.woff2") format("woff2"); }
+@font-face { font-family:"SUIT"; font-weight:500; font-display:swap; src:url("https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT-Medium.woff2") format("woff2"); }
+@font-face { font-family:"SUIT"; font-weight:600; font-display:swap; src:url("https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT-SemiBold.woff2") format("woff2"); }
+@font-face { font-family:"SUIT"; font-weight:700; font-display:swap; src:url("https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT-Bold.woff2") format("woff2"); }
+@font-face { font-family:"SUIT"; font-weight:800; font-display:swap; src:url("https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT-ExtraBold.woff2") format("woff2"); }
+@font-face { font-family:"SUIT"; font-weight:900; font-display:swap; src:url("https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT-Heavy.woff2") format("woff2"); }
 
 * { box-sizing:border-box; }
 body { margin:0; color:var(--ink); background:var(--paper); font-family:"SUIT","Pretendard","Noto Sans KR",Arial,sans-serif; font-weight:400; }
@@ -1614,8 +1625,9 @@ footer :is(a, button):focus-visible { outline-color: var(--acid); }
   .toast { top: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + var(--s3)); }
 }
 
-/* 2026-09-22: 로그인 콜백 화면의 돌아가기 링크가 굵은 글자일 뿐이라 누를 수 있어 보이지 않았다 */
-.auth-callback a {
+/* 2026-09-22: 콜백·관리자 화면의 돌아가기 링크가 굵은 글자일 뿐이라 누를 수 있어 보이지 않았다 */
+.auth-callback a,
+.admin-back a {
   padding: 0 var(--s4);
   border: var(--bd-bold);
   border-radius: var(--radius);
