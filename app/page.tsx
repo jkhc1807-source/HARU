@@ -1709,7 +1709,7 @@ export default function Home() {
                     <p className="stop-info">{spot.category} · {start}–{end} · {spot.stay}분</p>
                     <p>{spot.address}</p>
                     {spot.note && <p className="spot-note-preview">{spot.note}</p>}
-                    <a className="kakao-review-link" href={kakaoPlaceUrl(spot)} target="_blank" rel="noopener noreferrer" draggable={false} aria-label={`${spot.name} 카카오맵 리뷰 새 창에서 열기`}>카카오맵 리뷰 ↗</a>
+                    <a className="kakao-review-link" href={kakaoPlaceUrl(spot)} target="_blank" rel="noopener noreferrer" draggable={false} aria-label={`${spot.name} 영업시간과 리뷰를 카카오맵 새 창에서 열기`}>영업시간·리뷰 보기 ↗</a>
                   </div>
                   <details className="stop-actions" onToggle={event => { if (event.target === event.currentTarget && event.currentTarget.open) setSpotDrafts(current => ({ ...current, [spot.id]: { stay: spot.stay, note: spot.note || "" } })); }} onPointerDown={event => event.stopPropagation()} onKeyDown={event => { if (event.key === "Escape") { event.stopPropagation(); event.currentTarget.open = false; event.currentTarget.querySelector("summary")?.focus(); } }}>
                     <summary aria-label={`${spot.name} 관리`}>⋯</summary>
