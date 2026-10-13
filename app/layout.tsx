@@ -20,6 +20,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return <html lang="ko">
     <head>
       <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="" />
+      <link rel="manifest" href="/manifest.webmanifest" />
+      <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+      <meta name="theme-color" content="#14150F" />
+      <meta name="apple-mobile-web-app-capable" content="yes" />
+      <meta name="mobile-web-app-capable" content="yes" />
+      <meta name="apple-mobile-web-app-title" content="하루여행" />
     </head>
     <body>{children}</body>
   </html>;

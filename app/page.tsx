@@ -1690,7 +1690,8 @@ export default function Home() {
 
       <section className="workspace">
         <div className="timeline-panel">
-          <div className="section-head"><div><p>MY DAY</p><h2>{city}에서의 하루</h2></div><div className="section-tools"><div className="summary"><b>{Math.floor(shownTotal / 60)}시간 {shownTotal % 60}분</b><span>{shownCount}개 장소 · 도보 {totalTravel}분</span></div><div className="route-optimize-wrap"><button type="button" className="route-optimize" onClick={handleOptimizeRoute}><span aria-hidden="true">↗</span>동선 정리</button><span role="status">{routeOptimizeMessage}</span></div></div></div>
+          <div className="section-head"><div><p>MY DAY</p><h2>{city}에서의 하루</h2></div><div className="section-tools"><div className="summary"><b>{Math.floor(shownTotal / 60)}시간 {shownTotal % 60}분</b><span>{shownCount}개 장소 · 도보 약 {totalTravel}분</span></div><div className="route-optimize-wrap"><button type="button" className="route-optimize" onClick={handleOptimizeRoute}><span aria-hidden="true">↗</span>동선 정리</button><span role="status">{routeOptimizeMessage}</span></div></div></div>
+          {plan.length > 0 && <p className="estimate-note">이동시간은 직선거리를 걷는 기준으로 어림한 값이에요. 실제 길이나 대중교통과는 다를 수 있어요.</p>}
           <a className="place-search-shortcut" href="#place-search-input">+ 장소 찾아 추가하기</a>
           {overrunMinutes > 0 && <div className="time-warning" role="status"><div><b>선택한 종료 시간을 {overrunMinutes}분 초과해요</b><span>직접 추가한 장소는 임의로 지우지 않았어요.</span></div><button type="button" onClick={handleFitToTime}>시간에 맞게 줄이기</button></div>}
           <div ref={timelineEl} className={`timeline ${isDragging ? "dragging" : ""}`}>
@@ -1749,7 +1750,7 @@ export default function Home() {
             <button type="button" disabled={isLocating} onClick={handleShowCurrentLocation} aria-label="지도에서 내 현재 위치 보기">◎ {isLocating ? "위치 확인 중…" : "내 위치"}</button>
             <span role="status" aria-live="polite">{locationNotice}</span>
           </div>
-          {mapReady && <div className="route-legend">● 방문 순서 &nbsp; ━ 예상 이동 동선</div>}
+          {mapReady && <div className="route-legend">● 방문 순서 &nbsp; ━ 직선 연결(실제 길 아님)</div>}
         </div>
       </section>
 

@@ -1635,3 +1635,4 @@ footer :is(a, button):focus-visible { outline-color: var(--acid); }
   box-shadow: var(--shadow-hard);
   text-decoration: none;
 }
+.estimate-note{margin:12px 0 0;font-size:11px;line-height:1.5;color:var(--ink-faint);word-break:keep-all}
