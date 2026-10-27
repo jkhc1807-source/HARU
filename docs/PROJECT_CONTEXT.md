@@ -1,5 +1,13 @@
 # 하루여행 프로젝트 컨텍스트
 
+## 최신 작업 — 2026-10-27 코드 검사 정리·대중교통 경로 조사
+
+- `npx eslint .`가 `dist/`, `.wrangler/` 같은 생성물까지 검사해 2,500건 넘게 보고하던 것을 `eslint.config.mjs`의 무시 목록으로 정리했다. 소스 38건은 0건으로 만들었다.
+- 쓰이지 않던 드래그 핸들러 3개(`handleDragStart`, `handlePointerDragMove`, `handlePointerDragEnd`)를 지웠다. `schedule` 계산은 같은 결과의 for 문으로 바꿨다.
+- `set-state-in-effect` 9건은 effect 구조를 건드리지 않고 이유를 단 disable 주석으로 처리했다(09-22 데이터 손실 원인 영역). 카카오 SDK `any`는 `app/page.tsx` 파일 단위 disable이라 이 파일의 새 `any`도 잡히지 않는다.
+- 대중교통 경로 API 조사: 카카오는 자동차 길찾기만 공개, ODsay 무료(Basic)는 **하루 30건**을 전체 사용자가 나눠 쓰는 구조라 사실상 불가, 공공데이터포털(TAGO)은 시간표뿐이다.
+- 무료·무키 대안은 카카오맵 길찾기 링크 `https://map.kakao.com/link/by/traffic/<이름>,<위도>,<경도>/<이름>,<위도>,<경도>`다. 대중교통 화면(`target=traffic`)으로 열리는 것을 확인했다. 구현 여부는 사용자 결정 대기.
+
 ## 최신 작업 — 2026-10-27 TourAPI 시험 결과: 도입하지 않음
 
 - 지역·종류를 섞은 38곳(관광지 10, 문화시설 8, 음식점 12, 카페 6, 쇼핑 2)을 `searchKeyword2`로 이름 검색하고 `detailIntro2`로 이용시간·휴무일을 받았다.
@@ -203,8 +211,8 @@ LCP 가 구글 기준 "좋음"(2.5초 이하) 안으로 들어왔다. LCP 와 FC
 ## 현재 배포
 
 - 서비스명: 하루여행
-- 배포 주소: https://haru-trip-planner.njhina48.chatgpt.site
-- 현재 배포 버전: v22
+- 운영 주소: https://haru-ashy-rho.vercel.app (Vercel, GitHub `main` push 시 자동 배포)
+- 예전 Sites 주소 `haru-trip-planner.njhina48.chatgpt.site`는 **2026-10-27 사용자 결정으로 더 이상 쓰지 않는다.** 배포 원격(`origin`)에 접근할 수 없어 옛 버전에 멈춰 있다. 아래 Sites 관련 기록은 과거 이력이다.
 - Sites 프로젝트는 `.openai/hosting.json`의 기존 `project_id`를 계속 사용한다.
 - Vercel에서는 `vercel.json`을 통해 Sites용 `vinext build` 대신 표준 Next.js 빌드를 실행한다.
 - 카카오 JavaScript SDK 도메인에 배포 주소와 로컬 개발 주소가 등록되어 있다.

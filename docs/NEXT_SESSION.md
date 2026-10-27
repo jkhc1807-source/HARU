@@ -17,7 +17,7 @@
 | 항목 | 값 |
 | --- | --- |
 | 운영 주소 | https://haru-ashy-rho.vercel.app (Vercel, `main` 자동 배포) |
-| 예전 Sites 주소 | https://haru-trip-planner.njhina48.chatgpt.site (**옛 버전에서 멈춤**, 아래 참고) |
+| 예전 Sites 주소 | `haru-trip-planner.njhina48.chatgpt.site` — **2026-10-27 사용 중단**, 옛 버전에 멈춰 있음 |
 | Git 원격 | `github` = https://github.com/jkhc1807-source/HARU (**이걸 쓴다**) |
 | 못 쓰는 원격 | `origin` = chatgpt-team.site (인증 불가) |
 | Supabase 프로젝트 ref | `boanglpsvhcqjephlsjr` |
@@ -92,9 +92,9 @@ npm test                             # vinext build + 테스트 19개
 npx next build                       # Vercel 배포 경로. 배포 전 반드시 이걸로 확인한다
 ```
 
-`npm run build`(vinext)와 `npx next build`(Next.js)는 서로 다른 경로다. Sites는 전자, Vercel은 후자를 쓴다.
+`npm run build`(vinext)와 `npx next build`(Next.js)는 서로 다른 경로다. `npm test`는 전자, Vercel 배포는 후자를 쓴다.
 
-`npx eslint .` 는 **이번 작업 이전부터** 24건 실패하고 있었고 지금은 28건이다. 늘어난 4건은 기존 코드에 이미 있던 `react-hooks/set-state-in-effect`와 같은 계열이다. 빌드·테스트와 무관하다.
+`npx eslint .` 는 2026-10-27 정리 후 0건이다. 새 경고가 생기면 바로 확인한다.
 
 ## 2026-09-11에 한 일
 
@@ -128,7 +128,7 @@ npx next build                       # Vercel 배포 경로. 배포 전 반드�
 
 ### 정리
 
-- [ ] **Sites 주소 처리 결정** — `haru-trip-planner.njhina48.chatgpt.site`는 코덱스 내부 Git(`origin`)으로 배포되는데 그 원격에 접근할 수 없어 옛 버전에 멈춰 있다. 계속 쓸 주소인지 정하고, 쓸 거면 배포 방법을 찾는다. 안 쓰면 문서에서 정리한다.
+- [x] **Sites 주소 처리 결정** — 2026-10-27 사용 중단으로 결정하고 문서를 정리했다. Sites 전용 코드(`build/sites-vite-plugin.ts`, `.openai/hosting.json`, vinext 빌드)는 `npm test`가 vinext 빌드에 기대고 있어 남겨 두었다.
 - [x] **ROADMAP 과거 항목 정리** — Phase 3의 `여러 일정 저장`, `공유 링크 생성`, `모바일 공유 시트`가 코드상 구현되어 있음을 확인하고 체크 표시했다 (`lib/saved-trip-repository.ts`, `app/page.tsx`의 `#trip=` 공유 링크와 이미지 공유 시트). 실기기 동작 재확인은 아니고 코드 존재 확인이다.
 
 ### 다음에 만들 만한 것
