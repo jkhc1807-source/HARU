@@ -45,6 +45,7 @@ export default function AdminPage() {
     }
   }, [authorizedFetch]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- loading flag before the fetch in load()
   useEffect(() => { void load(); }, [load]);
 
   async function handleToggleBlock(user: AdminUser) {
@@ -99,6 +100,7 @@ export default function AdminPage() {
       </table>
     </div>}
 
+    {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- full page load on purpose (fresh auth/session state), same as before */}
     <p className="admin-back"><a href="/">하루여행으로 돌아가기</a></p>
   </main>;
 }

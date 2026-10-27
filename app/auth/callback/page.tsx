@@ -13,6 +13,7 @@ export default function AuthCallbackPage() {
     const code = new URLSearchParams(window.location.search).get("code");
     const supabase = getSupabaseBrowserClient();
     if (!code || !supabase) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot error when the OAuth code or client is missing
       setErrorMessage("로그인을 완료하지 못했어요. 홈으로 돌아가 다시 시도해주세요.");
       return;
     }
@@ -26,6 +27,10 @@ export default function AuthCallbackPage() {
 
   return <main className="auth-callback">
     <h1>{errorMessage ? "로그인에 실패했어요" : "로그인을 완료하고 있어요…"}</h1>
-    {errorMessage && <><p role="alert">{errorMessage}</p><a href="/">홈으로 돌아가기</a></>}
+    {errorMessage && <>
+      <p role="alert">{errorMessage}</p>
+      {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- full page load on purpose (fresh auth/session state), same as before */}
+      <a href="/">홈으로 돌아가기</a>
+    </>}
   </main>;
 }
