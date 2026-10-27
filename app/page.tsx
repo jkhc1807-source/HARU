@@ -82,8 +82,10 @@ function kakaoPlaceUrl(spot: Spot) {
 }
 
 // 장소명에 쉼표·슬래시가 있으면 카카오 링크 경로가 깨져 공백으로 바꾼다
-function kakaoTransitUrl(from: Spot, to: Spot) {
-  const point = (spot: Spot) => `${encodeURIComponent(spot.name.replace(/[,/]/g, " "))},${spot.y},${spot.x}`;
+type RoutePoint = { name: string; x: number; y: number };
+
+function kakaoTransitUrl(from: RoutePoint, to: RoutePoint) {
+  const point = (place: RoutePoint) => `${encodeURIComponent(place.name.replace(/[,/]/g, " "))},${place.y},${place.x}`;
   return `https://map.kakao.com/link/by/traffic/${point(from)}/${point(to)}`;
 }
 
@@ -1689,6 +1691,7 @@ export default function Home() {
               <b>{isDragging ? "여기에 놓으세요" : "아직 일정이 비어 있어요"}</b>
               <span>아래 검색 결과를 끌어오거나 눌러서 첫 장소를 추가하세요.</span>
             </div>}
+            {origin && plan[0] && <p className="between-stops">{origin.placeName}에서 출발 · <a href={kakaoTransitUrl({ name: origin.placeName, x: origin.x, y: origin.y }, plan[0])} target="_blank" rel="noopener noreferrer" aria-label={`${origin.placeName}에서 ${plan[0].name}까지 대중교통 길찾기를 카카오맵 새 창에서 열기`}>대중교통 길찾기 ↗</a></p>}
             {schedule.map(({ spot, start, end, travelToNext }, i) => <Fragment key={spot.id}>
               <div className={`drop-zone ${activeDropIndex === i ? "active" : ""}`} data-drop-index={i} onDragOver={event => event.preventDefault()} onDragEnter={() => setActiveDropIndex(i)} onDrop={() => handleDropAt(i)}><span>{i === 0 ? "맨 앞에 놓기" : "여기에 놓기"}</span></div>
               <article id={`stop-${spot.id}`} className={`stop tone-${toneForSpot(spot)} ${i === schedule.length - 1 ? "last" : ""}`} data-stop-index={i} style={{ "--stop-i": i } as CSSProperties} onPointerDown={event => { if (event.pointerType !== "touch" && !(event.target as HTMLElement).closest("a, button, select")) handlePointerDragStart(event, spot); }} aria-label={`${spot.name} 일정 순서 이동`}>
