@@ -81,6 +81,12 @@ function kakaoPlaceUrl(spot: Spot) {
   return spot.placeUrl || `https://map.kakao.com/link/search/${encodeURIComponent(`${spot.name} ${spot.address}`)}`;
 }
 
+// 장소명에 쉼표·슬래시가 있으면 카카오 링크 경로가 깨져 공백으로 바꾼다
+function kakaoTransitUrl(from: Spot, to: Spot) {
+  const point = (spot: Spot) => `${encodeURIComponent(spot.name.replace(/[,/]/g, " "))},${spot.y},${spot.x}`;
+  return `https://map.kakao.com/link/by/traffic/${point(from)}/${point(to)}`;
+}
+
 function toneForSpot(spot: Spot) {
   const text = `${spot.category} ${spot.name}`;
   if (/카페/.test(text)) return "cafe";
@@ -1716,7 +1722,7 @@ export default function Home() {
                     </div>
                   </details>
                 </div>
-                {travelToNext > 0 && <p className="between-stops">도보 약 {travelToNext}분</p>}
+                {travelToNext > 0 && <p className="between-stops">도보 약 {travelToNext}분 · <a href={kakaoTransitUrl(spot, plan[i + 1])} target="_blank" rel="noopener noreferrer" draggable={false} aria-label={`${spot.name}에서 ${plan[i + 1].name}까지 대중교통 길찾기를 카카오맵 새 창에서 열기`}>대중교통 길찾기 ↗</a></p>}
               </article>
             </Fragment>)}
             {plan.length > 0 && <div className={`drop-zone ${activeDropIndex === plan.length ? "active" : ""}`} data-drop-index={plan.length} onDragOver={event => event.preventDefault()} onDragEnter={() => setActiveDropIndex(plan.length)} onDrop={() => handleDropAt(plan.length)}><span>마지막에 놓기</span></div>}

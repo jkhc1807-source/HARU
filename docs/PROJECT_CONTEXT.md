@@ -6,7 +6,9 @@
 - 쓰이지 않던 드래그 핸들러 3개(`handleDragStart`, `handlePointerDragMove`, `handlePointerDragEnd`)를 지웠다. `schedule` 계산은 같은 결과의 for 문으로 바꿨다.
 - `set-state-in-effect` 9건은 effect 구조를 건드리지 않고 이유를 단 disable 주석으로 처리했다(09-22 데이터 손실 원인 영역). 카카오 SDK `any`는 `app/page.tsx` 파일 단위 disable이라 이 파일의 새 `any`도 잡히지 않는다.
 - 대중교통 경로 API 조사: 카카오는 자동차 길찾기만 공개, ODsay 무료(Basic)는 **하루 30건**을 전체 사용자가 나눠 쓰는 구조라 사실상 불가, 공공데이터포털(TAGO)은 시간표뿐이다.
-- 무료·무키 대안은 카카오맵 길찾기 링크 `https://map.kakao.com/link/by/traffic/<이름>,<위도>,<경도>/<이름>,<위도>,<경도>`다. 대중교통 화면(`target=traffic`)으로 열리는 것을 확인했다. 구현 여부는 사용자 결정 대기.
+- 무료·무키 대안은 카카오맵 길찾기 링크 `https://map.kakao.com/link/by/traffic/<이름>,<위도>,<경도>/<이름>,<위도>,<경도>`다. 대중교통 화면(`target=traffic`)으로 열리는 것을 확인했다.
+- 사용자 결정으로 일정 구간마다 `도보 약 N분 · 대중교통 길찾기 ↗` 링크를 달았다(`kakaoTransitUrl`). 장소명의 `,` `/`는 링크 경로를 깨뜨려(인코딩해도 404) 공백으로 바꾼다. 출발지→첫 장소 구간은 넣지 않았다.
+- 확인: `npx tsc --noEmit`, `npx eslint .` 0건, `npm test` 20개, `npx next build` 통과. 320px·1280px에서 링크 높이 44px, 가로 넘침 0, 생성된 링크가 카카오맵 대중교통 길찾기로 열림.
 
 ## 최신 작업 — 2026-10-27 TourAPI 시험 결과: 도입하지 않음
 

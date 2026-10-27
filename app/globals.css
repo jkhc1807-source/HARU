@@ -1636,3 +1636,6 @@ footer :is(a, button):focus-visible { outline-color: var(--acid); }
   text-decoration: none;
 }
 .estimate-note{margin:12px 0 0;font-size:11px;line-height:1.5;color:var(--ink-faint);word-break:keep-all}
+/* 2026-10-27: 구간별 카카오맵 대중교통 길찾기 링크 */
+.between-stops a{display:inline-flex;align-items:center;min-height:var(--tap);color:var(--ink);text-decoration:underline;text-decoration-color:var(--ink);text-underline-offset:4px}
+.between-stops a:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
